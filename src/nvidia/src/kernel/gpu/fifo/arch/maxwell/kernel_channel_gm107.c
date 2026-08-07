@@ -22,6 +22,7 @@
  */
 
 #include "kernel/gpu/fifo/kernel_channel.h"
+#include "mc-trace.h"
 #include "kernel/gpu/fifo/kernel_channel_group.h"
 #include "kernel/gpu/fifo/kernel_channel_group_api.h"
 #include "kernel/mem_mgr/mem.h"
@@ -611,6 +612,9 @@ kchannelGetEngine_GM107
               FMT_CHANNEL_DEBUG_TAG "\n",
               kchannelGetDebugTag(pKernelChannel));
 
+    MC_TRACE(fifo, "chan_get_engine", "hal=gm107 runlist_id=%u engine_type=%u",
+                    kchannelGetRunlistId(pKernelChannel),
+                    pKernelChannel->engineType);
     *pEngDesc = kchannelGetRunlistId(pKernelChannel);
 
     // This will pick the first engine on this runlist (may not be the only one).

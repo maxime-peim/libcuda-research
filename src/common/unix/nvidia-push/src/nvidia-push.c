@@ -25,6 +25,7 @@
 
 
 #include "nvidia-push-init.h"
+#include "mc-trace.h"
 #include "nvidia-push-methods.h"
 #include "nvidia-push-utils.h"
 #include "nvidia-push-priv.h"
@@ -357,6 +358,19 @@ static NvBool nvWriteGpEntry(
     gpPointer = &(push_buffer->gpfifo[push_buffer->gpPutOffset*2]);
 
     nvAssert((nextGpPut % 2) == 0);
+
+    /*
+     * This file (nvidia-push.c) is linked into nvidia-modeset.ko only, so
+     * this trace fires for display-channel submissions (blits, flips) rather
+     * than CUDA compute/copy work — CUDA submits to the GPFIFO entirely from
+     * userspace via mmap'd doorbells, bypassing the kernel on the hot path.
+     *
+     * nv_trace_printf is declared by mc-trace.h and exported from nvidia.ko
+     * (kernel-open/nvidia/os-interface.c); nvidia-modeset.ko already depends
+     * on nvidia.ko, so the symbol resolves at module load.
+     */
+    MC_TRACE(fifo, "gp_entry_write", "gp_put=%u next_gp_put=%u put_offset=0x%x",
+                    push_buffer->gpPutOffset, nextGpPut, putOffset);
 
     // Wait for a free entry in the buffer
     while (nextGpPut == ReadGpGetOffset(push_buffer)) {

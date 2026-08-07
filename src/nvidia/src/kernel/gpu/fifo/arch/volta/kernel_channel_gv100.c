@@ -22,6 +22,7 @@
  */
 
 #include "kernel/gpu/fifo/kernel_channel.h"
+#include "mc-trace.h"
 #include "kernel/mem_mgr/mem.h"
 #include "kernel/mem_mgr/os_desc_mem.h"
 #include "kernel/gpu/mmu/kern_gmmu.h"
@@ -29,6 +30,11 @@
 
 #include "published/volta/gv100/dev_pbdma.h"
 #include "rmapi/rs_utils.h"
+
+/* Fork instrumentation: ftrace_vprintk helper exported
+ * by kernel-open/nvidia/os-interface.c.  Declared inline rather than
+ * via os-interface.h to keep the include footprint of this TU small. */
+void NV_API_CALL nv_trace_printf(const char *fmt, ...);
 
 /**
  * @brief Verify that the given userd physical address is of the correct size
@@ -204,6 +210,20 @@ kchannelCreateUserdMemDesc_GV100
     userdAddr = memdescGetPhysAddr(pUserdMemDescForSubDev,
                                AT_GPU,
                                userdOffset);
+
+    /* Fork instrumentation: log the address PBDMA will
+     * use to fetch USERD for this channel.  Compared between the
+     * working UVM channel (FB-USERD reachable to PBDMA) and the
+     * broken FB-carrier non-UVM channel (FB-USERD not reachable) to
+     * isolate which step in the construct path differs. */
+    MC_TRACE(fifo, "userd_resolve", "hclient=0x%x huserd=0x%x "
+                    "userd_offset=0x%llx userd_addr=0x%llx "
+                    "address_space=%u userd_size=%u",
+                    hClient, hUserdMemory,
+                    (unsigned long long)userdOffset,
+                    (unsigned long long)userdAddr,
+                    memdescGetAddressSpace(pUserdMemDescForSubDev),
+                    userdSize);
 
     userdAddrLo = NvU64_LO32(userdAddr) >> userdShift;
     userdAddrHi = NvU64_HI32(userdAddr);

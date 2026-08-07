@@ -24,6 +24,8 @@
 #define NVOC_KERNEL_CHANNEL_H_PRIVATE_ACCESS_ALLOWED
 
 #include "kernel/gpu/fifo/kernel_channel.h"
+#include "os-interface.h"
+#include "mc-trace.h"
 
 #include "kernel/core/locks.h"
 #include "gpu/subdevice/subdevice.h"
@@ -130,6 +132,8 @@ kchannelConstruct_IMPL
 )
 {
     OBJGPU                 *pGpu             = GPU_RES_GET_GPU(pKernelChannel);
+    MC_TRACE(fifo, "chan_construct", "step=enter hclient=0x%x hparent=0x%x hnew=0x%x class=0x%x",
+                    pParams->hClient, pParams->hParent, pParams->hResource, pParams->externalClassId);
     OBJSYS                 *pSys             = SYS_GET_INSTANCE();
     KernelMIGManager       *pKernelMIGManager = GPU_GET_KERNEL_MIG_MANAGER(pGpu);
     KernelFifo             *pKernelFifo      = GPU_GET_KERNEL_FIFO(pGpu);
@@ -483,10 +487,15 @@ kchannelConstruct_IMPL
     // From here down do not return early, use goto cleanup
     //--------------------------------------------------------------------------
 
+    MC_TRACE(fifo, "chan_construct", "step=before_lock");
     NV_ASSERT_OK_OR_GOTO(status,
         rmDeviceGpuLocksAcquire(pGpu, GPUS_LOCK_FLAGS_NONE, RM_LOCK_MODULES_FIFO),
         cleanup);
     bLockAcquired = NV_TRUE;
+    MC_TRACE(fifo, "chan_construct", "step=lock_acquired herror_ctx=0x%x blegacy=%d chan_count=%d",
+                    pChannelGpfifoParams->hObjectError,
+                    (int)pKernelChannelGroup->bLegacyMode,
+                    (int)pKernelChannelGroup->chanCount);
 
     //
     // Initialize the notification indices used for different notifications
@@ -655,6 +664,8 @@ kchannelConstruct_IMPL
                 kchangrpapiSetLegacyMode(pKernelChannelGroupApi,
                                          pGpu, pKernelFifo, hClient),
                 cleanup);
+            MC_TRACE(fifo, "chan_construct", "step=set_legacy_mode status=0x%x tsg_engine_type=0x%x",
+                        status, pKernelChannelGroup->engineType);
         }
 
         subctxFlag = DRF_VAL(OS04, _FLAGS, _GROUP_CHANNEL_THREAD, flags);
@@ -689,8 +700,12 @@ kchannelConstruct_IMPL
                            NV_ERR_INVALID_OBJECT,
                            cleanup);
 
+    MC_TRACE(fifo, "chan_construct", "step=check_engine_type");
     if (kfifoIsPerRunlistChramSupportedInHw(pKernelFifo))
     {
+        MC_TRACE(fifo, "chan_construct", "step=per_runlist_chram tsg_eng_type=0x%x valid=%d",
+                        pKernelChannelGroup->engineType,
+                        (int)RM_ENGINE_TYPE_IS_VALID(pKernelChannelGroup->engineType));
         // TSG should always have a valid engine Id.
         NV_ASSERT_TRUE_OR_GOTO(status,
             RM_ENGINE_TYPE_IS_VALID(pKernelChannelGroup->engineType),
@@ -742,6 +757,10 @@ kchannelConstruct_IMPL
 
     // Determine initial runlist ID (based on engine type if provided or inherited from TSG)
     pKernelChannel->runlistId = kfifoGetDefaultRunlist_HAL(pGpu, pKernelFifo, pKernelChannel->engineType);
+    MC_TRACE(fifo, "chan_construct", "step=set_engine engine_type=%u runlist_id=%u tsg_engine_type=%u param_engine_type=%u",
+                    pKernelChannel->engineType, pKernelChannel->runlistId,
+                    pKernelChannelGroup->engineType,
+                    pChannelGpfifoParams->engineType);
 
     pKernelChannel->bCCSecureChannel = FLD_TEST_DRF(OS04, _FLAGS, _CC_SECURE, _TRUE, flags);
     pKernelChannel->bUseScrubKey = FLD_TEST_DRF(OS04, _FLAGS, _CHANNEL_SKIP_SCRUBBER, _TRUE, pChannelGpfifoParams->flags);
@@ -866,9 +885,12 @@ kchannelConstruct_IMPL
     // (Requires the channel to be created on the host if legacy VGPU / Heavy SRIOV.
     // Does not require a Channel object.)
     //
+    MC_TRACE(fifo, "chan_construct", "step=before_instmem chid=%u status=0x%x",
+                    pKernelChannel->ChID, status);
     NV_ASSERT_OK_OR_GOTO(status,
         _kchannelAllocOrDescribeInstMem(pKernelChannel, pChannelGpfifoParams),
         cleanup);
+    MC_TRACE(fifo, "chan_construct", "step=after_instmem status=0x%x", status);
 
     // Join the channel group here
     NV_ASSERT_OK_OR_GOTO(status,
@@ -891,10 +913,12 @@ kchannelConstruct_IMPL
         SLI_LOOP_END
      }
 
+    MC_TRACE(fifo, "chan_construct", "step=before_alloc_hal");
     // Allocate the physical channel
     NV_ASSERT_OK_OR_GOTO(status,
         kchannelAllocChannel_HAL(pKernelChannel, pChannelGpfifoParams),
         cleanup);
+    MC_TRACE(fifo, "chan_construct", "step=after_alloc_hal status=0x%x", status);
 
     // Initialize the userd length
     if (!pKernelChannel->bClientAllocatedUserD)
@@ -929,6 +953,8 @@ kchannelConstruct_IMPL
     // RPC to allocate the channel on GSPFW/host.
     // (Requires a Channel object but only for hPhysChannel.)
     //
+    MC_TRACE(fifo, "chan_construct", "step=before_gsp_rpc is_gsp_client=%d status=0x%x",
+                    (int)IS_GSP_CLIENT(pGpu), status);
     if (IS_GSP_CLIENT(pGpu) || bFullSriov)
     {
         NV_ASSERT_OK_OR_GOTO(status,
@@ -937,6 +963,7 @@ kchannelConstruct_IMPL
                                                           pKernelChannelGroup,
                                                           bFullSriov),
                              cleanup);
+        MC_TRACE(fifo, "chan_construct", "step=gsp_rpc_done status=0x%x", status);
         bRpcAllocated = NV_TRUE;
     }
 
@@ -1026,6 +1053,7 @@ kchannelConstruct_IMPL
             cleanup);
     }
 
+    MC_TRACE(fifo, "chan_construct", "step=before_vaspace_cache");
     // Cache the hVASpace for this channel in the KernelChannel object
     pKernelChannel->hVASpace = pKernelChannel->pKernelCtxShareApi->hVASpace;
 
@@ -1046,6 +1074,8 @@ kchannelConstruct_IMPL
     }
 
 cleanup:
+    if (status != NV_OK)
+        MC_TRACE(fifo, "chan_construct", "step=failed status=0x%x", status);
     if (bLockAcquired)
     {
         if ((status == NV_OK) &&
@@ -2652,6 +2682,22 @@ _kchannelSendChannelAllocRpc
                             memdescGetAddressSpace(pKernelChannel->pUserdSubDeviceMemDesc[subdevInst]);
             pRpcParams->userdMem.cacheAttrib =
                             memdescGetCpuCacheAttrib(pKernelChannel->pUserdSubDeviceMemDesc[subdevInst]);
+
+            /* Fork instrumentation: log what GSP sees
+             * as USERD for this channel.  This is the value that
+             * ultimately propagates into PBDMA's view of where to
+             * fetch USERD from.  Compare against fifo/userd_resolve in
+             * kernel_channel_gv100.c.  The two records share no handle, so
+             * join this record's base against that one's userd_addr: both
+             * are AT_GPU physical addresses for the same USERD, and they
+             * should agree. */
+            MC_TRACE(fifo, "userd_rpc", "hchannel=0x%x base=0x%llx "
+                            "size=%llu address_space=%u cache_attrib=%u",
+                            RES_GET_HANDLE(pKernelChannel),
+                            (unsigned long long)pRpcParams->userdMem.base,
+                            (unsigned long long)pRpcParams->userdMem.size,
+                            pRpcParams->userdMem.addressSpace,
+                            pRpcParams->userdMem.cacheAttrib);
         }
 
         // Fill the method buffer memory descriptor
