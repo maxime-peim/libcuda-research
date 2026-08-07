@@ -1,0 +1,58 @@
+---
+# Base: LLVM gives sane modern defaults; we override the parts that don't
+# match the existing mc source style.
+BasedOnStyle: LLVM
+Language: Cpp
+
+# ── Braces on their own line ────────────────────────────────────────────────
+BreakBeforeBraces: Allman
+
+# ── Indentation ────────────────────────────────────────────────────────────
+IndentWidth: 2
+ContinuationIndentWidth: 4
+UseTab: Never
+IndentCaseLabels: false
+IndentPPDirectives: None
+
+# ── Line width ─────────────────────────────────────────────────────────────
+ColumnLimit: 80
+ReflowComments: true
+
+# ── Pointers: "void *p" not "void* p" ─────────────────────────────────────
+PointerAlignment: Right
+DerivePointerAlignment: false
+
+# ── Spacing ────────────────────────────────────────────────────────────────
+SpaceBeforeParens: ControlStatements
+SpacesInParentheses: false
+SpacesInSquareBrackets: false
+SpaceAfterCStyleCast: false
+SpaceBeforeAssignmentOperators: true
+
+# ── Alignment — big readability win for struct-init and macro blocks ────────
+AlignTrailingComments: true
+AlignConsecutiveAssignments: true
+AlignConsecutiveDeclarations: true
+AlignConsecutiveMacros: true
+AlignEscapedNewlines: Left
+AlignAfterOpenBracket: Align
+
+# ── No short single-line bodies — keeps brace style consistent ─────────────
+AllowShortBlocksOnASingleLine: Never
+AllowShortCaseLabelsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: None
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: false
+
+# ── Operator at start of wrapped line, not end ─────────────────────────────
+BreakBeforeBinaryOperators: NonAssignment
+BreakBeforeTernaryOperators: true
+
+# ── Don't reorder includes — header order is load-bearing (libc → nvos →
+#    class/ → ctrl/ → uvm); sorting would break the build. ──────────────────
+SortIncludes: false
+
+# ── Misc ───────────────────────────────────────────────────────────────────
+Cpp11BracedListStyle: false
+KeepEmptyLinesAtTheStartOfBlocks: false
+MaxEmptyLinesToKeep: 1

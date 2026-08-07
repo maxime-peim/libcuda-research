@@ -1,0 +1,6 @@
+.cache/
+.claude/
+bin/
+lib/
+tools/__pycache__
+compile_commands.json
