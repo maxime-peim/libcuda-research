@@ -57,6 +57,7 @@
 #include "lib/base_utils.h"
 #if defined(NV_UNIX) && RMCFG_FEATURE_GSP_CLIENT_RM
 #include "os-interface.h"
+#include "mc-trace.h"
 #endif
 
 #include "griddisplayless/objgriddisplayless.h"
@@ -1833,6 +1834,39 @@ static NV_STATUS _rpcRecvPoll_VGPUGSP(OBJGPU *pGpu, OBJRPC *pRPC, NvU32 expected
     return _vgpuGspWaitForResponse(pGpu);
 }
 
+/*
+ * Decode an NV_VGPU_MSG_FUNCTION_* ordinal into a stringified name.
+ *
+ * The name table is auto-generated from the same X-macro list that defines
+ * the enum, so every new RPC function added to rpc_global_enums.h
+ * automatically gets a name here — no risk of drift.
+ *
+ * For any function number outside [0, NUM_FUNCTIONS) we return "UNKNOWN".
+ */
+static const char *_rpcFunctionName(NvU32 func)
+{
+    /*
+     * rpc_global_enums.h was already pulled in transitively (via rpc_headers.h),
+     * so its one-shot #include guard (_RPC_GLOBAL_ENUMS_H_) is already set and
+     * the file's content would be skipped on a normal re-include.  To get a
+     * second expansion — this time with X redefined to emit a string entry
+     * instead of an enumerator — we disarm the outer guard and pre-define
+     * BOTH X and E so that neither of the file's two `enum { ... }` blocks
+     * (function list / event list) are emitted inside this function body.
+     */
+#undef _RPC_GLOBAL_ENUMS_H_
+#define X(UNIT, RPC, VAL) [VAL] = #RPC,
+#define E(RPC, VAL) /* suppress event enum on re-include */
+    static const char *const names[] = {
+#include "vgpu/rpc_global_enums.h"
+    };
+#undef X
+#undef E
+    if (func >= NV_VGPU_MSG_FUNCTION_NUM_FUNCTIONS || names[func] == NULL)
+        return "UNKNOWN";
+    return names[func];
+}
+
 static NV_STATUS _issueRpcAndWait(OBJGPU *pGpu, OBJRPC *pRpc)
 {
     NV_STATUS status = NV_OK;
@@ -1840,6 +1874,11 @@ static NV_STATUS _issueRpcAndWait(OBJGPU *pGpu, OBJRPC *pRpc)
     OBJVGPU *pVGpu = GPU_GET_VGPU(pGpu);
     RMTIMEOUT timeout;
     rpc_message_header_v *pVgpuRpcHeader = rpcGetVgpuMessageHeader(pRpc);
+
+    MC_TRACE(gsp, "rpc_tx", "mode=sync func=%u name=%s len=%u",
+                    pVgpuRpcHeader->function,
+                    _rpcFunctionName(pVgpuRpcHeader->function),
+                    pVgpuRpcHeader->length);
 
     // should not be called in broadcast mode
     NV_ASSERT_OR_RETURN(!gpumgrGetBcEnabledStatus(pGpu), NV_ERR_INVALID_STATE);
@@ -2032,7 +2071,13 @@ static NV_STATUS _issueRpcAndWait(OBJGPU *pGpu, OBJRPC *pRpc)
 static NV_STATUS _issueRpcAsync(OBJGPU *pGpu, OBJRPC *pRpc)
 {
     NV_STATUS status;
-    NvU32     expectedFunc  = rpcGetVgpuMessageHeader(pRpc)->function;
+    rpc_message_header_v *pVgpuRpcHeader = rpcGetVgpuMessageHeader(pRpc);
+    NvU32                 expectedFunc = pVgpuRpcHeader->function;
+
+    MC_TRACE(gsp, "rpc_tx", "mode=async func=%u name=%s len=%u",
+                    expectedFunc,
+                    _rpcFunctionName(expectedFunc),
+                    pVgpuRpcHeader->length);
 
     // should not be called in broadcast mode
     NV_ASSERT_OR_RETURN(!gpumgrGetBcEnabledStatus(pGpu), NV_ERR_INVALID_STATE);
