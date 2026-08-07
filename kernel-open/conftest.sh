@@ -520,6 +520,34 @@ compile_test() {
             compile_check_conftest "$CODE" "NV_SET_MEMORY_UC_PRESENT" "" "functions"
         ;;
 
+        register_user_hw_breakpoint)
+            #
+            # Determine if register_user_hw_breakpoint() is present.
+            #
+            # Required by the nvidia-dbell.ko shim, which exposes the
+            # hardware-breakpoint API to the MIT-licensed nvidia.ko.
+            # Only available when CONFIG_HAVE_HW_BREAKPOINT=y.
+            #
+            # Added by commit f60d24d2ad04 ("hw-breakpoints: Fix broken
+            # hw-breakpoint sample module") in 2.6.33 (2010-01-28).
+            #
+            CODE="
+            #include <linux/perf_event.h>
+            #include <linux/hw_breakpoint.h>
+            void conftest_register_user_hw_breakpoint(void) {
+                /*
+                 * 'functions' probes are inverted: a wrong-signature call
+                 * must fail to compile for conftest to conclude 'present'.
+                 * The real signature is (attr, cb, ctx, tsk) — 4 args —
+                 * so we pass 0 args here to force the type-mismatch error
+                 * when the header declares the function.
+                 */
+                register_user_hw_breakpoint();
+            }"
+
+            compile_check_conftest "$CODE" "NV_REGISTER_USER_HW_BREAKPOINT_PRESENT" "" "functions"
+        ;;
+
         set_memory_array_uc)
             #
             # Determine if the set_memory_array_uc() function is present.
