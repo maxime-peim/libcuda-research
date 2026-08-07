@@ -22,6 +22,8 @@
  */
 
 #include <nv.h>
+#include "mc-trace.h"
+#include <nv-priv.h>
 #include <os/os.h>
 #include <osapi.h>
 #include <core/thread_state.h>
@@ -1075,5 +1077,49 @@ NV_STATUS  NV_API_CALL rm_gpu_ops_ccsl_log_encryption(nvidia_stack_t *sp,
     NV_ENTER_RM_RUNTIME(sp,fp);
     rmStatus = nvGpuOpsLogEncryption(ctx, direction, bufferSize);
     NV_EXIT_RM_RUNTIME(sp,fp);
+    return rmStatus;
+}
+
+/*
+ * rm_gpu_ops_dbell_resolve_channel — kernel-open/ trampoline into
+ * nvGpuOpsDbellResolveChannel.  Callers (the nv-doorbell-watch
+ * kthread-q worker) supply the nv_state_t* they already hold and the
+ * decoded (chid, runlist) from the intercepted VF_DOORBELL write.
+ *
+ * Must NOT be called from atomic context (nvGpuOpsDbellResolveChannel
+ * takes the GPU lock, which can sleep).  The worker context is fine.
+ */
+NV_STATUS NV_API_CALL rm_gpu_ops_dbell_resolve_channel(nvidia_stack_t *sp,
+                                                       nv_state_t *pNv,
+                                                       NvU32 chid,
+                                                       NvU32 runlist,
+                                                       void **out_userd_kva,
+                                                       NvU64 *out_userd_phys,
+                                                       NvU64 *out_userd_size,
+                                                       NvU32 *out_addrspace,
+                                                       NvU64 *out_gpfifo_gpu_va,
+                                                       NvU32 *out_gpfifo_entries)
+{
+    NV_STATUS rmStatus;
+    void *fp;
+    OBJGPU *pGpu;
+
+    if (pNv == NULL)
+        return NV_ERR_INVALID_ARGUMENT;
+
+    pGpu = NV_GET_NV_PRIV_PGPU(pNv);
+    if (pGpu == NULL)
+    {
+        MC_TRACE(dbell, "resolve", "state=wrap_no_gpu nv=%p", pNv);
+        return NV_ERR_INVALID_STATE;
+    }
+
+    NV_ENTER_RM_RUNTIME(sp, fp);
+    rmStatus = nvGpuOpsDbellResolveChannel(pGpu, chid, runlist,
+                                           out_userd_kva, out_userd_phys,
+                                           out_userd_size, out_addrspace,
+                                           out_gpfifo_gpu_va, out_gpfifo_entries);
+    NV_EXIT_RM_RUNTIME(sp, fp);
+
     return rmStatus;
 }

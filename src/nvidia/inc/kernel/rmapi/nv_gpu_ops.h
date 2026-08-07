@@ -260,6 +260,41 @@ NV_STATUS nvGpuOpsRetainChannel(struct gpuAddressSpace *vaSpace,
 
 void nvGpuOpsReleaseChannel(gpuRetainedChannel *retainedChannel);
 
+/*
+ * nv-doorbell-watch deferred resolver — see nv_gpu_ops.c.
+ * Takes an already-resolved OBJGPU* so this header stays architecture-
+ * agnostic (nv_state_t lives on the Unix side).  The caller in
+ * arch/nvalloc/unix/src/rm-gpu-ops.c translates nv_state_t → OBJGPU
+ * before calling in.  Returns phys+size+addrspace for USERD; caller
+ * decides how to turn that into a kernel VA.
+ */
+struct OBJGPU;
+NV_STATUS nvGpuOpsDbellResolveChannel(struct OBJGPU *pGpu,
+                                      NvU32 chid,
+                                      NvU32 runlist,
+                                      void **out_userd_kva,
+                                      NvU64 *out_userd_phys,
+                                      NvU64 *out_userd_size,
+                                      NvU32 *out_addrspace,
+                                      NvU64 *out_gpfifo_gpu_va,
+                                      NvU32 *out_gpfifo_entries);
+
+/*
+ * TRACE doorbell watchpoint support: stash (pGpu, runlist, chid)
+ * → (gpFifoOffset, gpFifoEntries) at channel construct time so the
+ * resolver doesn't need to memdescMap RAMFC.  See the body of
+ * nv_gpu_ops.c for the rationale.  Both calls are idempotent no-ops
+ * when pGpu is NULL or gpFifoEntries is 0.
+ */
+void nvGpuOpsDbellGpfifoRegister(struct OBJGPU *pGpu,
+                                  NvU32 runlist,
+                                  NvU32 chid,
+                                  NvU64 gpFifoOffset,
+                                  NvU32 gpFifoEntries);
+void nvGpuOpsDbellGpfifoUnregister(struct OBJGPU *pGpu,
+                                    NvU32 runlist,
+                                    NvU32 chid);
+
 NV_STATUS nvGpuOpsBindChannelResources(gpuRetainedChannel *retainedChannel,
                                        gpuChannelResourceBindParams *channelResourceBindParams);
 

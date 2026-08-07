@@ -18,6 +18,7 @@ NVIDIA_SOURCES += nvidia/nv-cray.c
 NVIDIA_SOURCES += nvidia/nv-dma.c
 NVIDIA_SOURCES += nvidia/nv-i2c.c
 NVIDIA_SOURCES += nvidia/nv-mmap.c
+NVIDIA_SOURCES += nvidia/nv-doorbell-watch.c
 NVIDIA_SOURCES += nvidia/nv-p2p.c
 NVIDIA_SOURCES += nvidia/nv-procfs.c
 NVIDIA_SOURCES += nvidia/nv-usermap.c

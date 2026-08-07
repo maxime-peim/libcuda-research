@@ -45,6 +45,7 @@
 #include "kernel/mem_mgr/gpu_vaspace.h"
 #include "kernel/rmapi/event_api.h"
 #include "kernel/rmapi/rmapi.h"
+#include "kernel/rmapi/nv_gpu_ops.h"  /* TRACE DbellGpfifoRegister/Unregister */
 #include "kernel/rmapi/rs_utils.h"
 #include "kernel/rmapi/mapping_list.h"
 #include "kernel/virtualization/hypervisor/hypervisor.h"
@@ -1078,6 +1079,26 @@ cleanup:
         MC_TRACE(fifo, "chan_construct", "step=failed status=0x%x", status);
     if (bLockAcquired)
     {
+        /*
+         * TRACE doorbell watchpoint: stash (runlist, chid) →
+         * (gpFifoOffset, gpFifoEntries) while we still hold the GPU
+         * lock, so the doorbell resolver kthread can read them later
+         * without re-mapping RAMFC.  See nv_gpu_ops.c for the
+         * rationale (the memdescMap-on-RAMFC path tripped a vfree
+         * WARN in kbusGetStaticFbAperture_TU102).  Idempotent no-op
+         * on non-GPFIFO classes or construct failure.
+         */
+        if ((status == NV_OK) &&
+            (pChannelGpfifoParams != NULL) &&
+            (pChannelGpfifoParams->gpFifoEntries > 0))
+        {
+            nvGpuOpsDbellGpfifoRegister(pGpu,
+                                         pKernelChannel->runlistId,
+                                         pKernelChannel->ChID,
+                                         pChannelGpfifoParams->gpFifoOffset,
+                                         pChannelGpfifoParams->gpFifoEntries);
+        }
+
         if ((status == NV_OK) &&
             ((pKernelChannel->privilegeLevel == NV_KERNELCHANNEL_ALLOC_INTERNALFLAGS_PRIVILEGE_ADMIN) ||
                 (pKernelChannel->privilegeLevel == NV_KERNELCHANNEL_ALLOC_INTERNALFLAGS_PRIVILEGE_USER)))
@@ -1178,6 +1199,16 @@ kchannelDestruct_IMPL
     OBJGPU                      *pGpu   = GPU_RES_GET_GPU(pKernelChannel);
     NV_STATUS                    status = NV_OK;
     KernelChannelGroup          *pKernelChannelGroup = NULL;
+
+    /*
+     * TRACE doorbell watchpoint: drop this channel's (runlist, chid)
+     * entry from the GPFIFO params table so the resolver won't hand
+     * stale offsets back to a future channel that reuses the same
+     * chid.  Idempotent no-op if the channel was never registered.
+     */
+    nvGpuOpsDbellGpfifoUnregister(pGpu,
+                                   pKernelChannel->runlistId,
+                                   pKernelChannel->ChID);
 
     NV_ASSERT(pKernelChannel->pKernelChannelGroupApi != NULL);
     pKernelChannelGroup = pKernelChannel->pKernelChannelGroupApi->pKernelChannelGroup;

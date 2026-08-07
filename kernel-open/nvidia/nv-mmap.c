@@ -24,8 +24,10 @@
 #define  __NO_VERSION__
 
 #include "os-interface.h"
+#include "mc-trace.h"
 #include "nv-linux.h"
 #include "nv_speculation_barrier.h"
+#include "nv-doorbell-watch.h"
 
 /*
  * The 'struct vm_operations' open() callback is called by the Linux
@@ -66,9 +68,19 @@
 static void
 nvidia_vma_open(struct vm_area_struct *vma)
 {
-    nv_alloc_t *at = NV_VMA_PRIVATE(vma);
+    nv_alloc_t *at;
 
     NV_PRINT_VMA(NV_DBG_MEMINFO, vma);
+
+    /*
+     * Doorbell-watch VMAs use VM_DONTCOPY so this path should not
+     * fire for them, but guard anyway to avoid type-punning the
+     * nv_dbell_ctx_t::tag as nv_alloc_t::usage_count.
+     */
+    if (nv_dbell_is_watched_vma(vma))
+        return;
+
+    at = NV_VMA_PRIVATE(vma);
 
     if (at != NULL)
     {
@@ -94,11 +106,39 @@ nvidia_vma_open(struct vm_area_struct *vma)
 static void
 nvidia_vma_release(struct vm_area_struct *vma)
 {
-    nv_alloc_t *at = NV_VMA_PRIVATE(vma);
+    nv_alloc_t *at;
     nv_linux_file_private_t *nvlfp = NV_GET_LINUX_FILE_PRIVATE(NV_VMA_FILE(vma));
     static int count = 0;
 
     NV_PRINT_VMA(NV_DBG_MEMINFO, vma);
+
+    /*
+     * If this VMA belongs to the BAR0 VF doorbell watchpoint, route
+     * the cleanup there.  The tag is the first ulong of our ctx, so
+     * a tag-mismatched NV_VMA_PRIVATE falls through to the nv_alloc_t
+     * path as before.
+     */
+    if (nv_dbell_is_watched_vma(vma))
+    {
+        nv_dbell_vma_release(vma);
+        return;
+    }
+
+    /*
+     * Drop any BAR1-tracker entry for this VMA.  No-op if the VMA was
+     * never tracked (sysmem mappings, UD mappings, multi-range FB
+     * mappings, or track_add failed).
+     */
+    nv_dbell_bar1_track_remove(vma);
+
+    /*
+     * Drop any sysmem-tracker entry too.  Mirrors the BAR1 path —
+     * most VMAs aren't tracked (tiny allocations below the size
+     * filter in the mmap helper) and will no-op here.
+     */
+    nv_dbell_sysmem_track_remove(vma);
+
+    at = NV_VMA_PRIVATE(vma);
 
     if (at != NULL && nv_alloc_release(nvlfp, at))
     {
@@ -518,6 +558,41 @@ static int nvidia_mmap_numa(
     return 0;
 }
 
+/*
+ * Record a ctl-node peer_io mapping: emit its first physical page as an
+ * mmap/ctl_peer record, and register the mapping with the BAR1 tracker when
+ * that phys falls inside the BAR1 window, so the USERD resolver can do
+ * phys->kva offset lookups inside it.
+ *
+ * These are MMIO ranges exposed through /dev/nvidiactl.  If RM exposes USERD as
+ * a reflected BAR1 peer_io mapping, its phys lands in the BAR1 GPA range
+ * [0x1fc000000000, 0x1fe000000000) on H100 passthrough.  That upper bound is
+ * hardcoded and deliberately conservative (128 GiB past fb_base) because
+ * nv_state_t is not in scope here to read fb->size.
+ */
+static void nv_dbell_note_ctl_peer(struct vm_area_struct *vma,
+                                   nv_alloc_t *at,
+                                   NvU64 page_index,
+                                   NvU64 mmap_size,
+                                   NvU64 pages)
+{
+    NvU64 first_phys = (at->page_table != NULL) ?
+        at->page_table[page_index].phys_addr : 0;
+
+    MC_TRACE(mmap, "ctl_peer", "pid=%d size=0x%llx "
+                    "pages=%llu first_phys=0x%llx",
+                    current->pid,
+                    (unsigned long long)mmap_size,
+                    (unsigned long long)pages,
+                    (unsigned long long)first_phys);
+
+    if (first_phys >= 0x1fc000000000ULL &&
+        first_phys <  0x1fe000000000ULL)
+    {
+        (void)nv_dbell_bar1_track_add(vma, first_phys, mmap_size);
+    }
+}
+
 int nvidia_mmap_helper(
     nv_state_t *nv,
     nv_linux_file_private_t *nvlfp,
@@ -558,6 +633,14 @@ int nvidia_mmap_helper(
 
     NV_PRINT_VMA(NV_DBG_MEMINFO, vma);
 
+    MC_TRACE(mmap, "any", "pid=%d comm=\"%s\" ctl=%d "
+                    "size=0x%llx access_start=0x%llx pgoff=0x%llx",
+                    current->pid, current->comm,
+                    NV_IS_CTL_DEVICE(nv) ? 1 : 0,
+                    (unsigned long long)NV_VMA_SIZE(vma),
+                    (unsigned long long)mmap_context->access_start,
+                    (unsigned long long)vma->vm_pgoff);
+
     status = nv_check_gpu_state(nv);
     if (status != NV_OK)
     {
@@ -594,6 +677,13 @@ int nvidia_mmap_helper(
                 ret = -ENXIO;
                 goto done;
             }
+
+            MC_TRACE(mmap, "bar0", "pid=%d comm=\"%s\" "
+                            "pa=0x%llx size=0x%llx nr=%llu",
+                            current->pid, current->comm,
+                            (unsigned long long)access_start,
+                            (unsigned long long)NV_VMA_SIZE(vma),
+                            (unsigned long long)mmap_context->memArea.numRanges);
         }
         else if (IS_FB_OFFSET(nv, access_start, access_len))
         {
@@ -609,7 +699,7 @@ int nvidia_mmap_helper(
             else
             {
                 if (nv_encode_caching(&vma->vm_page_prot,
-                        rm_disable_iomap_wc() ? NV_MEMORY_UNCACHED : mmap_context->caching, 
+                        rm_disable_iomap_wc() ? NV_MEMORY_UNCACHED : mmap_context->caching,
                         NV_MEMORY_TYPE_FRAMEBUFFER))
                 {
                     if (nv_encode_caching(&vma->vm_page_prot,
@@ -620,6 +710,40 @@ int nvidia_mmap_helper(
                     }
                 }
             }
+        }
+
+        /*
+         * Consolidated HOPPER_USERMODE_A doorbell-watchpoint hook.
+         *
+         * On Hopper+, libcuda allocates HOPPER_USERMODE_A (class 0xC661)
+         * with NV_HOPPER_USERMODE_A_PARAMS.bBar1Mapping = NV_TRUE, so
+         * the userspace mapping is backed by pKernelFifo->pBar1VF — a
+         * BAR1 GMMU page whose physical address falls inside the FB
+         * aperture (IS_FB_OFFSET == true) but NOT IS_UD_OFFSET.  The other
+         * variant is the BAR0 one (bBar1Mapping = NV_FALSE,
+         * IS_REG_OFFSET); mc allocates both and rings the BAR1 one.
+         * Both have the same 64 KiB size and the same VF doorbell
+         * layout with the dword at +0x90.
+         *
+         * We therefore key solely off the size == 64 KiB + single contig
+         * range signature, which uniquely identifies HOPPER_USERMODE_A
+         * mappings on the device node (no other device-node mapping has
+         * exactly this shape).  See docs/gpfifo_pushbuffer_reference.md
+         * §11 and Yan et al. §5.1.
+         *
+         * Return values:
+         *   > 0 → VMA already fully populated by the helper; skip the
+         *         normal remap loop below.
+         *   = 0 → not intercepted (slot full, shape mismatch); fall
+         *         through to the normal remap path.
+         *   < 0 → install failed after taking resources; treat as -ENXIO.
+         */
+        int dbell_ret = nv_dbell_intercept_mmap(nv, vma, mmap_context);
+        if (dbell_ret > 0) {
+          goto success;
+        } else if (dbell_ret < 0) {
+          ret = dbell_ret;
+          goto done;
         }
 
         down(&nvl->mmap_lock);
@@ -666,6 +790,27 @@ int nvidia_mmap_helper(
         up(&nvl->mmap_lock);
 
         nv_vm_flags_set(vma, VM_IO | VM_PFNMAP | VM_DONTEXPAND);
+
+        /*
+         * USERD-lookup support: if this was a plain FB mapping
+         * (IS_FB_OFFSET but NOT IS_UD_OFFSET, i.e. vidmem via BAR1),
+         * parallel-ioremap it into a kernel VA so the doorbell-watch
+         * resolver can look up USERD's phys inside it.  CUDA's 2 MiB
+         * mapping at pa=0x1fc022000000 is where USERD pages live.
+         *
+         * We only track single-range mappings (the common case) to keep
+         * the tracker simple.
+         */
+        if (IS_FB_OFFSET(nv, access_start, access_len) &&
+            !IS_UD_OFFSET(nv, access_start, access_len) &&
+            mmap_context->memArea.numRanges == 1)
+        {
+            (void)nv_dbell_bar1_track_add(vma,
+                                          mmap_context->memArea.pRanges[0].start,
+                                          mmap_context->memArea.pRanges[0].size);
+            /* Best-effort.  Failure (-ENOSPC / -ENOMEM) leaves the VMA
+             * functional; only the USERD-lookup feature is unavailable. */
+        }
     }
     else
     {
@@ -700,6 +845,8 @@ int nvidia_mmap_helper(
                 ret = -ENXIO;
                 goto done;
             }
+
+            nv_dbell_note_ctl_peer(vma, at, page_index, mmap_size, pages);
 
             /*
              * There is no need to keep 'peer IO at' alive till vma_release like
@@ -742,6 +889,21 @@ int nvidia_mmap_helper(
                 goto done;
             }
 
+            /*
+             * pb/bytes tracker: register large sysmem mappings
+             * so the #DB handler can translate pb_va (== user VA under
+             * UVM) to a kernel VA and read method-stream bytes.  The
+             * 256-page (1 MiB) threshold filters out the ~4 KiB
+             * per-channel scratch buffers — the 56 MiB libcuda
+             * pushbuffer pool and 2 MiB staging buffers pass through.
+             * Best-effort: failures don't block the mmap.
+             */
+            if (pages >= 256ULL)
+            {
+                (void)nv_dbell_sysmem_track_add(vma, at->page_table,
+                                                page_index, pages);
+            }
+
             NV_PRINT_AT(NV_DBG_MEMINFO, at);
 
             //
@@ -760,8 +922,9 @@ int nvidia_mmap_helper(
         nv_vm_flags_clear(vma, VM_MAYWRITE);
     }
 
-    vma->vm_ops = &nv_vm_ops;
-    ret = 0;
+success:
+  vma->vm_ops = &nv_vm_ops;
+  ret = 0;
 done: 
     nv_release_file_va(&nvlfp->nvfp, NV_FALSE);
     return ret;

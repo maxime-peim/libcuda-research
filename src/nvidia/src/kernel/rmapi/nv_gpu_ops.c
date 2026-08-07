@@ -10622,6 +10622,464 @@ static void _nvGpuOpsReleaseChannel(gpuRetainedChannel *retainedChannel)
     portMemFree(retainedChannel);
 }
 
+/*
+ * ── doorbell GPFIFO params table ────────────────────────────────────
+ *
+ * Small global table mapping (pGpu, runlist, chid) → (gpFifoOffset,
+ * gpFifoEntries) populated at kchannelConstruct time (from the client-
+ * supplied NV_CHANNEL_ALLOC_PARAMS) and consulted by the doorbell-
+ * watchpoint resolver.
+ *
+ * Motivation: the obvious way to get GP_BASE / GP_BASE_HI / GP_INFO is
+ * to read RAMFC via a temporary memdescMap() on
+ * pKernelChannel->pFifoHalData[sub]->pRamfcDesc.  That does not work: on
+ * Hopper + GSP-client mode, RAMFC is a 0x200-byte FBMEM memdesc;
+ * memdescMap routes through kbusMapFbAperture_GM107 →
+ * kbusGetStaticFbAperture_TU102, whose static-aperture path returns
+ * NV_ERR_NOT_SUPPORTED for < 2 MiB mappings and on error exit hits a
+ * portMemFree(pMemArea->pRanges) that vfree()s a pointer which was
+ * never vmalloc'd — producing paired "Trying to vfree() nonexistent
+ * vm area" + "bad address" WARNs.  44 WARNs per CUDA round-trip
+ * run (2 × 20 CUDA channels) were observed on the H100 test host
+ * before this fix.
+ *
+ * The values the resolver wants are already passed in by the client
+ * at channel alloc time (pChannelGpfifoParams->gpFifoOffset /
+ * gpFifoEntries) and simply stashed here — no BAR1 aperture, no
+ * memdescMap, no vfree path.
+ *
+ * Concurrency: register, unregister, and the resolver's lookup all
+ * run under the RM device GPU lock for pGpu, so no additional sync
+ * is needed.
+ *
+ * Slot states:
+ *   state == 0  : empty (never-used slot).  Lookup stops here.
+ *   state == 1  : live entry.
+ *   state == 2  : tombstone.  Lookup skips; insert may reuse.
+ */
+typedef struct _dbellGpfifoSlot
+{
+    OBJGPU *pGpu;
+    NvU32   runlist;
+    NvU32   chid;
+    NvU64   gpFifoOffset;
+    NvU32   gpFifoEntries;
+    NvU32   state;
+} dbellGpfifoSlot;
+
+#define TRACE_DBELL_GPFIFO_SLOTS  4096u
+
+static dbellGpfifoSlot g_dbellGpfifoTable[TRACE_DBELL_GPFIFO_SLOTS];
+
+static NvU32
+_dbellGpfifoHash(const OBJGPU *pGpu, NvU32 runlist, NvU32 chid)
+{
+    /* splitmix-style hash combining pGpu pointer, runlist, chid into
+     * a fairly uniform bucket index.  No cryptographic strength
+     * required — just even distribution across the 4096 slots. */
+    NvU64 k = (NvU64)(NvUPtr)pGpu;
+    k ^= ((NvU64)runlist << 32) | chid;
+    k ^= k >> 33;
+    k *= 0xff51afd7ed558ccdULL;
+    k ^= k >> 33;
+    return (NvU32)(k & (TRACE_DBELL_GPFIFO_SLOTS - 1u));
+}
+
+/*
+ * Kernel-open doorbell-cache pre-resolve hook.  Defined in
+ * kernel-open/nvidia/nv-doorbell-watch.c.  void* used for the nv_state_t
+ * parameter so nv_gpu_ops.c doesn't need to pull in nv.h.  Called at
+ * channel-register time to kick off the async resolver before the
+ * user's first doorbell fires — eliminates the "pending_init / no
+ * pb/submit decode on first submission per channel" gap.
+ */
+extern void NV_API_CALL
+nv_dbell_cache_pre_resolve(NvU32 chid, NvU32 runlist, void *nv_opaque);
+
+void
+nvGpuOpsDbellGpfifoRegister(OBJGPU *pGpu,
+                            NvU32 runlist,
+                            NvU32 chid,
+                            NvU64 gpFifoOffset,
+                            NvU32 gpFifoEntries)
+{
+    NvU32 i;
+    NvU32 start;
+    NvS32 firstTombstone = -1;
+    NvBool newRegistration = NV_FALSE;
+
+    if (pGpu == NULL || gpFifoEntries == 0)
+        return;
+
+    start = _dbellGpfifoHash(pGpu, runlist, chid);
+    for (i = 0; i < TRACE_DBELL_GPFIFO_SLOTS; i++)
+    {
+        NvU32 idx = (start + i) & (TRACE_DBELL_GPFIFO_SLOTS - 1u);
+        dbellGpfifoSlot *s = &g_dbellGpfifoTable[idx];
+
+        if (s->state == 1 &&
+            s->pGpu == pGpu && s->runlist == runlist && s->chid == chid)
+        {
+            /* Update-in-place wins over tombstone-reuse.  Not a new
+             * registration — don't re-kick the pre-resolve. */
+            s->gpFifoOffset  = gpFifoOffset;
+            s->gpFifoEntries = gpFifoEntries;
+            return;
+        }
+        if (s->state == 2 && firstTombstone < 0)
+            firstTombstone = (NvS32)idx;
+        if (s->state == 0)
+        {
+            NvU32 dst = (firstTombstone >= 0) ? (NvU32)firstTombstone : idx;
+            dbellGpfifoSlot *t = &g_dbellGpfifoTable[dst];
+            t->pGpu          = pGpu;
+            t->runlist       = runlist;
+            t->chid          = chid;
+            t->gpFifoOffset  = gpFifoOffset;
+            t->gpFifoEntries = gpFifoEntries;
+            t->state         = 1;
+            newRegistration = NV_TRUE;
+            goto prereserve;
+        }
+    }
+    /* Table saturated with live + tombstone slots and no empty slot
+     * found.  Try the first tombstone if we saw one. */
+    if (firstTombstone >= 0)
+    {
+        dbellGpfifoSlot *t = &g_dbellGpfifoTable[firstTombstone];
+        t->pGpu          = pGpu;
+        t->runlist       = runlist;
+        t->chid          = chid;
+        t->gpFifoOffset  = gpFifoOffset;
+        t->gpFifoEntries = gpFifoEntries;
+        t->state         = 1;
+        newRegistration = NV_TRUE;
+        goto prereserve;
+    }
+    MC_TRACE(dbell, "gpfifo_register", "result=table_full chid=%u runlist=%u", chid, runlist);
+    return;
+
+prereserve:
+    /* Kick off the kernel-open doorbell-cache pre-resolve so the
+     * resolver kthread populates (userd_kva, gpfifo_kva) BEFORE the
+     * user's first doorbell on this channel.  pGpu->pOsGpuInfo is the
+     * nv_state_t* used by the resolver path. */
+    if (newRegistration)
+    {
+        nv_dbell_cache_pre_resolve(chid, runlist, (void *)pGpu->pOsGpuInfo);
+    }
+}
+
+void
+nvGpuOpsDbellGpfifoUnregister(OBJGPU *pGpu, NvU32 runlist, NvU32 chid)
+{
+    NvU32 i;
+    NvU32 start;
+
+    if (pGpu == NULL)
+        return;
+
+    start = _dbellGpfifoHash(pGpu, runlist, chid);
+    for (i = 0; i < TRACE_DBELL_GPFIFO_SLOTS; i++)
+    {
+        NvU32 idx = (start + i) & (TRACE_DBELL_GPFIFO_SLOTS - 1u);
+        dbellGpfifoSlot *s = &g_dbellGpfifoTable[idx];
+
+        if (s->state == 0)
+            return;  /* ran past the end of the probe chain */
+        if (s->state == 1 &&
+            s->pGpu == pGpu && s->runlist == runlist && s->chid == chid)
+        {
+            s->pGpu          = NULL;
+            s->gpFifoEntries = 0;
+            s->state         = 2;  /* tombstone */
+            return;
+        }
+    }
+}
+
+static NvBool
+_dbellGpfifoLookup(OBJGPU *pGpu, NvU32 runlist, NvU32 chid,
+                   NvU64 *out_offset, NvU32 *out_entries)
+{
+    NvU32 i;
+    NvU32 start;
+
+    if (pGpu == NULL)
+        return NV_FALSE;
+
+    start = _dbellGpfifoHash(pGpu, runlist, chid);
+    for (i = 0; i < TRACE_DBELL_GPFIFO_SLOTS; i++)
+    {
+        NvU32 idx = (start + i) & (TRACE_DBELL_GPFIFO_SLOTS - 1u);
+        dbellGpfifoSlot *s = &g_dbellGpfifoTable[idx];
+
+        if (s->state == 0)
+            return NV_FALSE;
+        /* state == 2 (tombstone): skip. */
+        if (s->state == 1 &&
+            s->pGpu == pGpu && s->runlist == runlist && s->chid == chid)
+        {
+            if (out_offset)  *out_offset  = s->gpFifoOffset;
+            if (out_entries) *out_entries = s->gpFifoEntries;
+            return NV_TRUE;
+        }
+    }
+    return NV_FALSE;
+}
+
+/*
+ * nvGpuOpsDbellResolveChannel — resolve (chid, runlist) → USERD
+ *   physical address + size + address space.
+ *
+ * Called from the nv-doorbell-watch kthread-q worker on cache miss.
+ * Acquires the GPU lock, walks KernelFifo's chidmgr table to reach the
+ * matching KernelChannel, pulls out the USERD memdesc's physical
+ * address and size, and returns them along with the address space so
+ * the caller can decide how to turn them into a kernel VA.
+ *
+ * Why we return phys+size+addrspace instead of a kernel VA:
+ *   - For sysmem USERDs (mc carrier channels): RM already kernel-maps these;
+ *     memdescGetKernelMapping would work.  But for consistency we let
+ *     the caller do the final mapping.
+ *   - For FBMEM USERDs (libcuda on Hopper): memdescGetKernelMapping
+ *     returns NULL (no kmap for vidmem).  The caller uses the BAR1
+ *     tracker populated by nv_dbell_bar1_track_add() — CUDA's own 2 MiB
+ *     BAR1 FB mapping contains the USERD pages, so we just offset into
+ *     a kernel VA we already ioremap'd.  No BAR2 mapping setup.
+ *
+ * out_userd_phys: phys addr of USERD page (GPU phys for FBMEM, CPU phys for sysmem)
+ * out_userd_size: size in bytes (typically 0x200 aligned up to 0x1000)
+ * out_addrspace:  NV_ADDRESS_SPACE as memdescGetAddressSpace returns it
+ *                 (1 = ADDR_SYSMEM, 2 = ADDR_FBMEM)
+ */
+/*
+ * Look up the GPFIFO ring's GPU VA + entry count in the table populated at
+ * kchannelConstruct_IMPL time (see nvGpuOpsDbellGpfifoRegister above).  This
+ * replaces an earlier memdescMap-on-RAMFC approach, which tripped a
+ * vfree-nonexistent-vm-area WARN in kbusGetStaticFbAperture_TU102's
+ * error-return path for the sub-2-MiB RAMFC memdesc.
+ *
+ * The gpfifo_gpu_va it returns equals the userspace VA libcuda mapped under UVM
+ * (Paper Finding 1, plus a 2026-05-06 diagnostic showing all 20 CUDA channels'
+ * gpu_va inside libcuda's /dev/nvidia0 rw-s 2 MiB VMA).  The kernel-open side
+ * translates it with nv_dbell_bar1_gpu_va_to_kva().
+ *
+ * On a miss — a channel that pre-existed module load, or table overflow — the
+ * outputs are left untouched, so entries stays 0.  The #DB handler reads 0
+ * entries as "cannot decode the GPFIFO entry" and emits only the dbell record
+ * for that doorbell, not a pb one.  No WARN, no vfree.
+ */
+static void _dbellResolveGpfifo(OBJGPU *pGpu,
+                                NvU32 chid,
+                                NvU32 runlist,
+                                NvU64 *out_gpfifo_gpu_va,
+                                NvU32 *out_gpfifo_entries)
+{
+    NvU64 tbl_offset  = 0;
+    NvU32 tbl_entries = 0;
+    NvBool hit = _dbellGpfifoLookup(pGpu, runlist, chid,
+                                     &tbl_offset, &tbl_entries);
+    if (hit)
+    {
+        *out_gpfifo_gpu_va  = tbl_offset;
+        *out_gpfifo_entries = tbl_entries;
+
+        MC_TRACE(dbell, "gpfifo_lookup", "result=table chid=%u gpu_va=0x%llx entries=%u",
+                 chid, (unsigned long long)*out_gpfifo_gpu_va, *out_gpfifo_entries);
+    }
+    else
+    {
+        MC_TRACE(dbell, "gpfifo_lookup", "result=not_in_table chid=%u runlist=%u", chid, runlist);
+    }
+}
+
+/*
+ * Compute USERD's kernel VA directly from RM state.
+ *
+ * USERD layout on Hopper with an RM-preallocated USERD pool:
+ *   pKernelFifo->userdInfo.userdBar1CpuPtr = pool kernel VA, BAR1-mapped by RM
+ *                                            at init
+ *   pUserdMemDesc->subMemOffset            = this channel's byte offset into
+ *                                            that pool
+ * so userd_kva = userdBar1CpuPtr + subMemOffset.
+ *
+ * That bypasses the phys-arithmetic chain which broke on H100, where AT_GPU
+ * returns a vidmem offset in a different coordinate space than the BAR1
+ * aperture start offset chosen by kbusMapFbApertureSingle.
+ *
+ * For sysmem USERDs (mc carrier channels) userdBar1CpuPtr may be NULL — no BAR1
+ * pool — so this falls back to the sub-memdesc's own kernel mapping, which
+ * works for sysmem.
+ *
+ * Kept in a function of its own because every local here is initialised from
+ * pKernelFifo or pUserdMemDesc, both of which the caller assigns partway
+ * through.  Flattening this into the caller's scope would put those
+ * initialisers above their own inputs.
+ */
+static void _dbellResolveUserd(KernelFifo *pKernelFifo,
+                               MEMORY_DESCRIPTOR *pUserdMemDesc,
+                               NvU32 chid,
+                               void **out_userd_kva,
+                               NvU64 *out_userd_phys,
+                               NvU64 *out_userd_size,
+                               NvU32 *out_addrspace)
+{
+    const PREALLOCATED_USERD_INFO *pUserdInfo =
+        kfifoGetPreallocatedUserdInfo(pKernelFifo);
+    NvU32 addrspace = (NvU32)memdescGetAddressSpace(pUserdMemDesc);
+    NvU64 subOff = pUserdMemDesc->subMemOffset;
+    NvU64 poolSize = (pUserdInfo != NULL) ?
+                        (NvU64)pUserdInfo->userdBar1MapSize : 0;
+    void *pool_kva = (pUserdInfo != NULL) ?
+                        (void *)pUserdInfo->userdBar1CpuPtr : NULL;
+
+    *out_userd_size = memdescGetSize(pUserdMemDesc);
+    *out_addrspace  = addrspace;
+
+    if (addrspace == 2 /* ADDR_FBMEM */)
+    {
+        /*
+         * Always hand back subOff as userd_phys.  Kernel-open side
+         * adds the BAR1 mapping base.  If RM has its own pool kva
+         * (non-SRIOV, preallocated pool) use it as a shortcut.
+         */
+        *out_userd_phys = subOff;
+
+        if (pool_kva != NULL && subOff + *out_userd_size <= poolSize)
+        {
+            *out_userd_kva = (void *)((NvU8 *)pool_kva + subOff);
+            MC_TRACE(dbell, "resolve", "state=fbmem_pool chid=%u pool_kva=0x%p suboff=0x%llx kva=0x%p",
+                 chid, pool_kva, (unsigned long long)subOff, *out_userd_kva);
+        }
+        else
+        {
+            /* Kernel-open side resolves via BAR1 tracker + subOff. */
+            MC_TRACE(dbell, "resolve", "state=fbmem_no_pool chid=%u suboff=0x%llx",
+                 chid, (unsigned long long)subOff);
+        }
+    }
+    else if (addrspace == 1 /* ADDR_SYSMEM */)
+    {
+        /* Sysmem path: use the pre-existing sysmem kernel mapping. */
+        RmPhysAddr phys_cpu = 0;
+        memdescGetPhysAddrs(pUserdMemDesc, AT_CPU, 0, 0, 1, &phys_cpu);
+        *out_userd_phys = (NvU64)phys_cpu;
+        /* out_userd_kva stays NULL; caller does phys_to_virt. */
+        MC_TRACE(dbell, "resolve", "state=sysmem chid=%u phys=0x%llx", chid, (unsigned long long)phys_cpu);
+    }
+    else
+    {
+        MC_TRACE(dbell, "resolve", "state=unknown chid=%u addrspace=%u suboff=0x%llx",
+                 chid, addrspace, (unsigned long long)subOff);
+    }
+}
+
+NV_STATUS nvGpuOpsDbellResolveChannel(OBJGPU *pGpu,
+                                      NvU32 chid,
+                                      NvU32 runlist,
+                                      void **out_userd_kva,
+                                      NvU64 *out_userd_phys,
+                                      NvU64 *out_userd_size,
+                                      NvU32 *out_addrspace,
+                                      NvU64 *out_gpfifo_gpu_va,
+                                      NvU32 *out_gpfifo_entries)
+{
+    nvGpuOpsLockSet acquiredLocks;
+    THREAD_STATE_NODE threadState;
+    KernelFifo *pKernelFifo = NULL;
+    CHID_MGR *pChidMgr = NULL;
+    KernelChannel *pKernelChannel = NULL;
+    MEMORY_DESCRIPTOR *pUserdMemDesc = NULL;
+    NvU32 subDevInst;
+    NV_STATUS status = NV_OK;
+
+    MC_TRACE(dbell, "resolve", "state=enter chid=%u runlist=%u pgpu=%p", chid, runlist, pGpu);
+
+    if (pGpu == NULL || out_userd_kva == NULL ||
+        out_userd_phys == NULL || out_userd_size == NULL ||
+        out_addrspace == NULL || out_gpfifo_gpu_va == NULL ||
+        out_gpfifo_entries == NULL)
+        return NV_ERR_INVALID_ARGUMENT;
+
+    *out_userd_kva       = NULL;
+    *out_userd_phys      = 0;
+    *out_userd_size      = 0;
+    *out_addrspace       = 0;
+    *out_gpfifo_gpu_va   = 0;
+    *out_gpfifo_entries  = 0;
+
+    threadStateInit(&threadState, THREAD_STATE_FLAGS_NONE);
+
+    /*
+     * Take the RM API lock (read) + GPU lock for this one GPU.  Same
+     * pattern as nvGpuOpsDupAddressSpace and other no-client ops.
+     * numLocksNeeded=1 with deviceInstance2=0 locks just pGpu.
+     */
+    status = _nvGpuOpsLocksAcquire(RMAPI_LOCK_FLAGS_READ,
+                                   0,
+                                   NULL,
+                                   1,
+                                   pGpu->gpuInstance,
+                                   0,
+                                   &acquiredLocks);
+    if (status != NV_OK)
+    {
+        threadStateFree(&threadState, THREAD_STATE_FLAGS_NONE);
+        return status;
+    }
+
+    pKernelFifo = GPU_GET_KERNEL_FIFO(pGpu);
+    if (pKernelFifo == NULL)
+    {
+        MC_TRACE(dbell, "resolve", "state=no_fifo");
+        status = NV_ERR_INVALID_STATE;
+        goto out;
+    }
+
+    pChidMgr = kfifoGetChidMgr(pGpu, pKernelFifo, runlist);
+    if (pChidMgr == NULL)
+    {
+        MC_TRACE(dbell, "resolve", "state=no_chid_mgr runlist=%u", runlist);
+        status = NV_ERR_INVALID_ARGUMENT;
+        goto out;
+    }
+
+    pKernelChannel = kfifoChidMgrGetKernelChannel(pGpu, pKernelFifo,
+                                                  pChidMgr, chid);
+    if (pKernelChannel == NULL)
+    {
+        MC_TRACE(dbell, "resolve", "state=no_channel chid=%u runlist=%u", chid, runlist);
+        status = NV_ERR_INVALID_CHANNEL;
+        goto out;
+    }
+
+    subDevInst = gpumgrGetSubDeviceInstanceFromGpu(pGpu);
+    pUserdMemDesc = pKernelChannel->pUserdSubDeviceMemDesc[subDevInst];
+    if (pUserdMemDesc == NULL)
+    {
+        MC_TRACE(dbell, "resolve", "state=no_userd chid=%u sub=%u", chid, subDevInst);
+        status = NV_ERR_INVALID_STATE;
+        goto out;
+    }
+
+    _dbellResolveGpfifo(pGpu, chid, runlist,
+                        out_gpfifo_gpu_va, out_gpfifo_entries);
+
+    _dbellResolveUserd(pKernelFifo, pUserdMemDesc, chid,
+                       out_userd_kva, out_userd_phys,
+                       out_userd_size, out_addrspace);
+
+    MC_TRACE(dbell, "resolve", "state=done chid=%u phys=0x%llx size=0x%llx addrspace=%u",
+             chid, (unsigned long long)*out_userd_phys,
+             (unsigned long long)*out_userd_size, *out_addrspace);
+
+out:
+    _nvGpuOpsLocksRelease(&acquiredLocks);
+    threadStateFree(&threadState, THREAD_STATE_FLAGS_NONE);
+    return status;
+}
+
 void nvGpuOpsReleaseChannel(gpuRetainedChannel *retainedChannel)
 {
     nvGpuOpsLockSet acquiredLocks;

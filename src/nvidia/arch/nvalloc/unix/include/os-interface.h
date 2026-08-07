@@ -261,6 +261,8 @@ extern NvBool os_imex_channel_is_supported;
 void NV_API_CALL  out_string(const char *str);
 int  NV_API_CALL  nv_printf(NvU32 debuglevel, const char *printf_format, ...);
 void NV_API_CALL nv_trace_printf(const char *fmt, ...);
+void NV_API_CALL nv_dbell_cache_pre_resolve(NvU32 chid, NvU32 runlist,
+                                            void *nv_opaque);
 
 #define NV_DEV_PRINTF(debuglevel, nv, format, ... ) \
         nv_printf(debuglevel, "NVRM: GPU " NV_PCI_DEV_FMT ": " format, NV_PCI_DEV_FMT_ARGS(nv), ## __VA_ARGS__)

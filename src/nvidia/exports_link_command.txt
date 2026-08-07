@@ -118,6 +118,7 @@
 --undefined=rm_gpu_ops_get_external_alloc_ptes
 --undefined=rm_gpu_ops_get_external_alloc_phys_addrs
 --undefined=rm_gpu_ops_retain_channel
+--undefined=rm_gpu_ops_dbell_resolve_channel
 --undefined=rm_gpu_ops_bind_channel_resources
 --undefined=rm_gpu_ops_release_channel
 --undefined=rm_gpu_ops_get_channel_resource_ptes

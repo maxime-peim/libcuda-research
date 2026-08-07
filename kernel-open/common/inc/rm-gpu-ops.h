@@ -119,4 +119,11 @@ NV_STATUS  NV_API_CALL rm_gpu_ops_ccsl_query_message_pool(nvidia_stack_t *, stru
 NV_STATUS  NV_API_CALL rm_gpu_ops_ccsl_increment_iv(nvidia_stack_t *, struct ccslContext_t *, NvU8, NvU64, NvU8 *);
 NV_STATUS  NV_API_CALL rm_gpu_ops_ccsl_log_encryption(nvidia_stack_t *, struct ccslContext_t *, NvU8, NvU32);
 
+/* nv-doorbell-watch: resolve (chid, runlist) → the channel's USERD and
+ * GPFIFO.  Returns USERD kernel VA when RM already has one, plus its
+ * physical address, size and aperture, and the GPFIFO's GPU VA and entry
+ * count.  See src/nvidia/arch/nvalloc/unix/src/rm-gpu-ops.c and
+ * src/nvidia/src/kernel/rmapi/nv_gpu_ops.c::nvGpuOpsDbellResolveChannel. */
+NV_STATUS  NV_API_CALL rm_gpu_ops_dbell_resolve_channel(nvidia_stack_t *, nv_state_t *, NvU32, NvU32, void **, NvU64 *, NvU64 *, NvU32 *, NvU64 *, NvU32 *);
+
 #endif
