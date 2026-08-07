@@ -41,6 +41,7 @@
 #include "uvm_va_space_mm.h"
 #include "uvm_test.h"
 #include "uvm_common.h"
+#include "mc-trace.h"
 #include "nv_uvm_interface.h"
 #include "nv-kthread-q.h"
 #include "uvm_hmm.h"
@@ -1557,11 +1558,16 @@ static NV_STATUS create_gpu_va_space(uvm_gpu_t *gpu,
     // TODO: Bug 1624521: This interface needs to use rm_control_fd to do
     //       validation.
     (void)user_rm_va_space->rm_control_fd;
+    MC_TRACE(uvm, "create_gpu_va_space", "step=dup_call user_client=0x%x user_object=0x%x rm_ctrl_fd=%d",
+                    user_rm_va_space->user_client,
+                    user_rm_va_space->user_object,
+                    user_rm_va_space->rm_control_fd);
     status = uvm_rm_locked_call(nvUvmInterfaceDupAddressSpace(uvm_gpu_device_handle(gpu),
                                                               user_rm_va_space->user_client,
                                                               user_rm_va_space->user_object,
                                                               &gpu_va_space->duped_gpu_va_space,
                                                               &gpu_address_space_info));
+    MC_TRACE(uvm, "create_gpu_va_space", "step=dup_ret status=0x%x", status);
     if (status != NV_OK) {
         UVM_DBG_PRINT("failed to dup address space with error: %s, for GPU:%s \n",
                 nvstatusToString(status), uvm_gpu_name(gpu));
@@ -1570,14 +1576,21 @@ static NV_STATUS create_gpu_va_space(uvm_gpu_t *gpu,
 
     gpu_va_space->ats.enabled = gpu_address_space_info.atsEnabled;
 
-    // If ATS support in the UVM driver isn't enabled, fail registration of GPU
-    // VA spaces which have ATS enabled.
+    MC_TRACE(uvm, "create_gpu_va_space", "step=ats ats_enabled=%d "
+                    "uvm_ats_enabled=%d ats_unset=%d ats_supported=%d "
+                    "pageable_mem_access=%d",
+                    gpu_va_space->ats.enabled,
+                    uvm_va_space_ats_unset(va_space) ? -1 : (int)uvm_va_space_ats_enabled(va_space),
+                    (int)uvm_va_space_ats_unset(va_space),
+                    (int)uvm_va_space_ats_supported(va_space),
+                    (int)va_space->pageable.access_enabled);
 
     // If this GPU VA space uses ATS then pageable memory access must not have
     // been disabled in the VA space.
     // The VA space can be in an ATS_UNSET state and accept either ATS or non-ATS.
     if (gpu_va_space->ats.enabled && !va_space->pageable.access_enabled) {
         UVM_INFO_PRINT("GPU VA space requires ATS, but pageable memory access is not supported\n");
+        MC_TRACE(uvm, "gpu_va_space_reject", "reason=ats_on_pageable_off");
         status = NV_ERR_INVALID_FLAGS;
         goto error;
     }
@@ -1680,17 +1693,24 @@ NV_STATUS uvm_va_space_register_gpu_va_space(uvm_va_space_t *va_space,
     struct mm_struct *mm;
     LIST_HEAD(deferred_free_list);
 
+    MC_TRACE(uvm, "register_gpu_va_space", "step=enter");
+
     gpu = uvm_va_space_retain_gpu_by_uuid(va_space, gpu_uuid);
-    if (!gpu)
+    if (!gpu) {
+        MC_TRACE(uvm, "register_gpu_va_space", "result=gpu_retain_fail");
         return NV_ERR_INVALID_DEVICE;
+    }
 
     mm = uvm_va_space_mm_or_current_retain(va_space);
     if (!mm) {
+        MC_TRACE(uvm, "register_gpu_va_space", "result=mm_retain_null");
         status = NV_ERR_PAGE_TABLE_NOT_AVAIL;
         goto error_gpu_release;
     }
+    MC_TRACE(uvm, "register_gpu_va_space", "step=before_create");
 
     status = create_gpu_va_space(gpu, va_space, user_rm_va_space, &gpu_va_space);
+    MC_TRACE(uvm, "register_gpu_va_space", "step=create_ret status=0x%x", status);
     if (status != NV_OK)
         goto error_gpu_release;
 

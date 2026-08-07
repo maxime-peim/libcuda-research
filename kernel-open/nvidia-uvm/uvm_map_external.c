@@ -22,6 +22,7 @@
 *******************************************************************************/
 
 #include "uvm_common.h"
+#include "mc-trace.h"
 #include "uvm_linux.h"
 #include "uvm_forward_decl.h"
 #include "uvm_lock.h"
@@ -43,6 +44,11 @@
 #include "nv_uvm_user_types.h"
 
 #include "uvm_pushbuffer.h"
+
+/* Observational-only tracepoints at the UVM_MAP_EXTERNAL_ALLOCATION API
+ * boundary.  They correlate each UVM cmd-33 call back to an RM memory handle,
+ * which is what answers "does CUDA double-map (BAR1 via NV_ESC_RM_MAP_MEMORY +
+ * UVM via cmd 33) the same hMemory handle?" */
 
 // Assume almost all of the push space can be used for PTEs leaving 1K of margin.
 #define MAX_COPY_SIZE_PER_PUSH ((size_t)(UVM_MAX_PUSH_SIZE - 1024))
@@ -130,6 +136,59 @@ static void uvm_pte_buffer_deinit(uvm_pte_buffer_t *pte_buffer)
 }
 
 // Get the PTEs for mapping the [map_offset, map_offset + map_size) VA range.
+/*
+ * mmu/pte_hdr + pte/row: the PTE values for one map call, eight per record.
+ *
+ * The PTE bit layout on Hopper puts the physical address in the mid bits of
+ * each 8-byte PTE, so comparing PTE values across handles is the direct
+ * observation that confirms or refutes the PTE-alias hypothesis.
+ *
+ * The header carries the per-call context (handle, VA range type, offset, page
+ * size, total n_ptes) and is on by default — it is what says which aperture a
+ * mapping resolved to.  The pte/row batches behind it are an
+ * investigate-by-hand record: pte is bit 9, is NOT in MC_TRACE_CAT_DEFAULT, and
+ * nothing in reverse/tools/ consumes it.  Hence the guard clause — with pte
+ * masked off the loop is skipped outright rather than spinning through n/8
+ * iterations whose MC_TRACE calls all no-op.  Turn it on with mc_trace=0x3ff
+ * and expect volume: a 128 MiB mapping is 32768 PTEs, so 4096 records, which is
+ * why the ftrace buffer wants to be 128 MiB.
+ *
+ * The VA range type is logged too, so channel-resource mappings (USERD et al.)
+ * can be told apart from external-alloc mappings.
+ */
+static void mc_trace_pte_rows(const uvm_pte_buffer_t *pte_buffer,
+                              NvHandle mem_handle,
+                              NvU64 map_offset)
+{
+    NvU64 *pte_arr = (NvU64 *)pte_buffer->mapping_info.pteBuffer;
+    size_t n = pte_buffer->num_ptes;
+    size_t i;
+
+    MC_TRACE(mmu, "pte_hdr", "hmem=0x%x vatype=%u map_off=0x%llx "
+                    "page_size=0x%llx n_ptes=%zu",
+                    (unsigned)mem_handle,
+                    (unsigned)pte_buffer->va_range->type,
+                    (unsigned long long)map_offset,
+                    (unsigned long long)pte_buffer->page_size,
+                    n);
+
+    if (!(nv_trace_mask & MC_TRACE_CAT_pte))
+        return;
+
+    for (i = 0; i < n; i += 8) {
+        size_t j;
+        size_t lim = (i + 8 < n) ? i + 8 : n;
+        /* Build a fixed 8-slot output line (unfilled slots print as 0) so the
+         * parser has a predictable shape. */
+        NvU64 p[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
+
+        for (j = i; j < lim; j++)
+            p[j - i] = pte_arr[j];
+        MC_TRACE(pte, "row", "hmem=0x%x idx=%zu ptes=" MC_ARR8,
+                        (unsigned)mem_handle, i, MC_ARR8V(p));
+    }
+}
+
 static NV_STATUS uvm_pte_buffer_get(uvm_pte_buffer_t *pte_buffer,
                                     NvHandle mem_handle,
                                     NvU64 map_offset,
@@ -203,6 +262,8 @@ static NV_STATUS uvm_pte_buffer_get(uvm_pte_buffer_t *pte_buffer,
         }
         return status;
     }
+
+    mc_trace_pte_rows(pte_buffer, mem_handle, map_offset);
 
     *ptes_out = pte_buffer->mapping_info.pteBuffer;
     *need_l2_invalidate_at_unmap = pte_buffer->mapping_info.bNeedL2InvalidateAtUnmap;
@@ -1093,7 +1154,27 @@ error:
 NV_STATUS uvm_api_map_external_allocation(UVM_MAP_EXTERNAL_ALLOCATION_PARAMS *params, struct file *filp)
 {
     uvm_va_space_t *va_space = uvm_va_space_get(filp);
-    return uvm_map_external_allocation(va_space, params);
+    NV_STATUS status;
+
+    /* uvm/map_external: log hClient/hMemory/base/length so a post-
+     * processor can match UVM cmd-33 calls to RM MAP_MEMORY (0x4e)
+     * calls on the same hMemory handle.  params is already kernel-side
+     * here (copy_from_user happened in the UVM ioctl dispatch), so
+     * direct reads are safe. */
+    MC_TRACE(uvm, "map_external", "hclient=0x%x hmemory=0x%x base=0x%llx"
+                    " length=0x%llx offset=0x%llx rm_ctrl_fd=%d",
+                    params->hClient, params->hMemory,
+                    (unsigned long long)params->base,
+                    (unsigned long long)params->length,
+                    (unsigned long long)params->offset,
+                    params->rmCtrlFd);
+
+    status = uvm_map_external_allocation(va_space, params);
+
+    MC_TRACE(uvm, "map_external", "result=ret hmemory=0x%x rm_status=0x%x",
+                    params->hMemory, params->rmStatus);
+
+    return status;
 }
 
 static NvU64 external_sparse_pte_maker(uvm_page_table_range_vec_t *range_vec, NvU64 offset, void *caller_data)

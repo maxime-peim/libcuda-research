@@ -33,6 +33,7 @@
 #include "uvm_va_block.h"
 #include "uvm_tools.h"
 #include "uvm_common.h"
+#include "mc-trace.h"
 #include "uvm_fd_type.h"
 #include "uvm_linux_ioctl.h"
 #include "uvm_hmm.h"
@@ -764,6 +765,21 @@ static int uvm_mmap(struct file *filp, struct vm_area_struct *vma)
     int ret = 0;
     bool vma_wrapper_allocated = false;
 
+    /*
+     * mmap/uvm diagnostic: log every mmap request going through
+     * /dev/nvidia-uvm so we can locate how libcuda gets USERD into its
+     * address space.  Per UVM's own contract — the
+     * vm_start != (vm_pgoff << PAGE_SHIFT) rejection further down this
+     * function — the userspace VA is the "offset" argument and, on
+     * Hopper+ with UVM, equals the GPU VA.
+     */
+    MC_TRACE(mmap, "uvm", "pid=%d comm=\"%s\" vm_start=0x%lx "
+                    "vm_end=0x%lx size=0x%lx vm_pgoff=0x%lx",
+                    current->pid, current->comm,
+                    vma->vm_start, vma->vm_end,
+                    vma->vm_end - vma->vm_start,
+                    vma->vm_pgoff);
+
     if (status != NV_OK)
         return -nv_status_to_errno(status);
 
@@ -994,8 +1010,51 @@ static NV_STATUS uvm_api_pageable_mem_access(UVM_PAGEABLE_MEM_ACCESS_PARAMS *par
     return NV_OK;
 }
 
+/*
+ * uvm/ioctl: an entry-level record for every UVM cmd, plus a body dump of the
+ * parameter block keyed by the same correlation id.
+ *
+ * The other mc1 sites in UVM fire inside specific handlers
+ * (uvm_api_map_external_allocation, register_gpu_va_space, etc.), so CUDA's
+ * extra setup cmds (UVM_POPULATE_PAGEABLE, UVM_CREATE_RANGE_GROUP,
+ * UVM_PAGEABLE_MEM_ACCESS, ...) would otherwise be invisible in a capture.  One
+ * entry-level record here closes that blindspot, and the body dump lets a
+ * userspace decoder compare CUDA's params against mc's for the cmds both issue.
+ *
+ * copy_from_user is required — `arg` is a userspace pointer.  The fixed
+ * 512-byte read covers UVM_MAX_IOCTL_PARAM_STACK_SIZE (288 bytes) with room.
+ * There is no truncation or copy-failure marker: on a failed copy we simply
+ * emit no body/uvm_row records, which looks the same as a zero-length param
+ * block.  The row count is the only signal.
+ *
+ * The body mask test is a guard clause rather than a gate on each MC_TRACE so
+ * that a masked-off capture does not pay for the copy_from_user, which is the
+ * expensive part.  Keeping this out of uvm_ioctl also keeps the 512-byte buffer
+ * off the frame of a function that dispatches into deep handlers.
+ */
+static void mc_trace_uvm_ioctl_params(unsigned int cmd, unsigned long arg)
+{
+    unsigned int buf[128] = {0};   /* 512 bytes */
+    unsigned int i;
+    NvU32 mc_id = nv_trace_next_id();
+
+    MC_TRACE(uvm, "ioctl", "id=%u cmd=%u", mc_id, cmd);
+
+    if (!(nv_trace_mask & MC_TRACE_CAT_body) || !arg)
+        return;
+    if (copy_from_user(buf, (void __user *)arg, sizeof(buf)) != 0)
+        return;
+
+    for (i = 0; i + 3 < 128; i += 4) {
+        MC_TRACE(body, "uvm_row", "id=%u off=0x%03x dw=" MC_ARR4,
+                 mc_id, i * 4, MC_ARR4V(buf, i));
+    }
+}
+
 static long uvm_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 {
+    mc_trace_uvm_ioctl_params(cmd, arg);
+
     switch (cmd)
     {
         case UVM_DEINITIALIZE:
