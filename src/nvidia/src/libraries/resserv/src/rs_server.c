@@ -23,6 +23,7 @@
 
 #define NVOC_RS_SERVER_H_PRIVATE_ACCESS_ALLOWED
 #include "nvlog_inc.h"
+#include "mc-trace.h"
 #include "resserv/resserv.h"
 #include "resserv/rs_server.h"
 #include "resserv/rs_client.h"
@@ -2233,17 +2234,28 @@ serverInterMap
     if (status != NV_OK)
         goto done;
 
+    MC_TRACE(rm, "inter_map", "step=enter hclient=0x%x hmapper=0x%x hmappable=0x%x hdevice=0x%x",
+                     pParams->hClient, pParams->hMapper, pParams->hMappable, pParams->hDevice);
     status = clientGetResourceRef(pClient, pParams->hMapper, &pMapperRef);
-    if (status != NV_OK)
+    if (status != NV_OK) {
+        MC_TRACE(rm, "inter_map", "result=mapper_fail hmapper=0x%x status=0x%x", pParams->hMapper, status);
         goto done;
+    }
+    MC_TRACE(rm, "inter_map", "step=mapper_ok hmapper=0x%x internal_class_id=0x%x", pParams->hMapper, pMapperRef->internalClassId);
 
     status = clientGetResourceRef(pClient, pParams->hMappable, &pMappableRef);
-    if (status != NV_OK)
+    if (status != NV_OK) {
+        MC_TRACE(rm, "inter_map", "result=mappable_fail hmappable=0x%x status=0x%x", pParams->hMappable, status);
         goto done;
+    }
+    MC_TRACE(rm, "inter_map", "step=mappable_ok hmappable=0x%x internal_class_id=0x%x", pParams->hMappable, pMappableRef->internalClassId);
 
     status = clientGetResourceRef(pClient, pParams->hDevice, &pContextRef);
-    if (status != NV_OK)
+    if (status != NV_OK) {
+        MC_TRACE(rm, "inter_map", "result=device_fail hdevice=0x%x status=0x%x", pParams->hDevice, status);
         goto done;
+    }
+    MC_TRACE(rm, "inter_map", "result=ok hdevice=0x%x", pParams->hDevice);
 
     pLockInfo->pContextRef = pContextRef;
 

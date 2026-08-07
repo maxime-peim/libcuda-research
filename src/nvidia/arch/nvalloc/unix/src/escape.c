@@ -32,6 +32,7 @@
 //******************************************************************************
 
 #include <core/prelude.h>
+#include "mc-trace.h"
 #include <core/locks.h>
 #include <nv.h>
 #include <nv_escape.h>
@@ -67,6 +68,7 @@
 {                                              \
     if (((nv)->flags & NV_FLAG_CONTROL) != 0)  \
     {                                          \
+        MC_TRACE(rm, "actual_device_only_fail", "flags=0x%x", (nv)->flags); \
         rmStatus = NV_ERR_INVALID_ARGUMENT;    \
         goto done;                             \
     }                                          \
@@ -353,6 +355,77 @@ NV_STATUS RmValidateIoctl(NvU32 cmd, NvU32 size)
     return NV_ERR_INVALID_COMMAND;
 }
 
+/*
+ * Dump an NV_ESC_RM_ALLOC parameter block as one body/alloc_hdr plus a run of
+ * body/alloc_row records, correlated back to the rm/alloc record by id.
+ *
+ * pAllocParms is a USERSPACE VA — it MUST be read through os_memcpy_from_user,
+ * never dereferenced directly, which would fault in kernel context.
+ *
+ * For NVOS64 (bAccessApi=TRUE, dataSize=48), paramsSize gives the exact size of
+ * the alloc params.  NVOS21 has a paramsSize field too, but this path does not
+ * consult it: it reads a fixed 512 bytes, the same cap NVOS64 is clamped to,
+ * which keeps the trace output bounded.  The cost of that shortcut is that an
+ * NVOS21 alloc whose params buffer is shorter than 512 bytes and happens to sit
+ * at the end of a mapping fails the copy, and then emits no body records at all
+ * rather than a short one.  There is no truncation or copy-failure marker; the
+ * row count is the only signal.
+ *
+ * The mask test is a guard clause over the whole function rather than a gate on
+ * each MC_TRACE, because the copy_from_user is the expensive part and there is
+ * no reason to pay for it when the records it feeds are masked off.
+ *
+ * Keeping this in a function of its own is also what keeps params_size and
+ * ndwords together.  A scope-flattening pass once separated them, leaving
+ * ndwords derived from a params_size that had not been computed yet — which
+ * silently killed every body/alloc_row record until it was found much later.
+ */
+static void mc_trace_alloc_params(NvU32 mc_alloc_id,
+                                  const NVOS21_PARAMETERS *pApi,
+                                  NvBool bAccessApi)
+{
+    NvU32 params_size = 0;
+    NvU32 buf[128] = {0}; /* 512 bytes max */
+    NvU32 ndwords;
+    NvU32 i;
+
+    if (!(nv_trace_mask & MC_TRACE_CAT_body) || !pApi->pAllocParms)
+        return;
+
+    if (bAccessApi)
+        params_size = ((const NVOS64_PARAMETERS *)pApi)->paramsSize;
+    if (params_size == 0 || params_size > 512)
+        params_size = 512;
+
+    /* round up to 4-byte boundary */
+    params_size = (params_size + 3) & ~3u;
+
+    /* Derive ndwords only after params_size is final. */
+    ndwords = params_size / 4;
+    ndwords = ndwords > 128 ? 128 : ndwords;
+
+    if (os_memcpy_from_user(buf, (void *)(NvUPtr)pApi->pAllocParms,
+                            ndwords * 4) != NV_OK)
+        return;
+
+    MC_TRACE(body, "alloc_hdr", "id=%u size=%u dwords=%u",
+             mc_alloc_id, params_size, ndwords);
+    for (i = 0; i + 3 < ndwords; i += 4) {
+        MC_TRACE(body, "alloc_row", "id=%u off=0x%03x dw=" MC_ARR4,
+                 mc_alloc_id, i * 4, MC_ARR4V(buf, i));
+    }
+    /* Leftover dwords (ndwords % 4 != 0): zero-pad to a full 4-slot row so
+     * every body record has one shape and is a complete line, never a
+     * partial. */
+    if (i < ndwords) {
+        NvU32 tail[4] = {0, 0, 0, 0}, k;
+        for (k = 0; i + k < ndwords && k < 4; k++)
+            tail[k] = buf[i + k];
+        MC_TRACE(body, "alloc_row", "id=%u off=0x%03x dw=" MC_ARR4,
+                 mc_alloc_id, i * 4, MC_ARR4V(tail, 0));
+    }
+}
+
 NV_STATUS RmIoctl(
     nv_state_t  *nv,
     nv_file_private_t *nvfp,
@@ -379,6 +452,25 @@ NV_STATUS RmIoctl(
     secInfo.clientOSInfo = nvfp->ctl_nvfp;
     if (secInfo.clientOSInfo == NULL)
         secInfo.clientOSInfo = nvfp;
+
+    /*
+     * The low byte of `cmd` is the NV_ESC_* code (see nv-ioctl.h);
+     * the upper bits encode direction + size per the _IO() / _IOWR() macros.
+     * For RM_CONTROL (0x2a) the interesting sub-command lives in
+     * ((NVOS54_PARAMETERS *)data)->cmd — logged separately below.
+     */
+    MC_TRACE(rm, "ioctl", "cmd=0x%x esc=0x%x size=%u",
+             cmd, cmd & 0xff, dataSize);
+    if ((cmd & 0xff) == NV_ESC_RM_CONTROL && data != NULL &&
+        dataSize == sizeof(NVOS54_PARAMETERS))
+    {
+        /* Enrich CONTROL with hClient/hObject so the strace-diff can see
+         * WHICH object each control call targets — useful for answering
+         * "does CUDA re-map or re-control the same handle(s) repeatedly?". */
+        NVOS54_PARAMETERS *p54 = (NVOS54_PARAMETERS *)data;
+        MC_TRACE(rm, "control", "cmd=0x%x hclient=0x%x hobject=0x%x params_size=%u",
+                 p54->cmd, p54->hClient, p54->hObject, p54->paramsSize);
+    }
 
     switch (cmd)
     {
@@ -462,6 +554,12 @@ NV_STATUS RmIoctl(
                 goto done;
             }
 
+            NvU32 mc_alloc_id = nv_trace_next_id();
+            MC_TRACE(rm, "alloc", "id=%u hclass=0x%x root=0x%x parent=0x%x new=0x%x",
+                     mc_alloc_id, pApi->hClass, pApi->hRoot,
+                     pApi->hObjectParent, pApi->hObjectNew);
+            mc_trace_alloc_params(mc_alloc_id, pApi, bAccessApi);
+
             switch (pApi->hClass)
             {
                 case NV01_ROOT:
@@ -497,6 +595,12 @@ NV_STATUS RmIoctl(
                 Nv04AllocWithAccessSecInfo(pApiAccess, secInfo);
             }
 
+            /* Read status from the correct struct type — NVOS64 if bAccessApi */
+            MC_TRACE(rm, "alloc", "result=ret hclass=0x%x status=0x%x access=%d",
+                            pApi->hClass,
+                            bAccessApi ? ((NVOS64_PARAMETERS *)pApi)->status : pApi->status,
+                            (int)bAccessApi);
+
             break;
         }
 
@@ -510,9 +614,15 @@ NV_STATUS RmIoctl(
                 goto done;
             }
 
+            MC_TRACE(rm, "free", "root=0x%x parent=0x%x old=0x%x",
+                     pApi->hRoot, pApi->hObjectParent, pApi->hObjectOld);
+
             NV_CTL_DEVICE_ONLY(nv);
 
             Nv01FreeWithSecInfo(pApi, secInfo);
+
+            MC_TRACE(rm, "free", "result=ret old=0x%x status=0x%x",
+                     pApi->hObjectOld, pApi->status);
 
             if (pApi->status == NV_OK &&
                 pApi->hObjectOld == pApi->hRoot)
@@ -588,6 +698,16 @@ NV_STATUS RmIoctl(
 
             pApi = data;
             pParms = &pApi->params;
+
+            /* dump the handles so the strace-diff post-processor
+             * can answer "does CUDA double-map (BAR1 0x4e + UVM cmd 33) the
+             * same hMemory handle?". */
+            MC_TRACE(rm, "map_memory", "hclient=0x%x hdevice=0x%x hmemory=0x%x"
+                     " offset=0x%llx length=0x%llx flags=0x%x fd=%d",
+                            pParms->hClient, pParms->hDevice, pParms->hMemory,
+                            (unsigned long long)pParms->offset,
+                            (unsigned long long)pParms->length,
+                            pParms->flags, pApi->fd);
 
             NV_CTL_DEVICE_ONLY(nv);
 
@@ -865,11 +985,20 @@ NV_STATUS RmIoctl(
             pOldCpuAddress = NvP64_VALUE(pApi->pOldCpuAddress);
             pNewCpuAddress = NvP64_VALUE(pApi->pNewCpuAddress);
 
+            MC_TRACE(rm, "update_mapping_info",
+                "hclient=0x%x hdevice=0x%x hmemory=0x%x "
+                "old_cpu_addr=%p new_cpu_addr=%p",
+                pApi->hClient, pApi->hDevice, pApi->hMemory,
+                pOldCpuAddress, pNewCpuAddress);
+
             pApi->status = rm_update_device_mapping_info(pApi->hClient,
                                                          pApi->hDevice,
                                                          pApi->hMemory,
                                                          pOldCpuAddress,
                                                          pNewCpuAddress);
+
+            MC_TRACE(rm, "update_mapping_info", "result=ret hmemory=0x%x status=0x%x",
+                pApi->hMemory, pApi->status);
             break;
         }
 
