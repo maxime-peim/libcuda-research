@@ -77,6 +77,10 @@ $(foreach _module, $(NV_KERNEL_MODULES), \
 
 ccflags-y += -I$(src)/common/inc
 ccflags-y += -I$(src)
+# mc1 trace record header (src/common/sdk/nvidia/inc/mc-trace.h), shared with
+# the RM and modeset builds which already reach the SDK inc dir.  Added last
+# so it cannot shadow any header kernel-open already resolves.
+ccflags-y += -I$(src)/../src/common/sdk/nvidia/inc
 ccflags-y += -Wall $(DEFINES) $(INCLUDES) -Wno-cast-qual -Wno-format-extra-args
 ccflags-y += -D__KERNEL__ -DMODULE -DNVRM
 ccflags-y += -DNV_VERSION_STRING=\"610.43.02\"

@@ -25,6 +25,7 @@
 
 #include "os-interface.h"
 #include "nv-linux.h"
+#include "mc-trace.h"       /* nv_trace_mask + MC_TRACE_CAT_DEFAULT */
 #include <linux/iommu.h>
 #include "nv-caps-imex.h"
 
@@ -66,6 +67,21 @@ NvU64 os_page_size     = PAGE_SIZE;
 NvU64 os_max_page_size = PAGE_SIZE << NV_MAX_PAGE_ORDER;
 NvU64 os_page_mask     = NV_PAGE_MASK;
 NvU8  os_page_shift    = PAGE_SHIFT;
+
+/* mc1 trace category mask.  Runtime-writable, shared across nvidia.ko,
+ * nvidia-uvm.ko and nvidia-modeset.ko (all consume MC_TRACE from
+ * mc-trace.h).  Default: everything except the pte firehose. */
+NvU32 nv_trace_mask = MC_TRACE_CAT_DEFAULT;
+EXPORT_SYMBOL(nv_trace_mask);
+module_param_named(mc_trace, nv_trace_mask, uint, 0644);
+MODULE_PARM_DESC(mc_trace, "mc1 trace category bitmask; see src/common/sdk/nvidia/inc/mc-trace.h");
+
+static atomic_t nv_trace_id_ctr = ATOMIC_INIT(0);
+NvU32 NV_API_CALL nv_trace_next_id(void)
+{
+    return (NvU32)atomic_inc_return(&nv_trace_id_ctr);
+}
+EXPORT_SYMBOL(nv_trace_next_id);
 
 NvBool os_cc_enabled = 0;
 NvBool os_cc_sev_snp_enabled = 0;
@@ -898,6 +914,20 @@ int NV_API_CALL nv_printf(NvU32 debuglevel, const char *printf_format, ...)
 
     return chars_written;
 }
+
+void NV_API_CALL nv_trace_printf(const char *fmt, ...) {
+  va_list arglist;
+
+  /*
+   * trace_printk() is a variadic MACRO — passing a va_list to it as a single
+   * positional argument reads garbage off the stack.  Use ftrace_vprintk()
+   * from <linux/kernel.h>, the va_list-accepting counterpart.
+   */
+  va_start(arglist, fmt);
+  ftrace_vprintk(fmt, arglist);
+  va_end(arglist);
+}
+EXPORT_SYMBOL(nv_trace_printf);
 
 NvS32 NV_API_CALL os_snprintf(char *buf, NvU32 size, const char *fmt, ...)
 {

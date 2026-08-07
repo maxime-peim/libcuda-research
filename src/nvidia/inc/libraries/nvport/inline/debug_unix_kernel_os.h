@@ -42,6 +42,7 @@ extern "C" {
 void NV_API_CALL os_dbg_breakpoint(void);
 void NV_API_CALL out_string(const char *str);
 int  NV_API_CALL nv_printf(NvU32 debuglevel, const char *format, ...);
+void NV_API_CALL nv_trace_printf(const char *fmt, ...);
 void NV_API_CALL os_dump_stack(void);
 
 // No init/shutdown needed
