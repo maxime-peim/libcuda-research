@@ -1,0 +1,82 @@
+NOTICE
+======
+
+This repository is a fork of NVIDIA's open GPU kernel modules:
+
+    https://github.com/NVIDIA/open-gpu-kernel-modules
+
+forked at release 610.43.02.
+
+It is an independent research project. It is **not** affiliated with,
+endorsed by, or supported by NVIDIA Corporation. Do not report issues with
+this fork to NVIDIA.
+
+
+Upstream code
+-------------
+
+The overwhelming majority of this tree is NVIDIA's, unmodified, under its
+original terms: dual MIT / GPL-2.0. See COPYING.
+
+Where this fork modifies an upstream file, the file keeps its original
+NVIDIA copyright header and licence. Those modifications are contributed
+under the same terms.
+
+To see exactly what was changed, diff against the release this was forked at
+rather than against upstream's moving branch — `upstream/main` will have
+advanced past 610.43.02 and the diff would then include NVIDIA's own later
+changes as well as the fork's:
+
+    git remote add upstream https://github.com/NVIDIA/open-gpu-kernel-modules.git
+    git fetch upstream --tags
+    git diff 610.43.02 --stat
+
+
+Files added by this fork
+------------------------
+
+New files carry their own SPDX headers:
+
+    reverse/**                                    MIT
+    kernel-open/nvidia/nv-doorbell-watch.*        MIT
+    kernel-open/nvidia-dbell/**                   GPL-2.0
+    src/common/sdk/nvidia/inc/mc-trace.h          MIT
+    docs/**                                       prose; see below
+
+mc-trace.h sits inside NVIDIA's SDK header tree because that is where the
+build expects it, but it is the fork's own file, not NVIDIA's.
+
+kernel-open/nvidia-dbell/ is GPL-2.0 deliberately, not by preference. It
+calls register_user_hw_breakpoint(), which the Linux kernel exports
+EXPORT_SYMBOL_GPL, and a module must be GPL-compatible to link against
+such a symbol.
+
+Documentation under docs/ is prose about how the hardware and driver
+behave. Where it quotes constants, structure layouts or class identifiers,
+those come from the SDK headers in this tree and remain NVIDIA's.
+
+
+Third-party work referenced
+---------------------------
+
+The kernel-side doorbell watchpoint in kernel-open/nvidia/nv-doorbell-watch.c
+is a port of the technique described in:
+
+    Yan et al. (2026), "Revealing NVIDIA Closed-Source Driver Command
+    Streams for CPU-GPU Runtime Behavior Insight", sections 5.1-5.2.
+
+The QMD construction in reverse/mc/mc_compute_qmd.c follows the layout used
+by Mesa's NVK (src/nouveau), which is MIT-licensed. No NVK code is copied —
+the field assignments were written from scratch against the layout NVK
+publishes. NVK is the source for the Hopper V04 bit ranges specifically,
+because the header that defines them (clcbc0qmd.h) is not part of this
+tree; the only QMD class header here is cla0c0qmd.h, for Kepler.
+
+
+Warranty
+--------
+
+None. This is research code that runs with root privileges and writes
+directly to GPU hardware registers. It has been exercised on exactly one
+configuration — H100 PCIe, Linux 6.8 — and nowhere else. Do not install it
+on a machine whose uptime matters.

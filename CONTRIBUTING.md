@@ -1,21 +1,36 @@
-Thank you for all the enthusiasm around open-gpu-kernel-modules.
+# Contributing
 
-## Non-functional (cosmetic) changes
+This is an unaffiliated research fork (see `NOTICE`). It is not NVIDIA's
+repository, and NVIDIA's contribution process does not apply here — their
+guidance is preserved verbatim at [`CONTRIBUTING.nvidia.md`](CONTRIBUTING.nvidia.md)
+if you came looking for it.
 
-While we appreciate your enthusiasm, we have decided not to accept non-functional changes such as
-non-code typo fixes, comment and language adjustments, whitespace changes, and similar.
+## What this fork wants
 
-Changes going into this codebase incur significant overhead. As such, we want to focus our resources
-on executable code improvements for now.
+The fork exists to answer one question — what does a `cudaMemcpy` actually do
+between the CPU and the GPU — and to keep the answer reproducible. So the
+contributions that help most are the ones that make a claim checkable:
 
-If you have questions, or are unsure about the nature of your desired change, please ask us on the
-[Discussion boards](https://github.com/NVIDIA/open-gpu-kernel-modules/discussions)!
+- **Corrections.** If a number, a bit-field, or a described mechanism is wrong,
+  say so and cite the primary source (an SDK header in this tree, a capture, a
+  measurement). Nearly every error found so far has been a claim that drifted
+  away from its source rather than one that was never checked.
+- **Reproductions on other hardware.** Everything here was exercised on one
+  configuration (H100 PCIe, Linux 6.8). A report that something does or does
+  not reproduce elsewhere is genuinely useful, especially with a capture.
+- **Tooling that widens what can be observed** — see `docs/tracing_cuda.md`.
 
-## Code style
+Changes to the vendored NVIDIA sources under `src/` and `kernel-open/` are
+deliberately kept minimal: tracing instrumentation, plus the one functional
+workaround `docs/findings.md §9` describes. A change there needs a reason that
+could not be met in `reverse/`.
 
-We currently do not publish a code style guide, as we have many different components coming together.
-Please read the existing code in the repository, especially the one surrounding your proposed change,
-to get a feel for what you should aim for.
+## Practicalities
 
-Don't worry too much about it! We are happy to guide you through any neccessary style changes through
-code review of your PR.
+- Open an issue. There is no CLA, no template, and no triage funnel.
+- Security-relevant reports: read `SECURITY.md` first — where a report should
+  go depends on whether it reproduces against NVIDIA's driver or only here.
+- The local gates in `reverse/` should pass: `make` builds clean, and
+  `python3 tools/run_mc_tests.py` runs the matrix if you have the hardware.
+- Documentation is part of the work, not an afterthought. If a change makes a
+  statement in `docs/` false, fix the statement in the same change.
