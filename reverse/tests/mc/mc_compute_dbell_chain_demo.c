@@ -11,10 +11,10 @@
  * loop — just a single warp's STG.E.STRONG.SYS to the BAR1 page.
  *
  *   - Allocate device buffer (HBM) + host buffer (DRAM).
- *   - Pre-fill HBM with FILL_PATTERN via mc_memcpy_h2d (host-rung
+ *   - Pre-fill HBM with FILL_PATTERN via mc_memcpy (host-rung
  *     doorbell — uncontroversial, just stages bytes for the test).
  *   - Zero DRAM.
- *   - Call mc_memcpy_d2h_gpu_doorbell_sm(): the UVM channel's
+ *   - Call mc_memcpy_gpu_doorbell_sm(): the UVM channel's
  *     doorbell is rung by a compute kernel, not the host, not a CE.
  *   - Verify DRAM contains FILL_PATTERN throughout.
  *
@@ -22,7 +22,7 @@
  *
  *   PASS → DRAM contains FILL_PATTERN.  The HBM→DRAM copy ran.
  *          The host did NOT ring the UVM channel's doorbell during
- *          the mc_memcpy_d2h_gpu_doorbell_sm call.  No CE was used
+ *          the mc_memcpy_gpu_doorbell_sm call.  No CE was used
  *          to perform the doorbell write either.  The only path that
  *          could have woken the UVM channel's PBDMA is the compute
  *          kernel's STG.E.STRONG.SYS reaching real BAR1.  Therefore:
@@ -62,11 +62,13 @@ int main(int argc, char **argv)
 {
   mc_test_args_t args = { .n_bytes = DEFAULT_SIZE, .iters = 1 };
 
-  mc_ctx_t *ctx     = NULL;
-  size_t    n;
-  void     *d_buf   = NULL;
-  void     *h_buf   = NULL;
-  size_t    bad_off = 0;
+  mc_ctx_t   *ctx       = NULL;
+  size_t      n;
+  void       *d_buf     = NULL;
+  void       *h_buf     = NULL;
+  void       *h_verify  = NULL;   /* H2D-only readback target */
+  size_t      bad_off   = 0;
+  const char *dir_label;
 
   switch (mc_test_parse_args(argc, argv, &args))
   {
@@ -74,17 +76,19 @@ int main(int argc, char **argv)
   case MC_TEST_ARGS_HELP:  return 0;
   case MC_TEST_ARGS_ERROR: return 1;
   }
-  n = args.n_bytes;
+  n         = args.n_bytes;
+  dir_label = args.h2d ? "H2D" : "D2H";
 
   if (mc_init(&ctx) != MC_OK)
   {
     fprintf(stderr, "mc_init failed\n");
     return 1;
   }
-  printf("mc_init ok — UVM + DMA + compute channels ready (size=%zu)\n", n);
+  printf("mc_init ok — UVM + DMA + compute channels ready (size=%zu, dir=%s)\n",
+         n, dir_label);
 
-  d_buf  = mc_malloc_device(ctx, n);
-  h_buf  = mc_malloc_host(ctx, n);
+  d_buf  = mc_malloc_device(ctx, n, MC_VAS_UVM);
+  h_buf  = mc_malloc_host  (ctx, n, MC_VAS_UVM);
   if (!d_buf || !h_buf)
   {
     fprintf(stderr, "mc_malloc_* failed\n");
@@ -92,58 +96,144 @@ int main(int argc, char **argv)
     return 1;
   }
 
-  mc_test_seed_pattern((uint32_t *)h_buf, n / 4, FILL_PATTERN);
-  if (mc_memcpy_h2d(ctx, d_buf, h_buf, n) != MC_OK)
+  if (args.h2d)
   {
-    fprintf(stderr, "mc_memcpy_h2d (seed HBM) failed\n");
-    mc_fini(ctx);
-    return 2;
+    h_verify = mc_malloc_host(ctx, n, MC_VAS_UVM);
+    if (!h_verify)
+    {
+      fprintf(stderr, "h_verify alloc failed\n");
+      mc_free(ctx, h_buf);
+      mc_free(ctx, d_buf);
+      mc_fini(ctx);
+      return 1;
+    }
   }
 
-  /* Run the experiment args.iters times.  HBM stays loaded with
-   * FILL_PATTERN across iterations; each iter only zeroes DRAM, runs
-   * the SM-rings-doorbell D2H, and verifies.  Time only the D2H call.
-   * Fail-fast on any verify mismatch. */
+  /* Pre-fill h_buf with FILL_PATTERN.  D2H seeds it through to HBM
+   * via an untimed CE H2D so subsequent SM-rung D2Hs read FILL back.
+   * H2D skips that seed: h_buf IS the source of the timed H2D each
+   * iter; the verify path runs a separate untimed D2H readback into
+   * h_verify. */
+  mc_test_seed_pattern((uint32_t *)h_buf, n / 4, FILL_PATTERN);
+  if (!args.h2d)
+  {
+    if (mc_memcpy(ctx, d_buf, h_buf, n, MC_XFER_HOST) != MC_OK)
+    {
+      fprintf(stderr, "mc_memcpy (seed HBM) failed\n");
+      mc_free(ctx, h_verify);
+      mc_free(ctx, h_buf);
+      mc_free(ctx, d_buf);
+      mc_fini(ctx);
+      return 2;
+    }
+  }
+
+  /* Run the experiment args.iters times.  Time only the SM-rung
+   * chain call.  Fail-fast on any verify mismatch. */
   uint64_t best_ns = UINT64_MAX, sum_ns = 0, worst_ns = 0;
 
   for (int it = 0; it < args.iters; it++)
   {
-    memset(h_buf, 0, n);
+    uint64_t t0;
+    uint64_t ns;
 
-    uint64_t t0 = mc_test_now_ns();
-    if (mc_memcpy_d2h_gpu_doorbell_sm(ctx, h_buf, d_buf, n) != MC_OK)
+    if (args.h2d)
     {
-      fprintf(stderr,
-              "iter %d: mc_memcpy_d2h_gpu_doorbell_sm failed\n", it);
-      mc_fini(ctx);
-      return 3;
+      const uint32_t GARBLE = 0xCAFEBABEu;
+      mc_test_seed_pattern((uint32_t *)h_verify, n / 4, GARBLE);
+      if (mc_memcpy(ctx, d_buf, h_verify, n, MC_XFER_HOST) != MC_OK)
+      {
+        fprintf(stderr, "iter %d: pre-stomp mc_memcpy failed\n", it + 1);
+        mc_free(ctx, h_verify);
+        mc_free(ctx, h_buf);
+        mc_free(ctx, d_buf);
+        mc_fini(ctx);
+        return 3;
+      }
+
+      t0 = mc_test_now_ns();
+      if (mc_memcpy_gpu_doorbell_sm(ctx, d_buf, h_buf, n) != MC_OK)
+      {
+        fprintf(stderr,
+                "iter %d: mc_memcpy_gpu_doorbell_sm H2D failed\n", it + 1);
+        mc_free(ctx, h_verify);
+        mc_free(ctx, h_buf);
+        mc_free(ctx, d_buf);
+        mc_fini(ctx);
+        return 3;
+      }
+      ns = mc_test_now_ns() - t0;
+
+      if (mc_memcpy(ctx, h_verify, d_buf, n, MC_XFER_HOST) != MC_OK)
+      {
+        fprintf(stderr, "iter %d: readback mc_memcpy failed\n", it + 1);
+        mc_free(ctx, h_verify);
+        mc_free(ctx, h_buf);
+        mc_free(ctx, d_buf);
+        mc_fini(ctx);
+        return 3;
+      }
+
+      if (!mc_test_verify_pattern((uint32_t *)h_verify, n / 4,
+                                  FILL_PATTERN, &bad_off))
+      {
+        fprintf(stderr,
+                "iter %d VERIFY FAIL: h_verify[%zu] = 0x%08x (expected 0x%08x)\n",
+                it + 1, bad_off, ((uint32_t *)h_verify)[bad_off], FILL_PATTERN);
+        mc_free(ctx, h_verify);
+        mc_free(ctx, h_buf);
+        mc_free(ctx, d_buf);
+        mc_fini(ctx);
+        return 4;
+      }
     }
-    uint64_t ns = mc_test_now_ns() - t0;
-
-    if (!mc_test_verify_pattern((uint32_t *)h_buf, n / 4, FILL_PATTERN,
-                                &bad_off))
+    else
     {
-      fprintf(stderr,
-              "iter %d VERIFY FAIL: h_buf[%zu] = 0x%08x (expected 0x%08x)\n",
-              it, bad_off, ((uint32_t *)h_buf)[bad_off], FILL_PATTERN);
-      mc_fini(ctx);
-      return 4;
+      memset(h_buf, 0, n);
+
+      t0 = mc_test_now_ns();
+      if (mc_memcpy_gpu_doorbell_sm(ctx, h_buf, d_buf, n) != MC_OK)
+      {
+        fprintf(stderr,
+                "iter %d: mc_memcpy_gpu_doorbell_sm D2H failed\n", it + 1);
+        mc_free(ctx, h_verify);
+        mc_free(ctx, h_buf);
+        mc_free(ctx, d_buf);
+        mc_fini(ctx);
+        return 3;
+      }
+      ns = mc_test_now_ns() - t0;
+
+      if (!mc_test_verify_pattern((uint32_t *)h_buf, n / 4, FILL_PATTERN,
+                                  &bad_off))
+      {
+        fprintf(stderr,
+                "iter %d VERIFY FAIL: h_buf[%zu] = 0x%08x (expected 0x%08x)\n",
+                it + 1, bad_off, ((uint32_t *)h_buf)[bad_off], FILL_PATTERN);
+        mc_free(ctx, h_verify);
+        mc_free(ctx, h_buf);
+        mc_free(ctx, d_buf);
+        mc_fini(ctx);
+        return 4;
+      }
     }
 
     if (ns < best_ns)  best_ns  = ns;
     if (ns > worst_ns) worst_ns = ns;
     sum_ns += ns;
 
-    printf("  iter %3d: d2h=%7.1f us (%5.2f GB/s)\n",
-           it, ns / 1e3, mc_test_bandwidth_gbps(n, ns));
+    printf("  iter %3d: %s=%7.1f us (%5.2f GB/s)\n",
+           it + 1, dir_label, ns / 1e3, mc_test_bandwidth_gbps(n, ns));
   }
 
   printf("summary: best=%.1f us mean=%.1f us worst=%.1f us "
-         "(%d iters, %zu bytes)\n",
+         "(%d iters, %zu bytes, dir=%s)\n",
          best_ns / 1e3, (sum_ns / args.iters) / 1e3, worst_ns / 1e3,
-         args.iters, n);
+         args.iters, n, dir_label);
 
-  printf("PASS: DRAM contains FILL_PATTERN — UVM-channel D2H ran\n");
+  printf("PASS: %s — UVM-channel transfer ran\n",
+         args.h2d ? "d_buf contains FILL_PATTERN (via untimed D2H readback)"
+                  : "DRAM contains FILL_PATTERN");
   printf("       Host did NOT ring the UVM channel's doorbell during"
          " the call.\n");
   printf("       No copy engine was involved in the doorbell write.\n");
@@ -151,9 +241,10 @@ int main(int argc, char **argv)
   printf("       BAR1+0x%x physically landed on the H100 doorbell\n",
          0x90);
   printf("       register, woke the UVM channel's PBDMA, and the\n");
-  printf("       queued D2H executed.  GPU-initiated DMA via compute,"
-         " no CUDA.\n");
+  printf("       queued %s executed.  GPU-initiated DMA via compute,"
+         " no CUDA.\n", dir_label);
 
+  mc_free(ctx, h_verify);
   mc_free(ctx, h_buf);
   mc_free(ctx, d_buf);
   mc_fini(ctx);

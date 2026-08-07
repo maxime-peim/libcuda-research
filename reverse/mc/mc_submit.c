@@ -229,12 +229,17 @@ void ring_doorbell(volatile HopperAControlGPFifo *userd,
   _mm_sfence();
 }
 
-mc_status_t mc_channel_poll_sema(mc_channel_t *ch,
+/* Poll a release-sema cell until *cell == expected, with the standard
+ * MC_TIMEOUT_MS budget.  The cell may live in sysmem (host-rung paths,
+ * sysmem-carrier paths, FB-carrier sysmem-dst path) or in HBM via a
+ * BAR1-aliased CPU mapping (FB-carrier HBM-dst path).  The caller picks
+ * which cell + expected payload to poll. */
+mc_status_t mc_channel_poll_sema(volatile uint32_t *cell, uint32_t expected,
                                         struct timespec t0)
 {
   struct timespec now;
   long elapsed_ms;
-  while (*ch->sema_ptr != ch->sema_payload)
+  while (*cell != expected)
   {
     volatile int s;
     clock_gettime(CLOCK_MONOTONIC, &now);
@@ -242,7 +247,7 @@ mc_status_t mc_channel_poll_sema(mc_channel_t *ch,
                  + (now.tv_nsec - t0.tv_nsec) / 1000000;
     if (elapsed_ms > MC_TIMEOUT_MS) return MC_ETIMEOUT;
     for (s = 0; s < MC_POLL_SPIN_ITERATIONS
-                && *ch->sema_ptr != ch->sema_payload; s++)
+                && *cell != expected; s++)
       ;
   }
   return MC_OK;
@@ -270,7 +275,12 @@ mc_status_t mc_channel_arm(mc_channel_t *ch,
   entries_used = write_gp_entry(ch->gpfifo_ring, ch->gp_put,
                                 MC_GPFIFO_ENTRIES, ch->pb_gpu_va, 0,
                                 copy_bytes);
-  ch->gp_put += entries_used;
+  /* PBDMA reads USERD GPPut as a ring INDEX (Hopper NVC86F GPPut is
+   * the offset into the GPFIFO ring, not a monotonic counter), so
+   * the mirror must wrap modulo MC_GPFIFO_ENTRIES every advance.
+   * UVM does the same in uvm_channel.c (cpu_put = (cpu_put + 1) %
+   * num_gpfifo_entries). */
+  ch->gp_put = (ch->gp_put + entries_used) % MC_GPFIFO_ENTRIES;
   _mm_sfence();
 
   /* Advance USERD GPPut so PBDMA sees the new entry on its next
@@ -302,14 +312,33 @@ mc_status_t mc_channel_submit(mc_channel_t *ch,
   entries_used = write_gp_entry(ch->gpfifo_ring, ch->gp_put,
                                 MC_GPFIFO_ENTRIES, ch->pb_gpu_va, 0,
                                 copy_bytes);
-  ch->gp_put += entries_used;
+  /* See mc_channel_arm: GPPut wraps modulo MC_GPFIFO_ENTRIES. */
+  ch->gp_put = (ch->gp_put + entries_used) % MC_GPFIFO_ENTRIES;
   _mm_sfence();
 
   /* ring_doorbell does USERD GPPut + sfence + BAR1 doorbell + sfence
    * internally — the two writes that submit work on Hopper. */
   ring_doorbell(ch->userd, ch->gp_put, vf_doorbell, ch->work_submit_token);
 
-  rc = mc_channel_poll_sema(ch, t0);
+  rc = mc_channel_poll_sema(ch->sema_ptr, ch->sema_payload, t0);
+  if (rc != MC_OK)
+  {
+    uint32_t userd_gp_put = ch->userd ? ch->userd->GPPut : 0xffffffffu;
+    uint32_t userd_gp_get = ch->userd ? ch->userd->GPGet : 0xffffffffu;
+    uint32_t sema_actual  = ch->sema_ptr ? *ch->sema_ptr : 0xffffffffu;
+    WARN_LOG("mc_channel_submit: poll failed rc=%d role=%d type=%d vas=%d "
+             "h_channel=0x%x gp_put_mirror=0x%x USERD{GPPut=0x%x GPGet=0x%x} "
+             "sema_ptr=%p sema_gpu_va=0x%llx sema_actual=0x%x "
+             "sema_expected=0x%x pb_cpu=%p pb_gpu_va=0x%llx copy_bytes=%u "
+             "entries_used=%u work_token=0x%x",
+             rc, (int)ch->role, (int)ch->type, (int)ch->vas_id,
+             ch->h_channel, ch->gp_put, userd_gp_put, userd_gp_get,
+             (const void *)ch->sema_ptr,
+             (unsigned long long)ch->sema_gpu_va, sema_actual,
+             ch->sema_payload, (void *)ch->pb_cpu,
+             (unsigned long long)ch->pb_gpu_va, copy_bytes, entries_used,
+             ch->work_submit_token);
+  }
   return rc;
 }
 

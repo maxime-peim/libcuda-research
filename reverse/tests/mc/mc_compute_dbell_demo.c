@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: MIT
  *
  * mc_compute_dbell_demo.c — has the GPU SM thread run
- * mc_doorbell_kernel and write a token into a sysmem cell that
- * the host can read back.  No BAR1, no doorbell-write side
- * effect — just "did the SASS execute?".
+ * mc_doorbell_kernel and write a token into a host-visible scratch
+ * cell that the host can read back.  No doorbell-write side effect —
+ * just "did the SASS execute?".
  *
  * Sequence:
  *   1. mc_init.  Brings up the UVM, DMA, and compute channels.
@@ -120,7 +120,7 @@ int main(void)
 
   int ok = (observed == token);
   if (ok)
-    printf("PASS: GPU SM thread wrote 0x%08x to sysmem cell via\n"
+    printf("PASS: GPU SM thread wrote 0x%08x to host-visible scratch via\n"
            "      mc_doorbell_kernel(dst, token) executed under\n"
            "      HOPPER_COMPUTE_A on mc's compute channel.\n",
            token);

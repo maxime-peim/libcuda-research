@@ -41,6 +41,7 @@
 #include "class/cl2080.h"        /* NV20_SUBDEVICE_0 */
 #include "class/cl0040.h"        /* NV01_MEMORY_LOCAL_USER */
 #include "class/cl003e.h"        /* NV01_MEMORY_SYSTEM */
+#include "class/cl0071.h"        /* NV01_MEMORY_SYSTEM_OS_DESCRIPTOR */
 #include "class/cla06c.h"        /* KEPLER_CHANNEL_GROUP_A */
 #include "class/cl90f1.h"        /* FERMI_VASPACE_A */
 #include "class/clc86f.h"        /* HOPPER_CHANNEL_GPFIFO_A */
@@ -343,6 +344,79 @@ NvHandle rm_alloc_sysmem_at(int ctl_fd, int dev_fd, NvHandle root,
 }
 
 /*
+ * Register caller-owned host pages as an RM OS descriptor using
+ * NV01_MEMORY_SYSTEM_OS_DESCRIPTOR (class 0x71).  This is the RM half of
+ * cudaHostRegister for malloc memory: the driver pins/locks the already
+ * existing user pages and returns an hMemory handle, but mc does not
+ * mmap or otherwise allocate a new CPU alias.
+ *
+ * `page_base` and `page_covered_size` must describe the page-aligned range
+ * covering the user's [ptr, ptr+n) interval.  UVM will later map sub-ranges
+ * of this descriptor at CPU VA == GPU VA with offsets from this page_base.
+ */
+NvHandle rm_register_user_memory(int ctl_fd, int dev_fd, NvHandle root,
+                                 NvHandle device, void *page_base,
+                                 NvU64 page_covered_size)
+{
+  nv_ioctl_nvos02_parameters_with_fd p = {};
+  int                                alloc_fd, ioctl_fd;
+  long                               r;
+
+  (void)dev_fd; /* kept for signature symmetry with rm_alloc_sysmem_at */
+
+  if (page_base == NULL || page_covered_size == 0)
+    return 0;
+
+  p.params.hRoot         = root;
+  p.params.hObjectParent = device;
+  p.params.hObjectNew    = next_handle();
+  p.params.hClass        = NV01_MEMORY_SYSTEM_OS_DESCRIPTOR;
+  p.params.flags         = DRF_DEF(OS02, _FLAGS, _LOCATION, _PCI)
+                   | DRF_DEF(OS02, _FLAGS, _MAPPING, _NO_MAP)
+                   | DRF_DEF(OS02, _FLAGS, _PHYSICALITY, _NONCONTIGUOUS)
+                   | DRF_DEF(OS02, _FLAGS, _COHERENCY, _WRITE_BACK);
+  p.params.pMemory = (NvP64)(uintptr_t)page_base;
+  p.params.limit   = page_covered_size - 1;
+
+  alloc_fd = open(MC_CONTROL_DEV_PATH, O_RDWR | O_CLOEXEC);
+  ioctl_fd = open(MC_DEVICE_DEV_PATH, O_RDWR | O_CLOEXEC);
+  if (alloc_fd < 0 || ioctl_fd < 0)
+  {
+    ERROR_LOG("rm_register_user_memory: open fds: %s", strerror(errno));
+    if (alloc_fd >= 0) close(alloc_fd);
+    if (ioctl_fd >= 0) close(ioctl_fd);
+    return 0;
+  }
+  p.fd = alloc_fd;
+
+  if (rm_register_client_fd(ctl_fd, ioctl_fd) != 0)
+  {
+    close(alloc_fd);
+    close(ioctl_fd);
+    return 0;
+  }
+
+  r = ioctl(ioctl_fd,
+            _IOWR('F', NV_ESC_RM_ALLOC_MEMORY & 0xff,
+                  nv_ioctl_nvos02_parameters_with_fd),
+            &p);
+  close(ioctl_fd);
+  close(alloc_fd);
+  if (r != 0 || p.params.status != NV_OK)
+  {
+    ERROR_LOG("rm_register_user_memory failed: r=%ld status=0x%x base=%p size=0x%llx",
+              r, p.params.status, page_base,
+              (unsigned long long)page_covered_size);
+    return 0;
+  }
+
+  DEBUG_LOG("rm_register_user_memory: h=0x%x base=%p size=0x%llx",
+            p.params.hObjectNew, page_base,
+            (unsigned long long)page_covered_size);
+  return p.params.hObjectNew;
+}
+
+/*
  * Allocate a FERMI_VASPACE_A (class 0x90f1) GPU VA space object.
  *
  * This VA space becomes the channel's GPU MMU page-table root.  Buffers
@@ -631,6 +705,58 @@ void *rm_map_memory_at(int ctl_fd, const char *dev_path, NvHandle client,
   return addr;
 }
 
+/* Allocate a vidmem region and return both an hMemory + a host-visible
+ * BAR1-aliased CPU mapping of it.  Used by the FB-carrier VAS to back
+ * channel resources (PB / GPFIFO / USERD / sema) with FB pages while
+ * still letting the host read/write via BAR1 for one-time setup
+ * pushbuffer writes and failure-path diagnostics.
+ *
+ * Backing path:
+ *   - rm_alloc_vidmem allocates the FB region (NV01_MEMORY_LOCAL_USER).
+ *   - rm_map_memory_at with NVOS33_FLAGS_MAPPING_REFLECTED produces a
+ *     BAR1 alias the kernel kbus layer routes through pBar1VF.
+ *
+ * The host-visible CPU pointer's load/store traffic on the hot path is
+ * minimal: PBDMA reads PB/GPFIFO/USERD through the GPU MMU PTE, not
+ * BAR1, and the SM-author kernel writes them through the same path.
+ * BAR1 is only used at bring-up (host-built SET_OBJECT pushbuffer) and
+ * for diagnostics.
+ *
+ * If `want_va` is non-NULL, MAP_FIXED anchors the BAR1 mmap at that
+ * address (Paper-F1 VA pool placement).  Returns the new vidmem
+ * hMemory on success and stores the BAR1 CPU VA in *out_cpu_va.  On
+ * failure returns 0; the vidmem allocation is rolled back. */
+NvHandle rm_alloc_vidmem_bar1_at(int ctl_fd, const char *dev_path,
+                                 NvHandle client, NvHandle device,
+                                 NvU64 size, void *want_va,
+                                 void **out_cpu_va)
+{
+  NvHandle h_mem;
+  void    *cpu;
+
+  if (out_cpu_va == NULL) return 0;
+
+  h_mem = rm_alloc_vidmem(ctl_fd, client, device, size, NULL);
+  if (h_mem == 0) return 0;
+
+  cpu = rm_map_memory_at(ctl_fd, dev_path, client, device, h_mem,
+                         /*offset=*/0, size,
+                         DRF_NUM(OS33, _FLAGS, _MAPPING,
+                                 NVOS33_FLAGS_MAPPING_REFLECTED),
+                         want_va);
+  if (cpu == NULL)
+  {
+    /* Roll back: the vidmem alloc lives independently of the mapping
+     * so we can free it directly without an unmap step. */
+    rm_free_handle(ctl_fd, client, device, h_mem,
+                   "rm_alloc_vidmem_bar1_at_rollback");
+    return 0;
+  }
+
+  *out_cpu_va = cpu;
+  return h_mem;
+}
+
 /* Convenience wrapper: rm_map_memory without pre-reserved want_va — RM's
  * pLinearAddress is used as the mmap target.  Used for the two
  * HOPPER_USERMODE_A register windows, which are the only mappings that
@@ -849,10 +975,12 @@ NvHandle rm_alloc_tsg(int ctl_fd, NvHandle root, NvHandle device,
 /*
  * Allocate a HOPPER_CHANNEL_GPFIFO_A (class 0xC86F) parented on a TSG.
  * Two invariants:
- *   - engine_type must match the TSG's engineType (the TSG engine-Id cross-check in kernel_channel.c).
- *   - hVASpace MUST be zero when the parent is a TSG — the channel
- *     inherits the TSG's VA space.  kernel_channel.c:416 rejects
- *     non-zero hVASpace for TSG-parented channels.  We never set it.
+ *   - engine_type must match the TSG's engineType (the TSG engine-Id
+ *     cross-check in kernel_channel.c).
+ *   - hVASpace and hHandleVASpace MUST be zero when the parent is a
+ *     TSG — the channel inherits the TSG's VA space.  kernel_channel.c
+ *     rejects non-zero channel-level VAS fields for TSG-parented
+ *     channels.  We never set them.
  * gp_fifo_offset is the GPU VA of the GPFIFO ring (under UVM, equals
  * the CPU VA — Paper F1).  h_userd + userd_offset identify the
  * channel's USERD slot inside a caller-provided memory handle (the
@@ -870,7 +998,8 @@ NvHandle rm_alloc_channel(int ctl_fd, NvHandle root, NvHandle tsg,
     .engineType      = engine_type,
     .hUserdMemory[0] = h_userd,
     .userdOffset[0]  = userd_offset,
-    /* hVASpace deliberately left 0 — inherited from TSG parent. */
+    .hVASpace        = 0,
+    .hHandleVASpace  = 0,
   };
   return rm_alloc(ctl_fd, root, tsg, HOPPER_CHANNEL_GPFIFO_A, &chan_params);
 }

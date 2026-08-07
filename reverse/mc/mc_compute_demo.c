@@ -155,9 +155,9 @@ mc_status_t mc_compute_doorbell_kernel(mc_ctx_t *ctx, uint64_t dst_gpu_va,
   uint32_t                  copy_bytes;
 
   if (ctx == NULL) return MC_EINVAL;
-  if (!ctx->ch[MC_CH_COMPUTE].h_channel) return MC_EINTERNAL;
+  ch = mc_vas_find_channel(&ctx->vas[MC_VAS_SYSMEM_CARRIER], MC_ROLE_COMPUTE);
+  if (ch == NULL || !ch->h_channel) return MC_EINTERNAL;
 
-  ch  = &ctx->ch[MC_CH_COMPUTE];
   ex  = &ch->x.compute;
   mod = &ex->module;
 
@@ -233,16 +233,19 @@ mc_status_t mc_compute_doorbell_kernel(mc_ctx_t *ctx, uint64_t dst_gpu_va,
 mc_status_t mc_compute_get_scratch(mc_ctx_t *ctx, volatile uint32_t **cpu_ptr,
                                    uint64_t *gpu_va)
 {
-  /* Trivial getter over the dedicated scratch dword that
-   * mc_compute_module_init allocates via mc_va_space_alloc_scratch.
+  /* Trivial getter over the dedicated host-visible scratch dword that
+   * mc_compute_module_init allocates and maps into the carrier VAS.
    * The dword has its own RM hMemory and GPU MMU PTE; the carrier
    * VAS owns both for the lifetime of the compute channel. */
   const struct mc_compute_module *mod;
+  mc_channel_t *cmp;
 
   if (ctx == NULL || cpu_ptr == NULL || gpu_va == NULL) return MC_EINVAL;
-  if (!ctx->ch[MC_CH_COMPUTE].h_channel) return MC_EINTERNAL;
 
-  mod = &ctx->ch[MC_CH_COMPUTE].x.compute.module;
+  cmp = mc_vas_find_channel(&ctx->vas[MC_VAS_SYSMEM_CARRIER], MC_ROLE_COMPUTE);
+  if (cmp == NULL || !cmp->h_channel) return MC_EINTERNAL;
+  mod = &cmp->x.compute.module;
+
   if (mod->scratch_cpu == NULL || mod->scratch_gpu_va == 0)
     return MC_EINTERNAL;
 
@@ -251,20 +254,26 @@ mc_status_t mc_compute_get_scratch(mc_ctx_t *ctx, volatile uint32_t **cpu_ptr,
   return MC_OK;
 }
 
-/* ── SM-thread-rung D2H ────────────────────────────────────────────
- * Same chain-of-evidence as mc_memcpy_d2h_gpu_doorbell_ce, but the
+/* ── SM-thread-rung copy ───────────────────────────────────────────
+ * Same chain-of-evidence as mc_memcpy_gpu_doorbell_ce, but the
  * GPU-issued BAR1 doorbell write is performed by an SM thread of
  * mc_doorbell_kernel rather than by the DMA channel's CE LAUNCH_DMA.
  * No copy engine is involved in the doorbell ring — just a single
  * warp's STG.E.STRONG.SYS to a GPU-mapped BAR1 page.
  *
+ * Direction is inferred from which user pointer was returned by
+ * mc_malloc_host vs mc_malloc_device.  Both must live in MC_VAS_UVM
+ * (the chain primary is the UVM CE channel).
+ *
  * Both timeouts (compute sema then UVM-channel sema) are charged
  * against the same wall-clock budget so a wedged UVM channel can't
  * hide behind the compute kernel having succeeded.
  */
-mc_status_t mc_memcpy_d2h_gpu_doorbell_sm(mc_ctx_t *ctx, void *dst_host,
-                                          const void *src_dev, size_t n)
+mc_status_t mc_memcpy_gpu_doorbell_sm(mc_ctx_t *ctx, void *dst,
+                                      const void *src, size_t n)
 {
+  const mc_alloc_t     *src_slot;
+  const mc_alloc_t     *dst_slot;
   mc_channel_t         *prim;
   mc_channel_t         *dma;
   mc_channel_t         *cmp;
@@ -274,25 +283,59 @@ mc_status_t mc_memcpy_d2h_gpu_doorbell_sm(mc_ctx_t *ctx, void *dst_host,
   struct timespec       t0;
   mc_status_t           rc;
 
-  if (ctx == NULL || dst_host == NULL || src_dev == NULL) return MC_EINVAL;
-  if (n == 0 || n > MC_MAX_TRANSFER_SIZE)                 return MC_EINVAL;
-  dbell_gpu_va = ctx->vas[MC_VAS_PRIMARY_CARRIER].dbell_gpu_va;
-  if (!ctx->ch[MC_CH_DMA].h_channel || !dbell_gpu_va)
+  if (ctx == NULL || dst == NULL || src == NULL) return MC_EINVAL;
+  if (n == 0 || n > MC_MAX_TRANSFER_SIZE)        return MC_EINVAL;
+
+  /* Same alloc-table validation as mc_memcpy_gpu_doorbell_ce / mc_memcpy:
+   * both pointers must come from mc_malloc_* on this ctx, share a VAS,
+   * and the chain primary is the UVM channel — so MC_VAS_UVM only. */
+  src_slot = alloc_table_lookup(ctx, src);
+  dst_slot = alloc_table_lookup(ctx, dst);
+  if (src_slot == NULL || dst_slot == NULL)
+  {
+    WARN_LOG("mc_memcpy_gpu_doorbell_sm: src=%p dst=%p — at least one "
+             "pointer not in alloc table; both must come from mc_malloc_* "
+             "on this ctx", src, dst);
+    return MC_EINVAL;
+  }
+  if (src_slot->vas != MC_VAS_UVM || dst_slot->vas != MC_VAS_UVM)
+  {
+    WARN_LOG("mc_memcpy_gpu_doorbell_sm: src VAS=%d dst VAS=%d; both "
+             "buffers must live in MC_VAS_UVM (the chain primary is the "
+             "UVM CE channel)", (int)src_slot->vas, (int)dst_slot->vas);
+    return MC_EINVAL;
+  }
+  if (src_slot->size < n || dst_slot->size < n)
+  {
+    WARN_LOG("mc_memcpy_gpu_doorbell_sm: transfer size %zu exceeds buffer "
+             "(src=%llu, dst=%llu)", n,
+             (unsigned long long)src_slot->size,
+             (unsigned long long)dst_slot->size);
+    return MC_EINVAL;
+  }
+
+  dbell_gpu_va = ctx->vas[MC_VAS_SYSMEM_CARRIER].dbell_gpu_va;
+
+  dma = mc_vas_find_channel(&ctx->vas[MC_VAS_SYSMEM_CARRIER], MC_ROLE_HOST_DMA);
+  cmp = mc_vas_find_channel(&ctx->vas[MC_VAS_SYSMEM_CARRIER], MC_ROLE_COMPUTE);
+  if (dma == NULL || !dma->h_channel || !dbell_gpu_va)
     return MC_EINTERNAL;
-  if (!ctx->ch[MC_CH_COMPUTE].h_channel)
+  if (cmp == NULL || !cmp->h_channel)
     return MC_EINTERNAL;
 
-  prim = &ctx->ch[MC_CH_PRIMARY];
+  prim = mc_vas_find_channel(&ctx->vas[MC_VAS_UVM], MC_ROLE_UVM_CE);
+  if (prim == NULL) return MC_EINTERNAL;
 
-  /* Arm primary's HBM->DRAM submission: build pushbuffer + write
-   * GPFIFO entry + advance USERD GPPut, but DO NOT ring primary's
-   * vf_doorbell.  Same shape as mc_memcpy_d2h_gpu_doorbell_ce. */
+  /* Arm primary's submission: build pushbuffer + write GPFIFO entry +
+   * advance USERD GPPut, but DO NOT ring primary's vf_doorbell.  Same
+   * shape as mc_memcpy_gpu_doorbell_ce, including direction-agnostic
+   * src/dst handoff to mc_write_transfer_methods. */
   prim->sema_payload++;
   if (prim->sema_payload == 0) prim->sema_payload = 1;
 
   prim_pb_end = mc_write_transfer_methods(
       prim->pb_cpu,
-      (NvU64)(uintptr_t)src_dev, (NvU64)(uintptr_t)dst_host,
+      src_slot->gpu_va, dst_slot->gpu_va,
       (uint32_t)n, prim->sema_gpu_va, prim->sema_payload);
   prim_copy_bytes = (uint32_t)((prim_pb_end - prim->pb_cpu) * sizeof(uint32_t));
 
@@ -317,5 +360,5 @@ mc_status_t mc_memcpy_d2h_gpu_doorbell_sm(mc_ctx_t *ctx, void *dst_host,
   /* Poll primary sema with the t0 captured before arm so the
    * end-to-end budget can't hide a wedged primary behind a
    * successful compute launch. */
-  return mc_channel_poll_sema(prim, t0);
+  return mc_channel_poll_sema(prim->sema_ptr, prim->sema_payload, t0);
 }

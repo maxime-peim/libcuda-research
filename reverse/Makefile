@@ -36,7 +36,7 @@
 
 # ── Toolchain ──────────────────────────────────────────────────────────────
 CC        ?= gcc
-NVCC      ?= $(shell command -v nvcc 2>/dev/null || echo /usr/local/cuda/bin/nvcc)
+NVCC      ?= $(shell command -v nvcc      2>/dev/null || echo /usr/local/cuda/bin/nvcc)
 CUOBJDUMP ?= $(shell command -v cuobjdump 2>/dev/null || echo /usr/local/cuda/bin/cuobjdump)
 NVCC_ARCH ?= native
 CUDA_INC  ?= /usr/local/cuda/include
@@ -46,10 +46,9 @@ REPO_ROOT := $(realpath ..)
 # ── Flags ──────────────────────────────────────────────────────────────────
 # Warnings on, but allow unused helpers: the sources keep a few reference
 # implementations around as documentation.
+# libmc talks to the driver directly, so it needs the in-tree SDK headers.
 CFLAGS       ?= -O2 -g -Wall -Wno-unused-function
-# libmc talks to the driver directly, so it needs the in-tree SDK headers
-# (class definitions, NVOS structs, UVM ioctl definitions).
-SDK_INC      := -I$(REPO_ROOT)/src/common/sdk/nvidia/inc \
+SDK_INC     := -I$(REPO_ROOT)/src/common/sdk/nvidia/inc \
                 -I$(REPO_ROOT)/src/common/sdk/nvidia/inc/class \
                 -I$(REPO_ROOT)/src/common/sdk/nvidia/inc/alloc \
                 -I$(REPO_ROOT)/src/nvidia/arch/nvalloc/unix/include \
@@ -69,8 +68,10 @@ PBCAP_LDLIBS ?= -ldl -lpthread
 
 # sm_owner kernel build flags.  -O2 is required for nvcc to fold our
 # DRF-style header constants into immediate operands; -O0 leaves them
-# as runtime register loads.  sm_90 is pinned explicitly because the
-# Hopper-specific .sys store scope is sm_90+.
+# as runtime register loads which still works but obscures the SASS.
+# We pin sm_90 explicitly because Hopper-specific instructions (the
+# .sys store scope) are sm_90+. -lineinfo helps cuobjdump --dump-sass
+# annotate output but is harmless if the user has no debug interest.
 NVCC_KERNEL_FLAGS ?= -arch=sm_90 --cubin -O2 -lineinfo -Imc
 
 # ── Artefacts ──────────────────────────────────────────────────────────────
@@ -132,36 +133,6 @@ bin/%: tests/cuda/%.cu | bin
 $(PBCAP): tools/pbcap.c | lib
 	$(CC) $(PBCAP_CFLAGS) -shared -I$(CUDA_INC) -o $@ $< $(PBCAP_LDLIBS)
 
-# libmc: the ioctl + submission machinery behind a small
-# CUDA-runtime-like public API (see reverse/mc/mc.h).  Needs the SDK
-# headers, so it uses SDK_INC; compiled -fPIC and linked -shared.
-# mc_internal.h is a prerequisite only for rebuild tracking — public
-# consumers include mc.h and nothing else.
-#
-# Sources (one TU per topical band):
-#   mc_rm.c            — RM ioctl wrappers (alloc/free/map/control + typed
-#                        object allocators).  Hosts mc_debug() too.
-#   mc_uvm.c           — UVM ioctl wrappers (initialize, register/unregister,
-#                        map/unmap external allocation, register channel).
-#   mc_submit.c        — method-stream + GPFIFO entry builders +
-#                        mc_channel_arm/submit/poll_sema + drain_channel.
-#   mc_vaspace.c       — VA pool (Paper-F1 anchor) + mc_va_space_* helpers.
-#   mc_core.c          — lifecycle: per-kind channel init/fini + mc_init/
-#                        mc_fini + mc_malloc/mc_free + mc_memcpy + the two
-#                        CE-doorbell demos.
-#   mc_compute_qmd.c   — Hopper QMD V04 builder + embedded SASS.
-#   mc_compute_demo.c  — HOPPER_COMPUTE_A demos (mc_compute_doorbell_kernel,
-#                        mc_memcpy_d2h_gpu_doorbell_sm, mc_compute_get_scratch).
-$(LIBMC): mc/mc_core.c mc/mc_rm.c mc/mc_uvm.c mc/mc_submit.c \
-                 mc/mc_vaspace.c mc/mc_compute_qmd.c \
-                 mc/mc_compute_demo.c \
-                 mc/mc.h mc/mc_internal.h \
-                 mc/mc_compute_qmd.h | lib
-	$(CC) $(CFLAGS) -fPIC $(SDK_INC) -Imc -shared -o $@ \
-	    mc/mc_core.c mc/mc_rm.c mc/mc_uvm.c mc/mc_submit.c \
-	    mc/mc_vaspace.c mc/mc_compute_qmd.c \
-	    mc/mc_compute_demo.c
-
 # ── sm_owner kernel: .cu -> .cubin -> .text bytes -> generated .h ─────────
 #
 # The sm_owner kernel (mc/kernels/sm_owner.cu) is a single-thread Hopper
@@ -199,8 +170,60 @@ mc/mc_sm_owner_sass.h: mc/kernels/sm_owner.cu
 	 fi;                                                                  \
 	 dd if=mc/kernels/sm_owner.cubin of=mc/kernels/sm_owner.text.bin      \
 	    bs=1 skip=$$(printf '%d' $$OFF) count=$$(printf '%d' $$SZ) status=none
+	@# Sanity-check: the kernel must emit at least 19 system-scope
+	@# strong-ordered global stores (16 × STG.E.STRONG.SYS for the
+	@# PB method dwords + 1 × STG.E.64.STRONG.SYS for the GPFIFO
+	@# entry + 1 × STG.E.STRONG.SYS for USERD GPPut + 1 × for the
+	@# BAR1 doorbell).  If NVCC ever weakens any of these to plain
+	@# STG.E.SYS or coalesces them, PBDMA could observe PB / GPFIFO
+	@# / USERD writes out of order.  PTX-level we requested
+	@# `st.relaxed.sys.global` which has lowered to STG.E.STRONG.SYS
+	@# (or STG.E.64.STRONG.SYS for u64 stores) on every cuda toolkit
+	@# we've tested (sm_90, CUDA 13.x), but the lowering isn't an
+	@# ABI guarantee — fail the build loudly if it changes rather
+	@# than discovering it as an intermittent runtime failure.
+	@COUNT=$$($(CUOBJDUMP) --dump-sass mc/kernels/sm_owner.cubin             \
+	          | grep -cE 'STG\.E(\.[0-9]+)?\.STRONG\.SYS');               \
+	 if [ "$$COUNT" -lt 19 ]; then                                        \
+	   echo "ERROR: sm_owner.cubin contains only $$COUNT STG.E.*STRONG.SYS"\
+	        " instructions; expected >= 19 (16 PB + GPFIFO + GPPut +"     \
+	        " doorbell).  NVCC may have weakened a store; re-check"       \
+	        " sm_owner.cu inline PTX and cuobjdump --dump-sass." >&2;     \
+	   exit 1;                                                            \
+	 fi
+	@# The optional on-GPU DMA-sema poll loop (compiled in, disabled at
+	@# run time — the host passes dma_sema_poll_va = 0) is `__threadfence_system()`
+	@# + `ld.global.cg`, which lowers to MEMBAR.SC.SYS + LDG.E.STRONG.GPU
+	@# on Hopper.  The LDG bypasses L1 (.cg cache class), the MEMBAR
+	@# provides system-scope ordering — the combination is what makes
+	@# the SM observe PBDMA's CE-released sema (proven by the N=1000
+	@# stability sweep; see docs/findings.md §14).
+	@# Earlier `.relaxed.sys` lowering to LDG.E.STRONG.SYS spun on
+	@# stale L1 forever.
+	@# Gate on both the GPU-scope LDG inside the loop AND at least one
+	@# MEMBAR.SC.SYS — losing either would silently break the
+	@# cross-engine handshake.
+	@LCOUNT=$$($(CUOBJDUMP) --dump-sass mc/kernels/sm_owner.cubin            \
+	          | grep -cE 'LDG\.E(\.[0-9]+)?\.STRONG\.GPU');                \
+	 if [ "$$LCOUNT" -lt 1 ]; then                                        \
+	   echo "ERROR: sm_owner.cubin contains 0 LDG.E.*STRONG.GPU"          \
+	        " instructions; the FB DMA-sema poll loop's"                  \
+	        " ld.global.cg did not lower to a GPU-scope strong load." >&2;\
+	   exit 1;                                                            \
+	 fi
+	@MCOUNT=$$($(CUOBJDUMP) --dump-sass mc/kernels/sm_owner.cubin            \
+	          | grep -cE 'MEMBAR\.SC\.SYS');                               \
+	 if [ "$$MCOUNT" -lt 1 ]; then                                        \
+	   echo "ERROR: sm_owner.cubin contains 0 MEMBAR.SC.SYS"              \
+	        " instructions; the per-iter __threadfence_system() in the"   \
+	        " poll loop did not lower to a system-scope memory barrier." >&2; \
+	   exit 1;                                                            \
+	 fi
 	@echo "  GEN     $@"
 	@(  echo '/*';                                                        \
+	    echo ' * SPDX-FileCopyrightText: Copyright (c) 2026 Cisco and/or its affiliates.'; \
+	    echo ' * SPDX-License-Identifier: MIT';                           \
+	    echo ' *';                                                        \
 	    echo ' * mc_sm_owner_sass.h — auto-generated by reverse/Makefile';\
 	    echo ' *';                                                        \
 	    echo ' * Source: mc/kernels/sm_owner.cu';                         \
@@ -215,8 +238,8 @@ mc/mc_sm_owner_sass.h: mc/kernels/sm_owner.cu
 	    echo '#include <stdint.h>';                                       \
 	    echo '';                                                          \
 	    SIZE=$$(stat -c '%s' mc/kernels/sm_owner.text.bin);               \
-	    REGS=$$($(CUOBJDUMP) --dump-resource-usage mc/kernels/sm_owner.cubin \
-	            2>&1                                                      \
+	    REGS=$$($(CUOBJDUMP) --dump-resource-usage                        \
+	            mc/kernels/sm_owner.cubin 2>&1                            \
 	            | sed -n 's/.*REG:\([0-9]*\).*/\1/p' | head -1);          \
 	    echo "/* SASS byte length and register count, harvested from cubin. */"; \
 	    echo "#define MC_SM_OWNER_SASS_LEN ((uint32_t)$$SIZE)";          \
@@ -235,6 +258,38 @@ mc/mc_sm_owner_sass.h: mc/kernels/sm_owner.cu
 .PHONY: sm_owner
 sm_owner: mc/mc_sm_owner_sass.h
 
+# libmc: the ioctl + submission machinery behind a small
+# CUDA-runtime-like public API (see reverse/mc/mc.h).  Uses SDK_INC for the in-tree SDK headers;
+# compiled -fPIC and linked -shared.  mc_internal.h is a prereq
+# only for rebuild tracking — public consumers include mc.h.
+#
+# Sources (one TU per topical band):
+#   mc_rm.c            — RM ioctl wrappers (alloc/free/map/control + typed
+#                        object allocators).  Hosts mc_debug() too.
+#   mc_uvm.c           — UVM ioctl wrappers (initialize, register/unregister,
+#                        map/unmap external allocation, register channel).
+#   mc_submit.c        — method-stream + GPFIFO entry builders +
+#                        mc_channel_arm/submit/poll_sema + drain_channel.
+#   mc_vaspace.c       — VA pool (Paper-F1 anchor) + mc_va_space_* helpers.
+#   mc_core.c          — lifecycle: per-kind channel init/fini + mc_init/
+#                        mc_fini + mc_malloc/mc_free + mc_memcpy + the two
+#                        CE-doorbell demos.
+#   mc_compute_qmd.c   — Hopper QMD V04 builder + embedded SASS.
+#   mc_compute_demo.c  — HOPPER_COMPUTE_A demos (mc_compute_doorbell_kernel,
+#                        mc_memcpy_gpu_doorbell_sm, mc_compute_get_scratch).
+#   mc_sm_owner.c      — SM-authored CE submission helper.  Library-internal
+#                        (declared in mc_internal.h); reached through the
+#                        public API via mc_memcpy(..., MC_XFER_SM).
+#                        Embeds the sm_owner kernel from mc_sm_owner_sass.h.
+$(LIBMC): mc/mc_core.c mc/mc_rm.c mc/mc_uvm.c mc/mc_submit.c \
+                 mc/mc_vaspace.c mc/mc_compute_qmd.c \
+                 mc/mc_compute_demo.c mc/mc_sm_owner.c \
+                 mc/mc.h mc/mc_internal.h \
+                 mc/mc_compute_qmd.h mc/mc_sm_owner_sass.h | lib
+	$(CC) $(CFLAGS) -fPIC $(SDK_INC) -Imc -shared -o $@ \
+	    mc/mc_core.c mc/mc_rm.c mc/mc_uvm.c mc/mc_submit.c \
+	    mc/mc_vaspace.c mc/mc_compute_qmd.c \
+	    mc/mc_compute_demo.c mc/mc_sm_owner.c
 
 # ── Utility ────────────────────────────────────────────────────────────────
 clean:
@@ -248,7 +303,8 @@ help:
 	@echo "  bins             build everything under bin/"
 	@echo "  libs             build everything under lib/"
 	@echo "  libpbcap         build $(PBCAP) — requires CUDA headers"
-	@echo "  libmc     build $(LIBMC) — the mc library"
+	@echo "  libmc            build $(LIBMC) — the mc library"
+	@echo "  sm_owner         regenerate mc/mc_sm_owner_sass.h from the kernel"
 	@echo "  clean            remove bin/ and lib/ directories"
 	@echo "  help             this message"
 	@echo

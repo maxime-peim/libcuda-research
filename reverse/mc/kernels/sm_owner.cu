@@ -20,7 +20,8 @@
  *
  * Pre-conditions enforced by the host glue (mc_sm_owner.c):
  *   - The compute channel and the victim DMA channel share one carrier
- *     FERMI_VASPACE_A (MC_VAS_PRIMARY_CARRIER).  Every GPU VA below is
+ *     FERMI_VASPACE_A — MC_VAS_SYSMEM_CARRIER or MC_VAS_FB_CARRIER;
+ *     this kernel is the author on both.  Every GPU VA below is
  *     therefore reachable from this kernel.
  *   - `userd_gpu_va` is the GPU VA of the HopperAControlGPFifo struct
  *     itself (i.e. the host has already added MC_USERD_OFFSET = 0x2000
@@ -56,6 +57,12 @@
 
 #include <cuda_runtime.h>
 #include <stdint.h>
+
+/* Shared host/device argument-struct layout.  See mc_sm_owner_args.h
+ * for the rationale (NVCC parameter-packing isn't an ABI guarantee;
+ * a single struct-pointer parameter is).  The Makefile passes
+ * `-I mc` to nvcc so this resolves to mc/mc_sm_owner_args.h. */
+#include "mc_sm_owner_args.h"
 
 /* ── NVC8B5 / NVC86F bit layouts mirrored from the SDK headers ──────────
  *
@@ -188,6 +195,26 @@ void stg_u64_sys(uint64_t *addr, uint64_t value)
                  : : "l"(addr), "l"(value) : "memory");
 }
 
+/* L1-bypassing load — kept for the optional on-GPU sema poll loop
+ * (gated on dma_sema_poll_va != 0; the host always passes 0 today,
+ * so the loop is dead at runtime and the host polls the active
+ * sysmem sema cell directly). The `.cg` PTX cache modifier ("cache
+ * global, bypass L1") is the semantically correct primitive for a
+ * cross-engine spin-wait on Hopper if the loop is ever re-enabled:
+ * each iteration reads through L2 directly so a fresh release-store
+ * from another agent (PBDMA's CE-released sema) isn't masked by a
+ * stale L1/LTC line cached on the first miss. Pair with
+ * `__threadfence_system();` per iteration so NVCC neither hoists the
+ * load nor eliminates the loop body. */
+__device__ __forceinline__
+uint32_t ldg_u32_cg(const uint32_t *addr)
+{
+    uint32_t v;
+    asm volatile("ld.global.cg.u32 %0, [%1];"
+                 : "=r"(v) : "l"(addr) : "memory");
+    return v;
+}
+
 __device__ __forceinline__
 void membar_sys()
 {
@@ -208,39 +235,53 @@ void membar_sys()
  * `gp_put_in + 1` (we always emit one normal GPFIFO entry — no
  * extended-base) to USERD.
  *
- * All parameters land in CB0 at NVCC-determined byte offsets starting
- * at 0x210 (the standard Hopper kernel-arg base).  The host glue
- * (mc_sm_owner.c) reads these offsets via cuobjdump and writes them
- * to CB0 directly — same pattern as the existing mc_doorbell_kernel.
- *
- * The Phase A / Phase B distinction is in the *invocation arguments*,
- * not the kernel.  Phase A invokes with src/dst pointing at small
- * sysmem cells (4-byte copy); Phase B invokes with src=HBM, dst=DRAM
- * for a real D2H.  Same SASS, different CB0 contents.
+ * Parameter ABI: a single `struct mc_sm_owner_args *` pointer at
+ * NVCC's first kernel-parameter slot (CB0[0x210] on observed CUDA
+ * 13.x).  The kernel reads each field via LDG.E.64 / LDG.E through
+ * that pointer.  The struct lives in carrier sysmem, allocated and
+ * patched by the host glue (mc_sm_owner.c).  See mc_sm_owner_args.h
+ * for the layout and the rationale (NVCC's per-parameter offset
+ * table isn't an ABI; C struct offsets are).
  */
 extern "C" __global__
-void sm_owner_kernel(uint64_t pb_gpu_va,
-                     uint64_t gpfifo_gpu_va,
-                     uint64_t userd_gpu_va,
-                     uint64_t dbell_gpu_va,
-                     uint64_t src_gpu_va,
-                     uint64_t dst_gpu_va,
-                     uint32_t size_bytes,
-                     uint64_t sema_gpu_va,
-                     uint32_t sema_payload,
-                     uint32_t work_submit_token,
-                     uint32_t gp_put_in)
+void sm_owner_kernel(struct mc_sm_owner_args *args)
 {
     /* Single-thread — invoked with grid (1,1,1) × CTA (1,1,1).
      * Defensive guard if anyone ever launches a wider grid by mistake. */
     if (threadIdx.x | threadIdx.y | threadIdx.z |
         blockIdx.x  | blockIdx.y  | blockIdx.z) return;
 
-    /* ── Phase 1: emit the 7-method NVC8B5 D2H pushbuffer ──────────────
+    /* Load all fields into locals up front.  The compiler will batch
+     * these into LDG.E.64 / LDG.E instructions; the SM front-end
+     * caches CB0 reads, so the redirection through `args` is one
+     * extra LDG.64 (the pointer) plus the same per-field reads we
+     * had as direct kernel parameters.  The bandwidth profile is
+     * unchanged. */
+    const uint64_t pb_gpu_va              = args->pb_gpu_va;
+    const uint64_t gpfifo_gpu_va          = args->gpfifo_gpu_va;
+    const uint64_t userd_gpu_va           = args->userd_gpu_va;
+    const uint64_t dbell_gpu_va           = args->dbell_gpu_va;
+    const uint64_t src_gpu_va             = args->src_gpu_va;
+    const uint64_t dst_gpu_va             = args->dst_gpu_va;
+    const uint64_t sema_gpu_va            = args->sema_gpu_va;
+    const uint64_t dma_sema_poll_va       = args->dma_sema_poll_va;
+    const uint32_t size_bytes             = args->size_bytes;
+    const uint32_t sema_payload           = args->sema_payload;
+    const uint32_t work_submit_token      = args->work_submit_token;
+    const uint32_t gp_put_in              = args->gp_put_in;
+    const uint32_t dma_sema_poll_expected = args->dma_sema_poll_expected;
+    const uint32_t dma_sema_poll_budget   = args->dma_sema_poll_budget;
+
+    /* ── Build the NVC8B5 method stream ─────────────────────────────
      *
      * Same method groups as mc_submit.c::mc_write_transfer_methods, but
-     * fused into a single LAUNCH_DMA (see above), so 16 dwords = 64 bytes
-     * rather than that function's 18.  PB writes are STG.E.STRONG.SYS so
+     * fused into a single LAUNCH_DMA (see above), so 16 dwords rather
+     * than that function's 18:
+     * SET_OBJECT (2) + OFFSET_IN_UPPER (3) + OFFSET_OUT_UPPER (3) +
+     * LINE_LENGTH_IN (2) + SET_SEMAPHORE_A triplet (4) + LAUNCH_DMA
+     * (2) = 16 dwords (64 bytes).  Direction is implicit in the
+     * (src_gpu_va, dst_gpu_va) pair the host hands in; the same byte
+     * stream serves H2D and D2H.  PB writes are STG.E.STRONG.SYS so
      * they are visible to PBDMA (sysmem) once the membar.sys below
      * retires.
      */
@@ -286,12 +327,12 @@ void sm_owner_kernel(uint64_t pb_gpu_va,
      *                                  SRC_PITCH | DST_PITCH) */
     stg_u32_sys(&pb[15], LAUNCH_DMA_FLAGS);
 
-    constexpr uint32_t pb_method_dwords = 16;
+    constexpr uint32_t pb_method_dwords = MC_SM_OWNER_PB_METHOD_DWORDS;
 
     /* Publish PB before producing GPFIFO entry. */
     membar_sys();
 
-    /* ── Phase 2: write one GPFIFO entry pointing at pb_gpu_va ─────────
+    /* ── Author one GPFIFO entry pointing at pb_gpu_va ─────────────────
      *
      * Single normal entry only — we reject pb_gpu_va >= 2^40, which
      * would require an extended-base entry that mc's carrier
@@ -322,14 +363,17 @@ void sm_owner_kernel(uint64_t pb_gpu_va,
     /* Publish GPFIFO entry before advancing GPPut. */
     membar_sys();
 
-    /* ── Phase 3: advance USERD GPPut ──────────────────────────────────
+    /* ── Advance USERD GPPut ──────────────────────────────────────────
      *
      * GPPut byte offset = 0x8C inside HopperAControlGPFifo.  Caller
      * passes userd_gpu_va already including MC_USERD_OFFSET = 0x2000
      * within the gpfifo+userd 2 MiB allocation.
      */
     constexpr uint32_t USERD_GPPUT_OFFSET = 0x8C;
-    uint32_t new_gp_put = gp_put_in + 1;
+    /* GPPut is a ring index, not a monotonic counter — wrap modulo
+     * MC_GPFIFO_ENTRIES so a 513th submission writes 1, not 513.
+     * MC_GPFIFO_ENTRIES = 512 (mask 511); see GPFIFO_ENTRY_MASK. */
+    uint32_t new_gp_put = (gp_put_in + 1) & GPFIFO_ENTRY_MASK;
     uint32_t *userd_gpput_ptr = reinterpret_cast<uint32_t *>(
         userd_gpu_va + USERD_GPPUT_OFFSET);
     stg_u32_sys(userd_gpput_ptr, new_gp_put);
@@ -337,7 +381,7 @@ void sm_owner_kernel(uint64_t pb_gpu_va,
     /* Publish GPPut before ringing the doorbell. */
     membar_sys();
 
-    /* ── Phase 4: ring the BAR1 doorbell ───────────────────────────────
+    /* ── Ring the BAR1 doorbell ───────────────────────────────────────
      *
      * MC_VF_DOORBELL_OFFSET = 0x90 inside HOPPER_USERMODE_A.  The host
      * passes dbell_gpu_va as the page base; we add 0x90 ourselves.
@@ -352,11 +396,38 @@ void sm_owner_kernel(uint64_t pb_gpu_va,
         dbell_gpu_va + VF_DOORBELL_OFFSET);
     stg_u32_sys(dbell_ptr, work_submit_token);
 
-    /* Final fence: ensure the doorbell store retires before the
-     * kernel's report-semaphore release fires.  This makes the
-     * compute kernel's "I'm done" signal a strict happens-after of
-     * the doorbell write reaching BAR1, so the host can poll the
-     * compute sema and trust that PBDMA on the victim channel has
-     * already been kicked. */
+    /* Fence the doorbell store before the report-semaphore release
+     * fires — the doorbell must have left the SM before we observe
+     * (or fail to observe) PBDMA's response. */
     membar_sys();
+
+    /* ── Optional on-GPU DMA-sema poll (currently disabled) ───────────
+     *
+     * Gated on dma_sema_poll_va != 0.  The host always passes 0 today
+     * — the active sema cell for every supported (carrier, direction)
+     * tuple is sysmem-resident and the host polls it directly after
+     * the compute report sema fires (see mc_sm_owner.c).  This loop
+     * is kept as a hook for a future HBM-resident sema path where
+     * keeping the spin-wait on-GPU would matter.  Per-iteration
+     * `__threadfence_system();` + `ld.global.cg` so NVCC neither
+     * hoists the load nor eliminates the loop body. */
+    if (dma_sema_poll_va != 0)
+    {
+        const uint32_t *sema_ptr =
+            reinterpret_cast<const uint32_t *>(dma_sema_poll_va);
+        uint32_t budget = dma_sema_poll_budget;
+        while (budget != 0)
+        {
+            __threadfence_system();
+            if (ldg_u32_cg(sema_ptr) == dma_sema_poll_expected) break;
+            budget--;
+        }
+        /* Ensure the success-or-timeout decision is globally visible
+         * before the report-semaphore release fires.  This is mostly
+         * defensive: the report sema release method runs on PBDMA
+         * after the kernel returns, so any prior LD/ST has already
+         * propagated, but the explicit fence keeps the SASS shape
+         * simple and obvious to read. */
+        membar_sys();
+    }
 }

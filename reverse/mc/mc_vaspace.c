@@ -11,10 +11,14 @@
  * sub-windows; rm_alloc_sysmem_at + rm_map_memory_at + uvm_map_buffer_at
  * MAP_FIXED into them.
  *
- * The VA-space helpers wrap rm_alloc_vaspace + rm_alloc_virtual_memory
- * into a typed mc_va_space_t.  The carrier VAS (MC_VAS_PRIMARY_CARRIER)
- * also hosts a bump allocator (mc_va_space_carve) and the BAR1 doorbell
- * PTE shared between the DMA + compute channels.
+ * The VA-space helpers wrap rm_alloc_vaspace + per-resource
+ * rm_alloc_virtual_memory into a typed mc_va_space_t.  Each NVOS46
+ * mapping into the carrier VAS allocates its own NV50_MEMORY_VIRTUAL
+ * sized to the source hMemory, mirroring libcuda's non-UVM shape: the
+ * (GPFIFO 8 KiB + SYSMEM 48 B + USERD 512 B)-per-channel triple, each in its own
+ * carrier with dmaOffset=0.  The previous bump-allocator over a single
+ * 4-GiB carrier did not match libcuda and wedged the FB-resident
+ * channel experiment.
  */
 
 #define _GNU_SOURCE
@@ -112,21 +116,24 @@ void *va_pool_reserve(NvU64 size, const char *label)
 
 /* ── VA-space helpers ──────────────────────────────────────────────────────
  *
- * The carrier VAS hands out GPU-VA windows via a simple bump allocator
- * (mc_va_space_carve).  The DMA + compute channels each grab a few 2 MiB
- * tiles for their gpfifo / pushbuffer / sema / kind-specific buffers; the
- * BAR1 doorbell PTE lives at a fixed offset inside the same VAS.
+ * Each carrier VAS is a plain FERMI_VASPACE_A.  Per-resource NV50
+ * carriers are allocated lazily by mc_va_space_dma_map_resource — one
+ * per source hMemory, sized to the source.  RM picks the GPU VA at
+ * NVOS46 time (dmaOffset=0).  Tracked in vas->carriers[] for teardown.
  *
- * Capacity is sized for today's two carrier-bound channels (DMA +
- * COMPUTE) plus head-room for a future H2D channel sharing the
- * carrier; bump the constant if more is needed.
+ * Per libcuda's recipe, channel resources break down as:
+ *   GPFIFO   8 KiB  NV01_MEMORY_LOCAL_USER (FB)
+ *   USERD    512 B  NV01_MEMORY_LOCAL_USER (FB)
+ *   PB       N MiB  NV01_MEMORY_SYSTEM (sysmem)
+ *   sema     ~48 B  NV01_MEMORY_SYSTEM (sysmem)
+ * mc's current sizes are ~2 MiB chunks per resource (see
+ * MC_GPFIFO_USERD_SIZE) — fine for now; we match libcuda's *shape*
+ * (one carrier per source) without yet matching its tight sizing.
  */
-#define MC_CARRIER_VIRT_SIZE      (256ULL * 1024ULL * 1024ULL)
-#define MC_CARRIER_DEFAULT_ALIGN  (2ULL * 1024ULL * 1024ULL)
 
 int mc_va_space_init_uvm(mc_ctx_t *ctx)
 {
-  mc_va_space_t *vas = &ctx->vas[MC_VAS_PRIMARY_UVM];
+  mc_va_space_t *vas = &ctx->vas[MC_VAS_UVM];
 
   vas->kind = MC_VAS_KIND_UVM;
   vas->h_vaspace = rm_alloc_vaspace(ctx->ctl_fd, ctx->h_client, ctx->h_device);
@@ -134,68 +141,153 @@ int mc_va_space_init_uvm(mc_ctx_t *ctx)
   return 0;
 }
 
-int mc_va_space_init_carrier(mc_ctx_t *ctx)
+/* Shared init core for both carrier kinds.  Allocates the FERMI VAS
+ * only; per-resource carriers are added on demand by
+ * mc_va_space_dma_map_resource.
+ *
+ * The caller picks which mc_ctx.vas[] slot to populate by passing its
+ * index; the kind comes along to differentiate FB from sysmem at every
+ * later kind-aware site (channel-core bring-up, teardown, dispatch). */
+static int mc_va_space_init_carrier_kind(mc_ctx_t *ctx, mc_vas_t slot,
+                                         mc_va_space_kind_t kind,
+                                         const char *label)
 {
-  mc_va_space_t *vas = &ctx->vas[MC_VAS_PRIMARY_CARRIER];
+  mc_va_space_t *vas = &ctx->vas[slot];
 
-  vas->kind = MC_VAS_KIND_CARRIER;
+  vas->kind = kind;
   vas->h_vaspace = rm_alloc_vaspace_dma(ctx->ctl_fd, ctx->h_client,
                                         ctx->h_device);
   if (!vas->h_vaspace) return -1;
-
-  vas->h_virt = rm_alloc_virtual_memory(
-      ctx->ctl_fd, ctx->h_client, ctx->h_device, vas->h_vaspace,
-      MC_CARRIER_VIRT_SIZE, &vas->virt_base);
-  if (!vas->h_virt) return -1;
-  vas->virt_size   = MC_CARRIER_VIRT_SIZE;
-  vas->virt_cursor = 0;
-  DEBUG_LOG("carrier VAS: h_virt=0x%x base=0x%llx size=%llu MiB",
-            vas->h_virt, (unsigned long long)vas->virt_base,
-            (unsigned long long)(vas->virt_size >> 20));
+  vas->carrier_count = 0;
+  DEBUG_LOG("%s VAS: h_vaspace=0x%x (per-resource carriers allocated lazily)",
+            label, vas->h_vaspace);
   return 0;
 }
 
-/* Bump-allocate a GPU-VA window inside the carrier VAS.  Returns the GPU
- * VA on success, 0 if the request would overflow virt_size.  The caller
- * still has to NV04_MAP_MEMORY_DMA something into that range; this helper
- * just hands out the address. */
-NvU64 mc_va_space_carve(mc_va_space_t *vas, NvU64 size, NvU64 align)
+int mc_va_space_init_carrier(mc_ctx_t *ctx)
 {
-  NvU64 aligned_cursor;
+  return mc_va_space_init_carrier_kind(ctx, MC_VAS_SYSMEM_CARRIER,
+                                       MC_VAS_KIND_CARRIER, "sysmem-carrier");
+}
 
-  if (vas == NULL || vas->kind != MC_VAS_KIND_CARRIER) return 0;
-  if (size == 0) return 0;
-  if (align == 0) align = MC_CARRIER_DEFAULT_ALIGN;
+int mc_va_space_init_carrier_fb(mc_ctx_t *ctx)
+{
+  return mc_va_space_init_carrier_kind(ctx, MC_VAS_FB_CARRIER,
+                                       MC_VAS_KIND_CARRIER_FB, "fb-carrier");
+}
 
-  aligned_cursor = (vas->virt_cursor + align - 1) & ~(align - 1);
-  if (aligned_cursor + size > vas->virt_size)
+/* Per-resource NV50 carrier allocation + NVOS46.  libcuda's shape:
+ * one NV50_MEMORY_VIRTUAL per source hMemory, sized to the source,
+ * NV04_MAP_MEMORY_DMA with dmaOffset=0 (RM picks GPU VA).  Returns
+ * the RM-chosen GPU VA on success, 0 on failure.
+ *
+ * The carrier is recorded in vas->carriers[] so mc_va_space_fini can
+ * NVOS47-unmap and NV01_FREE both handles.  The caller still owns
+ * h_mem's lifecycle — this helper does not free h_mem on failure. */
+NvU64 mc_va_space_dma_map_resource(mc_ctx_t *ctx, mc_va_space_t *vas,
+                                   NvHandle h_mem, NvU64 size)
+{
+  NvHandle h_carrier;
+  NvU64    gpu_va;
+
+  if (vas == NULL || !mc_va_space_kind_is_carrier(vas->kind)) return 0;
+  if (size == 0 || h_mem == 0)                                return 0;
+
+  if (vas->carrier_count >= MC_VAS_CARRIER_MAX)
   {
-    ERROR_LOG("mc_va_space_carve: out of carrier VAS (cursor=%llu need=%llu cap=%llu)",
-              (unsigned long long)aligned_cursor, (unsigned long long)size,
-              (unsigned long long)vas->virt_size);
+    ERROR_LOG("mc_va_space_dma_map_resource: carrier table full "
+              "(%d entries, increase MC_VAS_CARRIER_MAX)",
+              vas->carrier_count);
     return 0;
   }
-  vas->virt_cursor = aligned_cursor + size;
-  return vas->virt_base + aligned_cursor;
+
+  /* Per-resource carrier: NV50_MEMORY_VIRTUAL sized to `size`, in the
+   * caller's hVASpace.  RM will reject sub-page sizes — round up to
+   * one MMU page (4 KiB) at minimum. */
+  NvU64 carrier_size = (size + 0xFFFULL) & ~0xFFFULL;
+  h_carrier = rm_alloc_virtual_memory(ctx->ctl_fd, ctx->h_client,
+                                      ctx->h_device, vas->h_vaspace,
+                                      carrier_size, NULL);
+  if (!h_carrier) return 0;
+
+  /* dmaOffset=0 → RM picks the GPU VA from the carrier's range. */
+  gpu_va = rm_map_memory_dma(ctx->ctl_fd, ctx->h_client, ctx->h_device,
+                             h_carrier, h_mem, 0, size, 0);
+  if (!gpu_va)
+  {
+    rm_free_handle(ctx->ctl_fd, ctx->h_client, ctx->h_device, h_carrier,
+                   "carrier_rollback");
+    return 0;
+  }
+
+  vas->carriers[vas->carrier_count++] = (mc_resource_carrier_t){
+      .h_carrier = h_carrier,
+      .h_mem     = h_mem,
+      .gpu_va    = gpu_va,
+      .size      = size,
+  };
+  return gpu_va;
+}
+
+/* Release the per-resource carrier(s) mapping `h_mem` into `vas`.
+ * NVOS47-unmap each match, NV01_FREE the carrier handle, then shift
+ * survivors down in vas->carriers[].  Caller invokes this BEFORE
+ * freeing h_mem (channel teardown), so the NVOS47 still has a valid
+ * source object.
+ *
+ * Cost: O(carrier_count) per call.  carrier_count <= MC_VAS_CARRIER_MAX
+ * (16) — fine. */
+void mc_va_space_release_carrier(mc_ctx_t *ctx, mc_va_space_t *vas,
+                                 NvHandle h_mem)
+{
+  int i, j;
+
+  if (ctx == NULL || vas == NULL) return;
+  if (ctx->ctl_fd < 0 || ctx->h_client == 0) return;
+  if (h_mem == 0) return;
+  if (!mc_va_space_kind_is_carrier(vas->kind)) return;
+
+  for (i = 0; i < vas->carrier_count; )
+  {
+    mc_resource_carrier_t *rc = &vas->carriers[i];
+    if (rc->h_mem != h_mem)
+    {
+      i++;
+      continue;
+    }
+    if (rc->gpu_va)
+      rm_unmap_memory_dma(ctx->ctl_fd, ctx->h_client, ctx->h_device,
+                          rc->h_carrier, rc->h_mem, rc->gpu_va);
+    if (rc->h_carrier)
+      rm_free_handle(ctx->ctl_fd, ctx->h_client, ctx->h_device,
+                     rc->h_carrier, "vas.carrier_release");
+    /* Compact the table: shift survivors down. */
+    for (j = i + 1; j < vas->carrier_count; j++)
+      vas->carriers[j - 1] = vas->carriers[j];
+    vas->carrier_count--;
+    /* Don't increment i — the slot we just compacted into may also
+     * match (shouldn't, but cheap). */
+  }
 }
 
 /* Install the BAR1 USERMODE_A doorbell page as a PTE inside the carrier
  * VAS.  Stores the resulting GPU VA on the VAS itself so every channel
  * bound to this VAS sees the same doorbell address.  Idempotent: if the
- * PTE is already installed (dbell_gpu_va != 0), returns success. */
+ * PTE is already installed (dbell_gpu_va != 0), returns success.
+ *
+ * The doorbell page gets its own per-resource NV50 carrier just like
+ * any other resource — no shared mega-carrier. */
 int mc_va_space_install_doorbell_pte(mc_ctx_t *ctx, mc_va_space_t *vas)
 {
   NvU64 gpu_va;
 
-  if (vas == NULL || vas->kind != MC_VAS_KIND_CARRIER) return -1;
+  if (vas == NULL || !mc_va_space_kind_is_carrier(vas->kind)) return -1;
   if (vas->dbell_gpu_va) return 0;
 
-  gpu_va = mc_va_space_carve(vas, MC_USERMODE_SIZE, MC_USERMODE_SIZE);
+  gpu_va = mc_va_space_dma_map_resource(ctx, vas, ctx->h_usermode_bar1,
+                                        MC_USERMODE_SIZE);
   if (!gpu_va) return -1;
-  if (rm_map_memory_dma(ctx->ctl_fd, ctx->h_client, ctx->h_device,
-                        vas->h_virt, ctx->h_usermode_bar1, 0,
-                        MC_USERMODE_SIZE, gpu_va) != gpu_va)
-    return -1;
+
   vas->dbell_gpu_va = gpu_va;
   DEBUG_LOG("BAR1 doorbell PTE installed in carrier VAS at gpu_va=0x%llx",
             (unsigned long long)gpu_va);
@@ -220,18 +312,17 @@ NvU64 mc_va_space_alloc_scratch(mc_ctx_t *ctx, mc_va_space_t *vas,
   NvHandle h_mem;
   void    *cpu = NULL;
 
-  if (vas == NULL || vas->kind != MC_VAS_KIND_CARRIER) return 0;
-  if (size == 0) return 0;
+  (void)align;  /* RM picks the GPU VA in the per-resource carrier path. */
 
-  gpu_va = mc_va_space_carve(vas, size, align ? align : 0x1000);
-  if (!gpu_va) return 0;
+  if (vas == NULL || !mc_va_space_kind_is_carrier(vas->kind)) return 0;
+  if (size == 0) return 0;
 
   h_mem = rm_alloc_sysmem_at(ctx->ctl_fd, ctx->dev_fd, ctx->h_client,
                              ctx->h_device, size, NULL, &cpu);
   if (!h_mem || cpu == NULL) return 0;
 
-  if (rm_map_memory_dma(ctx->ctl_fd, ctx->h_client, ctx->h_device,
-                        vas->h_virt, h_mem, 0, size, gpu_va) != gpu_va)
+  gpu_va = mc_va_space_dma_map_resource(ctx, vas, h_mem, size);
+  if (!gpu_va)
   {
     rm_free_handle(ctx->ctl_fd, ctx->h_client, ctx->h_device, h_mem,
                    "scratch_rollback");
@@ -243,30 +334,131 @@ NvU64 mc_va_space_alloc_scratch(mc_ctx_t *ctx, mc_va_space_t *vas,
   return gpu_va;
 }
 
-void mc_va_space_fini(mc_ctx_t *ctx, mc_va_space_id_t id)
+/* Allocate `size` bytes of vidmem (HBM), DMA-map it into the carrier
+ * VAS, and return the GPU VA.  Counterpart to mc_va_space_alloc_scratch
+ * for HBM-backed buffers — used by the upcoming carrier-VAS arm of
+ * mc_malloc_device.
+ *
+ * Vidmem allocs have no CPU alias; the caller gets only an hMemory
+ * handle (for free) and a GPU VA (for use in CE submissions).
+ *
+ * Alignment defaults to 2 MiB when caller passes 0.  RM picks a vidmem
+ * PTE page size based on the allocation size:
+ *
+ *   small allocs (~ <= 1 MiB)   → 64 KiB pages   (BAR1 small page)
+ *   large allocs (>= ~64 MiB)   → 2 MiB pages    (BAR1 big page)
+ *
+ * The page size determines the GPU-VA alignment RM accepts; passing a
+ * 64-KiB-aligned GPU VA for a 64-MiB allocation gets rejected with
+ * `dmaAllocMapping_GM107: Virtual address ... is not compatible with
+ * page size 0x200000`.  2-MiB align is universally accepted (it's
+ * already a safe choice; with per-resource carriers (RM picks the
+ * GPU VA), the page-size compatibility check is RM's problem.  The
+ * `align` parameter is now ignored — kept in the signature for ABI
+ * compat with existing callers.
+ *
+ * On success returns the carved GPU VA and stores the hMemory in
+ * *out_h_mem.  On failure returns 0; *out_h_mem is untouched. */
+NvU64 mc_va_space_alloc_vidmem(mc_ctx_t *ctx, mc_va_space_t *vas,
+                                      NvU64 size, NvU64 align,
+                                      NvHandle *out_h_mem)
+{
+  NvU64    gpu_va;
+  NvHandle h_mem;
+
+  (void)align;  /* RM picks the GPU VA in the per-resource carrier path. */
+
+  if (vas == NULL || !mc_va_space_kind_is_carrier(vas->kind)) return 0;
+  if (size == 0 || out_h_mem == NULL) return 0;
+
+  h_mem = rm_alloc_vidmem(ctx->ctl_fd, ctx->h_client, ctx->h_device,
+                          size, NULL);
+  if (!h_mem) return 0;
+
+  gpu_va = mc_va_space_dma_map_resource(ctx, vas, h_mem, size);
+  if (!gpu_va)
+  {
+    rm_free_handle(ctx->ctl_fd, ctx->h_client, ctx->h_device, h_mem,
+                   "vidmem_rollback");
+    return 0;
+  }
+
+  *out_h_mem = h_mem;
+  return gpu_va;
+}
+
+void mc_va_space_fini(mc_ctx_t *ctx, mc_vas_t id)
 {
   mc_va_space_t *vas = &ctx->vas[id];
+  int i;
 
   if (ctx->ctl_fd < 0 || ctx->h_client == 0) return;
 
-  if (vas->kind == MC_VAS_KIND_CARRIER)
+  if (mc_va_space_kind_is_carrier(vas->kind))
   {
-    /* Doorbell PTE: only DMA-unmap if the PTE actually got installed.
-     * The carrier itself is freed below; channels are expected to have
-     * unmapped their own buffers already (channel_free_core does this
-     * inside *_channel_fini, which runs before mc_va_space_fini). */
-    if (vas->dbell_gpu_va)
-      rm_unmap_memory_dma(ctx->ctl_fd, ctx->h_client, ctx->h_device,
-                          vas->h_virt, ctx->h_usermode_bar1,
-                          vas->dbell_gpu_va);
-    if (vas->h_virt)
-      rm_free_handle(ctx->ctl_fd, ctx->h_client, ctx->h_device,
-                     vas->h_virt, "vas.h_virt");
+    /* Walk per-resource carriers in reverse alloc order: NVOS47-unmap
+     * each, then NV01_FREE the carrier handle.  The source hMemory
+     * (h_mem) is owned by the caller of mc_va_space_dma_map_resource —
+     * channel_free_core already freed those before reaching here.  We
+     * only own the carriers themselves. */
+    for (i = vas->carrier_count - 1; i >= 0; i--)
+    {
+      mc_resource_carrier_t *rc = &vas->carriers[i];
+      if (rc->gpu_va)
+        rm_unmap_memory_dma(ctx->ctl_fd, ctx->h_client, ctx->h_device,
+                            rc->h_carrier, rc->h_mem, rc->gpu_va);
+      if (rc->h_carrier)
+        rm_free_handle(ctx->ctl_fd, ctx->h_client, ctx->h_device,
+                       rc->h_carrier, "vas.carrier");
+    }
+    vas->carrier_count = 0;
+    vas->dbell_gpu_va  = 0;
   }
+
   if (vas->h_vaspace)
     rm_free_handle(ctx->ctl_fd, ctx->h_client, ctx->h_device,
                    vas->h_vaspace, "vas.h_vaspace");
 
-
   memset(vas, 0, sizeof(*vas));
+}
+
+/* ── Channel registry on a VAS ────────────────────────────────────────────
+ *
+ * Each VAS owns its channels inline in vas->channels[].  Bring-up calls
+ * mc_vas_add_channel(vas, role) to reserve the next free slot; the
+ * caller fills the rest of the channel struct.  mc_vas_find_channel
+ * resolves (vas, role) → channel pointer for dispatch.  The role-uniqueness
+ * invariant (one channel per role per VAS) is enforced here at add time —
+ * a duplicate role aborts the process via CHECK rather than letting a
+ * silently shadowed second channel hide a bring-up bug.
+ */
+mc_channel_t *mc_vas_add_channel(mc_va_space_t *vas, mc_channel_role_t role)
+{
+  int i;
+  if (vas == NULL) return NULL;
+
+  for (i = 0; i < vas->channel_count; i++)
+    CHECK(vas->channels[i].role != role,
+          "mc_vas_add_channel: role %d already present in this VAS",
+          (int)role);
+
+  if (vas->channel_count >= MC_VAS_CH_MAX)
+  {
+    ERROR_LOG("mc_vas_add_channel: VAS already holds MC_VAS_CH_MAX (%d) channels",
+              MC_VAS_CH_MAX);
+    return NULL;
+  }
+  mc_channel_t *ch = &vas->channels[vas->channel_count++];
+  ch->role = role;
+  return ch;
+}
+
+mc_channel_t *mc_vas_find_channel(mc_va_space_t *vas, mc_channel_role_t role)
+{
+  int i;
+  if (vas == NULL) return NULL;
+  for (i = 0; i < vas->channel_count; i++)
+    if (vas->channels[i].role == role)
+      return &vas->channels[i];
+  return NULL;
 }

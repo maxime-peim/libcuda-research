@@ -254,7 +254,8 @@ static int uvm_create_external_range(int uvm_fd, NvU64 base, NvU64 size,
 static int uvm_map_external_allocation(int uvm_fd, int dev_fd, NvHandle h_client,
                                        const NvU8 inst_uuid[NV_UUID_LEN],
                                        NvHandle hMemory, NvU64 base,
-                                       NvU64 size, const char *label)
+                                       NvU64 size, NvU64 offset,
+                                       const char *label)
 {
   UVM_MAP_EXTERNAL_ALLOCATION_PARAMS *p;
   UvmGpuMappingAttributes            *attr;
@@ -266,7 +267,7 @@ static int uvm_map_external_allocation(int uvm_fd, int dev_fd, NvHandle h_client
 
   p->base               = base;
   p->length             = size;
-  p->offset             = 0;
+  p->offset             = offset;
   p->gpuAttributesCount = 1;
   p->rmCtrlFd           = dev_fd;
   p->hClient            = h_client;
@@ -286,6 +287,22 @@ static int uvm_map_external_allocation(int uvm_fd, int dev_fd, NvHandle h_client
   if (r != 0 || st != NV_OK)
   {
     ERROR_LOG("MAP_EXTERNAL_ALLOCATION(%s) r=%ld rmStatus=0x%x", label, r, st);
+    return -1;
+  }
+  return 0;
+}
+
+int uvm_map_buffer_range_at(int uvm_fd, int dev_fd, NvHandle h_client,
+                            const NvU8 inst_uuid[NV_UUID_LEN],
+                            NvHandle hMemory, NvU64 base, NvU64 size,
+                            NvU64 offset, const char *label)
+{
+  if (uvm_create_external_range(uvm_fd, base, size, label) != 0)
+    return -1;
+  if (uvm_map_external_allocation(uvm_fd, dev_fd, h_client, inst_uuid, hMemory,
+                                  base, size, offset, label) != 0)
+  {
+    uvm_free_range(uvm_fd, base, label);
     return -1;
   }
   return 0;
@@ -323,7 +340,7 @@ NvU64 uvm_map_buffer(int uvm_fd, int dev_fd, NvHandle h_client,
 
   if (uvm_create_external_range(uvm_fd, gpu_va, size, label) != 0) return 0;
   if (uvm_map_external_allocation(uvm_fd, dev_fd, h_client, inst_uuid, hMemory,
-                                  gpu_va, size, label) != 0)
+                                  gpu_va, size, 0, label) != 0)
     return 0;
   return gpu_va;
 }
@@ -352,7 +369,7 @@ NvU64 uvm_map_buffer_at(int uvm_fd, int dev_fd, NvHandle h_client,
   NvU64 gpu_va = (NvU64)(uintptr_t)cpu_va;
   if (uvm_create_external_range(uvm_fd, gpu_va, size, label) != 0) return 0;
   if (uvm_map_external_allocation(uvm_fd, dev_fd, h_client, inst_uuid, hMemory,
-                                  gpu_va, size, label) != 0)
+                                  gpu_va, size, 0, label) != 0)
     return 0;
   return gpu_va;
 }
@@ -365,8 +382,8 @@ NvU64 uvm_map_buffer_at(int uvm_fd, int dev_fd, NvHandle h_client,
  * base/length reserves a VA window in UVM that user mappings must not
  * overlap.  We pick 4 MiB at 0x7f0000000000 — well above the UVM-
  * internal region and outside the VA pool at 0x200000000.  Only the
- * UVM channel (MC_CH_PRIMARY) is UVM-registered, so this reservation
- * applies once per mc_ctx; the DMA + COMPUTE channels never call
+ * UVM channel (role MC_ROLE_UVM_CE) is UVM-registered, so this reservation
+ * applies once per mc_ctx; the carrier DMA + compute channels never call
  * UVM_REGISTER_CHANNEL.
  */
 int uvm_register_channel(int uvm_fd, int dev_fd, NvHandle h_client,
@@ -420,6 +437,20 @@ void uvm_unmap_buffer(int uvm_fd, const NvU8 inst_uuid[NV_UUID_LEN],
   memcpy(p.gpuUuid.uuid, inst_uuid, NV_UUID_LEN);
   if (ioctl(uvm_fd, UVM_UNMAP_EXTERNAL, &p) != 0 || p.rmStatus != NV_OK)
     WARN_LOG("UVM_UNMAP_EXTERNAL(%s) rmStatus=0x%x", label, p.rmStatus);
+}
+
+/*
+ * UVM_FREE (cmd 34).  cudaHostUnregister uses this for each
+ * CREATE_EXTERNAL_RANGE segment it made for a registered host pointer.
+ * Unlike UVM_UNMAP_EXTERNAL it takes only the range base.
+ */
+void uvm_free_range(int uvm_fd, NvU64 base, const char *label)
+{
+  UVM_FREE_PARAMS p = {};
+  p.base = base;
+  if (ioctl(uvm_fd, UVM_FREE, &p) != 0 || p.rmStatus != NV_OK)
+    WARN_LOG("UVM_FREE(%s base=0x%llx) rmStatus=0x%x", label,
+             (unsigned long long)base, p.rmStatus);
 }
 
 /*

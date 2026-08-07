@@ -32,12 +32,13 @@ typedef enum {
 } mc_test_args_status_t;
 
 /* Canonical CLI shape for tests/mc/ programs.  Every test in this
- * directory uses the same flag surface (--size, --iters); individual
+ * directory uses the same flag surface (--size, --iters, --h2d); individual
  * tests are free to ignore fields they don't care about (chain demos
  * read n_bytes only). */
 typedef struct {
     size_t n_bytes;   /* --size; bounds: > 0, <= 4 GiB, dword-aligned */
     int    iters;     /* --iters; bounds: 1 .. INT_MAX */
+    int    h2d;       /* --h2d; should the xfer be host to device */
 } mc_test_args_t;
 
 /* Parse argv into *args.  Caller seeds *args with its desired defaults

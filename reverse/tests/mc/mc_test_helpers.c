@@ -63,12 +63,15 @@ static int parse_int_value(const char *s, long *out)
 static void print_usage(const char *prog)
 {
   printf(
-      "usage: %s [--size SIZE] [--iters N] [--help]\n"
+      "usage: %s [--size SIZE] [--iters N] [--h2d] [--help]\n"
       "\n"
       "  --size SIZE   Transfer size; K/M/G suffixes accepted.  Must be\n"
       "                > 0, dword-aligned, <= 4 GiB.\n"
       "  --iters N     Number of iterations (1 <= N <= %d).  Tests that\n"
       "                don't iterate ignore this field.\n"
+      "  --h2d         Run the timed transfer host->device instead of the\n"
+      "                default device->host.  Tests that aren't directional\n"
+      "                ignore this field.\n"
       "  -h, --help    Show this message.\n"
       "\n"
       "Exit codes (by convention): 0 pass, 1 verify FAIL, 2 CLI error,\n"
@@ -125,6 +128,11 @@ mc_test_args_status_t mc_test_parse_args(int argc, char **argv,
       }
       args->iters = (int)it;
       i++;
+      continue;
+    }
+    if (!strcmp(argv[i], "--h2d"))
+    {
+      args->h2d = 1;
       continue;
     }
     fprintf(stderr, "%s: unknown argument '%s'\n", argv[0], argv[i]);
