@@ -22,7 +22,8 @@
  */
 
 #include "core/prelude.h"
-
+#include "os-interface.h"
+#include "mc-trace.h"
 
 #include <class/cl0002.h>
 #include <class/cl0005.h>
@@ -9995,29 +9996,45 @@ static NV_STATUS nvGpuOpsVerifyChannel(struct gpuAddressSpace *vaSpace,
 
     NV_ASSERT_OR_RETURN(ppKernelChannel != NULL, NV_ERR_INVALID_ARGUMENT);
 
+    MC_TRACE(fifo, "verify_channel", "result=enter hclient=0x%x hkernel_channel=0x%x "
+             "session=0x%x device=0x%x vaspace=0x%x",
+             pClient->hClient, hKernelChannel,
+             vaSpace->device->session->handle,
+             vaSpace->device->handle, vaSpace->handle);
+
     status = serverGetClientUnderLock(&g_resServ, vaSpace->device->session->handle,
             &pSessionClient);
-    if (status != NV_OK)
+    if (status != NV_OK) {
+        MC_TRACE(fifo, "verify_channel", "result=client_fail status=0x%x", status);
         return status;
+    }
 
     status = vaspaceGetByHandleOrDeviceDefault(pSessionClient,
                                                vaSpace->device->handle,
                                                vaSpace->handle,
                                                &pVAS);
-    if (status != NV_OK)
+    if (status != NV_OK) {
+        MC_TRACE(fifo, "verify_channel", "result=vaspace_fail status=0x%x", status);
         return status;
+    }
 
     status = CliGetKernelChannel(pClient, hKernelChannel, ppKernelChannel);
-    if (status != NV_OK)
+    if (status != NV_OK) {
+        MC_TRACE(fifo, "verify_channel", "result=channel_fail status=0x%x", status);
         return NV_ERR_INVALID_OBJECT_HANDLE;
+    }
 
     hDevice = RES_GET_HANDLE(GPU_RES_GET_DEVICE(*ppKernelChannel));
     status = CliSetGpuContext(pClient->hClient, hDevice, pGpu, NULL);
-    if (status != NV_OK)
+    if (status != NV_OK) {
+        MC_TRACE(fifo, "verify_channel", "result=context_fail status=0x%x hdevice=0x%x", status, hDevice);
         return status;
+    }
 
     if ((*ppKernelChannel)->pVAS != pVAS)
     {
+        MC_TRACE(fifo, "verify_channel", "result=vas_mismatch channel_pvas=%p expected=%p",
+                 (*ppKernelChannel)->pVAS, pVAS);
         if (CliSetGpuContext(vaSpace->device->session->handle,
                              vaSpace->device->handle,
                              &pVaSpaceGpu,
@@ -10026,6 +10043,7 @@ static NV_STATUS nvGpuOpsVerifyChannel(struct gpuAddressSpace *vaSpace,
 
         return NV_ERR_INVALID_CHANNEL;
     }
+    MC_TRACE(fifo, "verify_channel", "result=ok");
 
     // In SLI config, RM's internal allocations such as channel instance
     // are tracked with a memdesc per subdevice. Hence, Get the correct pGpu.
@@ -10071,6 +10089,8 @@ static NV_STATUS nvGpuOpsGetChannelEngineType(OBJGPU *pGpu,
         *engineType = UVM_GPU_CHANNEL_ENGINE_TYPE_SEC2;
     else
         *engineType = UVM_GPU_CHANNEL_ENGINE_TYPE_CE;
+    MC_TRACE(fifo, "channel_engine_type", "rm_engine_type=%u engine_type=%u",
+             (unsigned)rmEngineType, (unsigned)*engineType);
 
     return NV_OK;
 }
@@ -10403,6 +10423,8 @@ NV_STATUS nvGpuOpsRetainChannel(struct gpuAddressSpace *vaSpace,
     channel->runlistId = kchannelGetRunlistId(pKernelChannel);
 
     status = nvGpuOpsGetChannelEngineType(pGpu, pKernelChannel, &channel->channelEngineType);
+    MC_TRACE(fifo, "retain_channel", "step=engine_type channel_engine_type=%u status=0x%x",
+             channel->channelEngineType, status);
     if (status != NV_OK)
         goto error;
 
@@ -10435,6 +10457,12 @@ NV_STATUS nvGpuOpsRetainChannel(struct gpuAddressSpace *vaSpace,
     NV_PRINTF(LEVEL_INFO, "%s:Channel duping is not supported. Fall back to UVM_CHANNEL_RETAINER\n",
               __FUNCTION__);
 
+    MC_TRACE(fifo, "retain_channel", "step=alloc_retainer "
+             "session=0x%x hchannel_parent=0x%x btsg_channel=%d "
+             "hdup_tsg=0x%x device_handle=0x%x",
+             device->session->handle, hChannelParent,
+             channelInstanceInfo->bTsgChannel, channel->hDupTsg,
+             channel->rmDevice->deviceHandle);
     status = pRmApi->Alloc(pRmApi,
                            device->session->handle,
                            hChannelParent,
@@ -10442,16 +10470,23 @@ NV_STATUS nvGpuOpsRetainChannel(struct gpuAddressSpace *vaSpace,
                            UVM_CHANNEL_RETAINER,
                           &channelRetainerParams,
                           sizeof(channelRetainerParams));
+    MC_TRACE(fifo, "retain_channel", "step=alloc_retainer_ret status=0x%x "
+             "retained_handle=0x%x",
+             status, channel->hChannelRetainer);
     if (status != NV_OK)
         goto error;
 
     // Now get the token for submission on given channel.
+    MC_TRACE(fifo, "retain_channel", "step=get_token hclient=0x%x hkernel_channel=0x%x",
+             hClient, hKernelChannel);
     status = pRmApi->Control(pRmApi,
                              hClient,
                              hKernelChannel,
                              NVC36F_CTRL_CMD_GPFIFO_GET_WORK_SUBMIT_TOKEN,
                              &params,
                              sizeof(params));
+    MC_TRACE(fifo, "retain_channel", "step=get_token_ret status=0x%x token=0x%x",
+             status, params.workSubmitToken);
 
     if (status != NV_OK)
     {
@@ -10515,11 +10550,13 @@ NV_STATUS nvGpuOpsRetainChannel(struct gpuAddressSpace *vaSpace,
         }
     }
 
+    MC_TRACE(fifo, "retain_channel", "step=retain_resources");
     status = _nvGpuOpsRetainChannelResources(device,
                                              hClient,
                                              hKernelChannel,
                                              channel,
                                              channelInstanceInfo);
+    MC_TRACE(fifo, "retain_channel", "step=retain_resources_ret status=0x%x", status);
     if (status != NV_OK)
     {
         NV_PRINTF(LEVEL_ERROR, "%s:%d: %s\n", __FUNCTION__,
@@ -10532,6 +10569,7 @@ NV_STATUS nvGpuOpsRetainChannel(struct gpuAddressSpace *vaSpace,
 
     _nvGpuOpsLocksRelease(&acquiredLocks);
     threadStateFree(&threadState, THREAD_STATE_FLAGS_NONE);
+    MC_TRACE(fifo, "retain_channel", "step=success");
     return NV_OK;
 
 error:
@@ -10808,6 +10846,11 @@ static NV_STATUS _nvGpuOpsRetainChannelResources(struct gpuDevice *device,
     NvU32 i;
     NvU32 j;
 
+    MC_TRACE(fifo, "retain_channel_resources", "step=enter channel_engine_type=%u ce=%u gr=%u sec2=%u",
+                    channelEngineType,
+                    (unsigned)UVM_GPU_CHANNEL_ENGINE_TYPE_CE,
+                    (unsigned)UVM_GPU_CHANNEL_ENGINE_TYPE_GR,
+                    (unsigned)UVM_GPU_CHANNEL_ENGINE_TYPE_SEC2);
     NV_ASSERT(channelEngineType == UVM_GPU_CHANNEL_ENGINE_TYPE_CE ||
               channelEngineType == UVM_GPU_CHANNEL_ENGINE_TYPE_GR ||
               channelEngineType == UVM_GPU_CHANNEL_ENGINE_TYPE_SEC2);
@@ -10815,8 +10858,10 @@ static NV_STATUS _nvGpuOpsRetainChannelResources(struct gpuDevice *device,
     // CE channels have 0 resources, so they skip this step
     if (channelEngineType == UVM_GPU_CHANNEL_ENGINE_TYPE_CE)
     {
+        MC_TRACE(fifo, "retain_channel_resources", "step=ce_path_done");
         goto done;
     }
+    MC_TRACE(fifo, "retain_channel_resources", "step=not_ce_path");
 
     status = nvGpuOpsGetChannelData(retainedChannel, &pKernelChannel);
     if (status != NV_OK)
@@ -11063,6 +11108,17 @@ NV_STATUS nvGpuOpsBindChannelResources(gpuRetainedChannel *retainedChannel,
     NvU32 i;
     KernelChannel *pKernelChannel = NULL;
     RM_API *pRmApi = rmapiGetInterface(RMAPI_GPU_LOCK_INTERNAL);
+
+    /* Fork instrumentation: log every BindChannelResources
+     * entry.  This is the UVM-side hook into PROMOTE_CTX that
+     * distinguishes UVM channels from non-UVM channels for FB-USERD
+     * reachability.  Note: PROMOTE_CTX itself only runs when
+     * resourceCount != 0 (CE channels are 0); this trace fires
+     * BEFORE that gate so we can tell whether UVM even tries to
+     * promote anything for our CE-engine channel. */
+    MC_TRACE(fifo, "userd_bind", "retained=%p resource_count=%u",
+                    (void *)retainedChannel,
+                    retainedChannel ? retainedChannel->resourceCount : 0);
 
     threadStateInit(&threadState, THREAD_STATE_FLAGS_NONE);
 
