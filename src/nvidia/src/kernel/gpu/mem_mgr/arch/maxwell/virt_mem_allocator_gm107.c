@@ -107,6 +107,7 @@
  */
 
 #include "core/core.h"
+#include "mc-trace.h"
 #include "gpu/gpu.h"
 #include "lib/base_utils.h"
 #include "gpu/mem_mgr/heap.h"
@@ -140,6 +141,11 @@
 #include "published/maxwell/gm107/dev_bus.h"
 
 #include "ctrl/ctrl0002.h"
+
+/* Instrumentation added by this fork.  MC_TRACE() emits one `mc1` trace
+ * record through the ftrace_vprintk helper exported by
+ * kernel-open/nvidia/os-interface.c; the record format and the full event
+ * catalogue are in docs/reference/trace-format.md. */
 
 #include "vgpu/rpc.h"
 
@@ -1148,7 +1154,6 @@ dmaAllocMapping_GM107
             {
                 pLocals->aperture = GMMU_APERTURE_VIDEO;
             }
-
         }
         else if (
                  (memdescGetAddressSpace(pLocals->pTempMemDesc) == ADDR_FABRIC_MC) ||
@@ -1289,6 +1294,66 @@ dmaAllocMapping_GM107
                     pLocals->aperture = GMMU_APERTURE_SYS_NONCOH;
                 }
             }
+        }
+
+        /* Fork instrumentation: log the first PTE
+         * physical address being installed in this VAS's GMMU PTE
+         * for any aperture (FBMEM / SYS_COH / SYS_NONCOH / PEER).
+         * Compare pte0_phys against fifo/userd_resolve's userd_addr.
+         * This record carries no handle, so the join is by physical
+         * address — if PTE phys ≠ AT_GPU resolution, the SM's GMMU walk
+         * lands on different pages than RM tells PBDMA. */
+        MC_TRACE(mmu, "gmmu_pte_phys", "va_lo=0x%llx va_hi=0x%llx "
+                        "pte0_phys=0x%llx pte_count=%u page_size=0x%llx "
+                        "aperture=%u",
+                        (unsigned long long)pLocals->vaLo,
+                        (unsigned long long)pLocals->vaHi,
+                        (unsigned long long)(pLocals->pPteArray ? pLocals->pPteArray[0] : 0),
+                        pLocals->pteCount,
+                        (unsigned long long)pLocals->pageSize,
+                        (unsigned)pLocals->aperture);
+
+        /* Fork instrumentation: was the source PFN
+         * array taken from the requested hMemory or from the carrier's
+         * own backing?  When the carrier (pVirtualMemory) is
+         * NV50_MEMORY_VIRTUAL it has typed heap-backed pages and
+         * dmaAllocMapping_GM107 sources PTEs through them, *not*
+         * through the requested hMemory.  When it's NV01_MEMORY_VIRTUAL
+         * the carrier's MEMDESC is ADDR_VIRTUAL (no backing) and the
+         * PTE points at the requested hMemory's real pages.
+         *
+         * carrier_aspace and src_aspace let us see the divergence in
+         * one line:
+         *   carrier_aspace = ADDR_VIRTUAL (3) → NV01-style, no backing
+         *   carrier_aspace = ADDR_FBMEM/SYSMEM_* → NV50-style, has
+         *                                          backing → BUG
+         *
+         * src_pte0 is the first PFN of the requested hMemory; chosen_pte0
+         * is what dmaAllocMapping_GM107 actually installed. They should
+         * be equal for a working mapping. */
+        if (pCliMapInfo != NULL && pCliMapInfo->pMemory != NULL)
+        {
+            MEMORY_DESCRIPTOR *pSrcMd = pCliMapInfo->pMemory->pMemDesc;
+            MEMORY_DESCRIPTOR *pCarMd = (pCliMapInfo->pVirtualMemory != NULL) ?
+                staticCast(pCliMapInfo->pVirtualMemory, Memory)->pMemDesc : NULL;
+            RmPhysAddr srcPte0 = (pSrcMd != NULL) ?
+                memdescGetPhysAddr(pSrcMd, addressTranslation, 0) : 0;
+            NvU32 srcAS = (pSrcMd != NULL) ? memdescGetAddressSpace(pSrcMd) : 0xff;
+            NvU32 carAS = (pCarMd != NULL) ? memdescGetAddressSpace(pCarMd) : 0xff;
+            NvU32 carClass = (pCliMapInfo->pVirtualMemory != NULL) ?
+                staticCast(pCliMapInfo->pVirtualMemory, Memory)->categoryClassId : 0;
+            NvU32 srcClass = pCliMapInfo->pMemory->categoryClassId;
+            NvU32 hCarrier = (pCliMapInfo->pVirtualMemory != NULL) ?
+                RES_GET_HANDLE(pCliMapInfo->pVirtualMemory) : 0;
+            NvU32 hSrc = RES_GET_HANDLE(pCliMapInfo->pMemory);
+
+            MC_TRACE(mmu, "pte_src_decision", "carrier_h=0x%x carrier_class=0x%x carrier_aspace=%u "
+                            "src_h=0x%x src_class=0x%x src_aspace=%u "
+                            "src_pte0=0x%llx chosen_pte0=0x%llx",
+                            hCarrier, carClass, carAS,
+                            hSrc, srcClass, srcAS,
+                            (unsigned long long)srcPte0,
+                            (unsigned long long)(pLocals->pPteArray ? pLocals->pPteArray[0] : 0));
         }
 
         if (pLocals->p2p == NVOS46_FLAGS_P2P_ENABLE_SLI)

@@ -29,6 +29,7 @@
 ******************************************************************************/
 
 #include "core/core.h"
+#include "mc-trace.h"
 #include "gpu/gpu.h"
 #include "mem_mgr/mem.h"
 #include "gpu/mem_mgr/virt_mem_allocator_common.h"
@@ -43,6 +44,7 @@
 #include "gpu/device/device.h"
 #include "gpu/subdevice/subdevice.h"
 #include "rmapi/rs_utils.h"
+#include "os-interface.h"   /* nv_trace_printf */
 #include "rmapi/mapping_list.h"
 #include "platform/sli/sli.h"
 
@@ -143,6 +145,9 @@ ctxdmaConstruct_IMPL
     NvU32                             flags = pAllocParams->flags;
     NvU64                             offset = pAllocParams->offset;
     NvU64                             limit = pAllocParams->limit;
+
+    MC_TRACE(rm, "ctxdma_construct", "hclass=0x%x flags=0x%x offset=0x%llx limit=0x%llx",
+                    hClass, flags, (unsigned long long)offset, (unsigned long long)limit);
 
     status = clientGetResourceRef(pClient, pAllocParams->hMemory, &pMemoryRef);
     if (status != NV_OK)

@@ -22,12 +22,18 @@
  */
 
 #include "mem_mgr_internal.h"
+#include "mc-trace.h"
 #include "mem_mgr/virt_mem_range.h"
 #include "os/os.h"
 #include "vgpu/rpc.h"
 #include "gpu/mem_mgr/vaspace_api.h"
 #include "gpu/mmu/kern_gmmu.h"
 #include "class/cl0070.h"
+
+/* Instrumentation added by this fork.  MC_TRACE() emits one `mc1` trace
+ * record through the ftrace_vprintk helper exported by
+ * kernel-open/nvidia/os-interface.c; the record format and the full event
+ * catalogue are in docs/reference/trace-format.md. */
 
 NV_STATUS
 vmrangeConstruct_IMPL
@@ -138,6 +144,21 @@ vmrangeConstruct_IMPL
 
     if (pVASpaceRef)
         refAddDependant(pVASpaceRef, pResourceRef);
+
+    /* Fork instrumentation: log NV01_MEMORY_VIRTUAL
+     * construction (the pure VA-range placeholder path).  Pairs with
+     * the NV50 trace at the end of virtmemConstruct_IMPL to give a
+     * single timeline of every VirtualMemory carrier allocation, with
+     * `has_heap=0` always for NV01 — the distinction that matters. */
+    MC_TRACE(mmu, "virtmem_backing", "hmemory=0x%x class=0x%x "
+                    "va_size=0x%llx hvaspace=0x%x aspace=%u "
+                    "has_heap=%u via=vmrange_construct",
+                    hMemory,
+                    class,
+                    (unsigned long long)(maxVA - pAllocData->offset),
+                    pAllocData->hVASpace,
+                    (unsigned)memdescGetAddressSpace(pMemDesc),
+                    (unsigned)(pMemDesc->pHeap != NULL));
 
     return status;
 }

@@ -27,6 +27,7 @@
  */
 
 #include "gpu/mem_mgr/mem_desc.h"
+#include "mc-trace.h"
 
 #include "gpu/bif/kernel_bif.h"
 
@@ -64,6 +65,11 @@
 #include "class/cl0071.h" // NV01_MEMORY_SYSTEM_OS_DESCRIPTOR
 
 #include "gpu/bus/kern_bus.h"
+
+/* Instrumentation added by this fork.  MC_TRACE() emits one `mc1` trace
+ * record through the ftrace_vprintk helper exported by
+ * kernel-open/nvidia/os-interface.c; the record format and the full event
+ * catalogue are in docs/reference/trace-format.md. */
 
 // Structure for keeping track of BAR1 mappings
 typedef struct
@@ -1840,6 +1846,23 @@ memdescMap
 
             bar1PhysAddr = gpumgrGetGpuPhysFbAddr(pGpu) + pMapping->FbAperture;
             mode = NV_MEMORY_WRITECOMBINED;
+
+            /* Fork instrumentation: log the FB physical
+             * address that this BAR1 reflection resolves to.  Compare
+             * against mmu/gmmu_pte_phys in virt_mem_allocator_gm107.c.
+             * Neither record carries a memory handle, so join on the
+             * address: this record's at_gpu against that one's pte0_phys,
+             * both being FB-local physical addresses.  bar1_phys is not
+             * comparable to either — it is a host bus address in the GPU's
+             * BAR1 window.  If at_gpu and pte0_phys differ, the SM's GMMU
+             * walk and the host's BAR1 alias point at different FB pages. */
+            MC_TRACE(mmu, "bar1_reflect_phys", "at_gpu=0x%llx "
+                            "fb_aperture_off=0x%llx bar1_phys=0x%llx "
+                            "size=0x%llx",
+                            (unsigned long long)memdescGetPhysAddr(pMemDesc, AT_GPU, Offset),
+                            (unsigned long long)pMapping->FbAperture,
+                            (unsigned long long)bar1PhysAddr,
+                            (unsigned long long)Size);
 
             // Create the mapping
             if (Kernel)

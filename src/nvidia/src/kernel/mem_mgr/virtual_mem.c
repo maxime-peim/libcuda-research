@@ -22,6 +22,7 @@
  */
 
 #include "mem_mgr/virtual_mem.h"
+#include "mc-trace.h"
 #include "mem_mgr/vaspace.h"
 #include "gpu/mem_mgr/virt_mem_allocator.h"
 #include "virtualization/hypervisor/hypervisor.h"
@@ -42,6 +43,11 @@
 
 #include "class/cl0070.h" // NV01_MEMORY_VIRTUAL
 #include "class/cl50a0.h" // NV50_MEMORY_VIRTUAL
+
+/* Instrumentation added by this fork.  MC_TRACE() emits one `mc1` trace
+ * record through the ftrace_vprintk helper exported by
+ * kernel-open/nvidia/os-interface.c; the record format and the full event
+ * catalogue are in docs/reference/trace-format.md. */
 
 static void _virtmemFreeKernelMapping(OBJGPU *, CLI_DMA_MAPPING_INFO *);
 
@@ -609,6 +615,24 @@ virtmemConstruct_IMPL
     pAllocData->offset = offsetOut;
 
     stdmemDumpOutputAllocParams(pAllocData);
+
+    /* Fork instrumentation: log VirtualMemory
+     * construction.  NV50 carriers pass through this path with
+     * `bReserveVaOnAlloc = NV_TRUE` and the allocation routed through
+     * memmgrAllocResources, leaving `pMemory->pMemDesc->pHeap`
+     * non-null (carrier owns heap-tracked backing).  NV01 carriers go
+     * through vmrangeConstruct_IMPL (a separate trace site) and have
+     * no heap pointer at all.  `has_heap` is the cleanest construct-
+     * time discriminator. */
+    MC_TRACE(mmu, "virtmem_backing", "hmemory=0x%x class=0x%x "
+                    "va_size=0x%llx hvaspace=0x%x aspace=%u "
+                    "has_heap=%u via=virtmem_construct",
+                    RES_GET_HANDLE(pMemory),
+                    pParams->externalClassId,
+                    (unsigned long long)sizeOut,
+                    pAllocData->hVASpace,
+                    (unsigned)memdescGetAddressSpace(pMemory->pMemDesc),
+                    (unsigned)(pMemory->pMemDesc->pHeap != NULL));
 
 done:
     if (status != NV_OK)
@@ -1243,6 +1267,25 @@ virtmemMapTo_IMPL
     // Validate the offset and limit passed in.
     if (offset + length > pSrcMemDesc->Size)
         return NV_ERR_INVALID_BASE;
+
+    /* Fork instrumentation: log every NVOS46
+     * dispatch with both carrier and source class ids visible.
+     * Lets ftrace-side analysis correlate "what was mapped where"
+     * without a post-hoc class lookup.  Recursive call sites in
+     * the split/unmap paths (lines ~1700/1718/1737) are deliberately
+     * not instrumented — the primary dispatch is what user code drives. */
+    NvU32 hCarrier = RES_GET_HANDLE(pVirtualMemory);
+    NvU32 hSrc = (pSrcMemory != NULL) ? RES_GET_HANDLE(pSrcMemory) : 0;
+    NvU32 carClass = staticCast(pVirtualMemory, Memory)->categoryClassId;
+    NvU32 srcClass = (pSrcMemory != NULL) ? pSrcMemory->categoryClassId : 0;
+
+    MC_TRACE(mmu, "intermap_call",
+             "hclient=0x%x hcarrier=0x%x "
+             "carrier_class=0x%x hsrc=0x%x src_class=0x%x "
+             "flags=0x%x dma_offset=0x%llx length=0x%llx",
+             hClient, hCarrier, carClass, hSrc, srcClass, flags,
+             (unsigned long long)(pDmaOffset ? *pDmaOffset : 0),
+             (unsigned long long)length);
 
     status = intermapCreateDmaMapping(pClient, pVirtualMemory, &pDmaMappingInfo, flags, flags2);
     if (status != NV_OK)
