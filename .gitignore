@@ -3,3 +3,19 @@
 *.o.cmd
 *.o.d
 _out/
+
+# Kernel module build output
+*.ko
+*.mod
+*.mod.c
+*.mod.o
+.*.cmd
+modules.order
+Module.symvers
+
+# Tooling and editor state
+__pycache__/
+node_modules/
+compile_commands.json
+.cache/
+.claude/

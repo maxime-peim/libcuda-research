@@ -62,8 +62,9 @@ by project maintainers.
 ## Enforcement
 
 Instances of abusive, harassing, or otherwise unacceptable behavior may be
-reported to the community leaders and moderators responsible for enforcement at
-GitHub_Conduct@nvidia.com.
+reported by opening an issue on this repository, or privately to its
+maintainer.  This is an unaffiliated research fork (see `NOTICE`); reports
+about it do not go to NVIDIA.
 All complaints will be reviewed and investigated and will result in a response
 that is deemed necessary and appropriate to the circumstances. Leaders and moderators
 are obligated to maintain confidentiality with regard to the reporter of an incident.
