@@ -254,7 +254,7 @@ static void patch_cb0(uint8_t                       *cb0,
       cb0_gpu_va + MC_SMO_ARGS_CB0_OFFSET;
 
   /* Make the CB0 stores globally visible before the kernel launch.
-   * CB0 is allocated write-combined,
+   * CB0 is allocated write-combined (mc_va_space_alloc_scratch_wc),
    * so the stores above sit in the CPU's write-combining buffers,
    * not in cache lines — the SFENCE below is what drains those
    * buffers to DRAM, and it is the instruction doing the work here.
@@ -445,7 +445,7 @@ mc_status_t mc_sm_owner_submit(mc_ctx_t *ctx, mc_vas_t vas, uint64_t src_gpu_va,
 
   /* Clear the active semaphore so the host's poll observes a fresh
    * transition vs. a stale prior payload.  The cell is write-combined
-   * sysmem, so the SFENCE is what
+   * sysmem (mc_va_space_alloc_scratch_wc), so the SFENCE is what
    * makes the store globally visible — it drains the CPU's
    * write-combining buffers before the kernel launch.  The CLFLUSH is
    * an architectural no-op on WC (no cache line is ever allocated)

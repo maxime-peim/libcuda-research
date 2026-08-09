@@ -248,7 +248,7 @@ static int mc_channel_alloc_resource(mc_ctx_t *ctx, mc_va_space_kind_t kind,
   *out_cpu_ptr = NULL;
   if (kind == MC_VAS_KIND_CARRIER)
   {
-    *out_h_mem = rm_alloc_sysmem_at(ctx->ctl_fd, ctx->dev_fd, ctx->h_client,
+    *out_h_mem = rm_alloc_sysmem_wc_at(ctx->ctl_fd, ctx->dev_fd, ctx->h_client,
                                     ctx->h_device, size, NULL, out_cpu_ptr);
   }
   else if (kind == MC_VAS_KIND_CARRIER_FB)
@@ -329,7 +329,7 @@ static int mc_channel_alloc_via_carrier(mc_ctx_t *ctx, mc_channel_t *ch)
       && ch->role == MC_ROLE_SM_VICTIM_DMA)
   {
     void *sema_sys_cpu = NULL;
-    ch->sema_sysmem_gpu_va = mc_va_space_alloc_scratch(
+    ch->sema_sysmem_gpu_va = mc_va_space_alloc_scratch_wc(
         ctx, vas, MC_SEMA_SIZE, /*align=*/0,
         &ch->h_sema_sysmem_mem, &sema_sys_cpu);
     if (!ch->sema_sysmem_gpu_va) return -1;
@@ -477,7 +477,7 @@ static int mc_dma_channel_init(mc_ctx_t *ctx, mc_vas_t slot,
    * doorbell-write demo's CE op reads 4 bytes from this cell and
    * writes them to the BAR1 doorbell page; sysmem keeps the host
    * able to read/write the cell via a normal CPU pointer. */
-  ex->token_cell_gpu_va = mc_va_space_alloc_scratch(
+  ex->token_cell_gpu_va = mc_va_space_alloc_scratch_wc(
       ctx, vas, 4, 4,
       &ex->h_token_mem, &cpu);
   if (!ex->token_cell_gpu_va) return -1;
@@ -549,17 +549,17 @@ static int mc_compute_module_init(mc_ctx_t *ctx, mc_vas_t slot,
   void          *scratch_cpu_ptr = NULL;
   NvU64          scratch_base_gpu_va;
 
-  mod->qmd_gpu_va = mc_va_space_alloc_scratch(
+  mod->qmd_gpu_va = mc_va_space_alloc_scratch_wc(
       ctx, vas, MC_GPFIFO_USERD_SIZE, 0, &mod->h_qmd_mem, &qmd_cpu_ptr);
   if (!mod->qmd_gpu_va) return -1;
   mod->qmd_cpu = (uint8_t *)qmd_cpu_ptr;
 
-  mod->cb0_gpu_va = mc_va_space_alloc_scratch(
+  mod->cb0_gpu_va = mc_va_space_alloc_scratch_wc(
       ctx, vas, MC_GPFIFO_USERD_SIZE, 0, &mod->h_cb0_mem, &cb0_cpu_ptr);
   if (!mod->cb0_gpu_va) return -1;
   mod->cb0_cpu = (uint8_t *)cb0_cpu_ptr;
 
-  mod->sass_gpu_va = mc_va_space_alloc_scratch(
+  mod->sass_gpu_va = mc_va_space_alloc_scratch_wc(
       ctx, vas, MC_GPFIFO_USERD_SIZE, 0, &mod->h_sass_mem, &sass_cpu_ptr);
   if (!mod->sass_gpu_va) return -1;
   mod->sass_cpu = (uint8_t *)sass_cpu_ptr;
@@ -744,7 +744,7 @@ static int mc_uvm_channel_init(mc_ctx_t *ctx, NvU32 lce_engine_type)
 
   pb_direct = va_pool_reserve(MC_PB_SIZE, "pushbuffer");
   if (pb_direct == NULL) return -1;
-  ch->h_pb_mem = rm_alloc_sysmem_at(ctx->ctl_fd, ctx->dev_fd, ctx->h_client,
+  ch->h_pb_mem = rm_alloc_sysmem_wc_at(ctx->ctl_fd, ctx->dev_fd, ctx->h_client,
                                     ctx->h_device, MC_PB_SIZE, pb_direct,
                                     &pb_direct);
   if (!ch->h_pb_mem) return -1;

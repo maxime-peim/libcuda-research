@@ -236,7 +236,7 @@ NvU64 mc_va_space_dma_map_resource(mc_ctx_t *ctx, mc_va_space_t *vas,
  * source object.
  *
  * Cost: O(carrier_count) per call.  carrier_count <= MC_VAS_CARRIER_MAX
- * (16) — fine. */
+ * (64) — fine. */
 void mc_va_space_release_carrier(mc_ctx_t *ctx, mc_va_space_t *vas,
                                  NvHandle h_mem)
 {
@@ -303,8 +303,9 @@ int mc_va_space_install_doorbell_pte(mc_ctx_t *ctx, mc_va_space_t *vas)
  * Used wherever a channel needs a small dedicated sysmem region with
  * its own RM hMemory and GPU MMU PTE — token cells, compute QMD/CB0/
  * SASS images, the compute scratch dword. */
-NvU64 mc_va_space_alloc_scratch(mc_ctx_t *ctx, mc_va_space_t *vas,
+static NvU64 mc_va_space_alloc_scratch_coh(mc_ctx_t *ctx, mc_va_space_t *vas,
                                        NvU64 size, NvU64 align,
+                                       int want_wc,
                                        NvHandle *out_h_mem,
                                        void **out_cpu)
 {
@@ -317,8 +318,11 @@ NvU64 mc_va_space_alloc_scratch(mc_ctx_t *ctx, mc_va_space_t *vas,
   if (vas == NULL || !mc_va_space_kind_is_carrier(vas->kind)) return 0;
   if (size == 0) return 0;
 
-  h_mem = rm_alloc_sysmem_at(ctx->ctl_fd, ctx->dev_fd, ctx->h_client,
-                             ctx->h_device, size, NULL, &cpu);
+  h_mem = want_wc
+            ? rm_alloc_sysmem_wc_at(ctx->ctl_fd, ctx->dev_fd, ctx->h_client,
+                                    ctx->h_device, size, NULL, &cpu)
+            : rm_alloc_sysmem_at(ctx->ctl_fd, ctx->dev_fd, ctx->h_client,
+                                 ctx->h_device, size, NULL, &cpu);
   if (!h_mem || cpu == NULL) return 0;
 
   gpu_va = mc_va_space_dma_map_resource(ctx, vas, h_mem, size);
@@ -332,6 +336,26 @@ NvU64 mc_va_space_alloc_scratch(mc_ctx_t *ctx, mc_va_space_t *vas,
   *out_h_mem = h_mem;
   *out_cpu   = cpu;
   return gpu_va;
+}
+
+/* Cached scratch — for buffers the host reads back.  See
+ * rm_alloc_sysmem_at for why cached is the right default. */
+NvU64 mc_va_space_alloc_scratch(mc_ctx_t *ctx, mc_va_space_t *vas,
+                                       NvU64 size, NvU64 align,
+                                       NvHandle *out_h_mem, void **out_cpu)
+{
+  return mc_va_space_alloc_scratch_coh(ctx, vas, size, align, /*want_wc=*/0,
+                                       out_h_mem, out_cpu);
+}
+
+/* Write-combined scratch — for control-plane regions the host writes and
+ * the GPU reads: semaphores, token cells, QMD / CB0 / SASS images. */
+NvU64 mc_va_space_alloc_scratch_wc(mc_ctx_t *ctx, mc_va_space_t *vas,
+                                          NvU64 size, NvU64 align,
+                                          NvHandle *out_h_mem, void **out_cpu)
+{
+  return mc_va_space_alloc_scratch_coh(ctx, vas, size, align, /*want_wc=*/1,
+                                       out_h_mem, out_cpu);
 }
 
 /* Allocate `size` bytes of vidmem (HBM), DMA-map it into the carrier

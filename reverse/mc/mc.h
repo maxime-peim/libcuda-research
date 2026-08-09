@@ -155,10 +155,18 @@ void *mc_malloc_device(mc_ctx_t *ctx, size_t n, mc_vas_t vas);
  *                    alloc-table lookup); pass mc_gpu_va(p) when an
  *                    external primitive needs the raw GPU VA.
  *
+ * Cacheability: host allocations are write-back cacheable, in every VA
+ * space.  This is deliberate and it matters — the same buffer allocated
+ * write-combined reads back at roughly 30 MB/s instead of ~11 GB/s,
+ * because write-combined memory is uncached on the load path.  mc still
+ * uses write-combining internally for its control plane (pushbuffers,
+ * GPFIFO, USERD, semaphores), which the host writes and the GPU reads;
+ * that is not what this function hands you.
+ *
  * Coherency contract for carrier-VAS host allocs (both
  * MC_VAS_SYSMEM_CARRIER and MC_VAS_FB_CARRIER — user host allocs are
  * sysmem either way; only the FB carrier's *channel* resources live
- * in FB): the mapping is cacheable (write-back).  CPU writes you
+ * in FB): CPU writes you
  * make before handing the buffer to mc_memcpy(..., MC_XFER_HOST)
  * will be ordered correctly by the library's own fence discipline.
  * The same holds for mc_memcpy(..., MC_XFER_SM): the caller's buffer is

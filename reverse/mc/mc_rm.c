@@ -276,9 +276,9 @@ int rm_register_client_fd(int ctl_fd, int dev_fd)
  * is the libcuda pattern used to anchor the CPU alias inside the VA
  * pool (Paper F1 invariant: GPU VA == CPU VA).
  */
-NvHandle rm_alloc_sysmem_at(int ctl_fd, int dev_fd, NvHandle root,
+static NvHandle rm_alloc_sysmem_coh_at(int ctl_fd, int dev_fd, NvHandle root,
                                    NvHandle device, NvU64 size, void *want_addr,
-                                   void **out_cpu_ptr)
+                                   NvU32 coherency, void **out_cpu_ptr)
 {
   nv_ioctl_nvos02_parameters_with_fd p = {};
   int                                alloc_fd, ioctl_fd;
@@ -294,7 +294,7 @@ NvHandle rm_alloc_sysmem_at(int ctl_fd, int dev_fd, NvHandle root,
   p.params.hObjectNew    = next_handle();
   p.params.hClass        = NV01_MEMORY_SYSTEM;
   p.params.flags         = DRF_DEF(OS02, _FLAGS, _PHYSICALITY, _NONCONTIGUOUS)
-                   | DRF_DEF(OS02, _FLAGS, _COHERENCY, _WRITE_COMBINE);
+                   | DRF_NUM(OS02, _FLAGS, _COHERENCY, coherency);
   p.params.limit = size - 1;
 
   alloc_fd = open(MC_CONTROL_DEV_PATH, O_RDWR | O_CLOEXEC);
@@ -336,11 +336,63 @@ NvHandle rm_alloc_sysmem_at(int ctl_fd, int dev_fd, NvHandle root,
   if (addr == MAP_FAILED)
   {
     ERROR_LOG("sysmem mmap failed: %s", strerror(errno));
+    /* Roll back the RM allocation too — the object exists at this point,
+     * and the caller only learns "failed" (handle 0), so nothing else can
+     * free it.  Mirrors the ioctl-failure path above. */
+    rm_free_handle(ctl_fd, root, device, p.params.hObjectNew,
+                   "sysmem_mmap_rollback");
+    close(alloc_fd);
     return 0;
   }
   if (out_cpu_ptr)
     *out_cpu_ptr = addr;
   return p.params.hObjectNew;
+}
+
+/*
+ * Allocate host memory that the CPU will actually read.
+ *
+ * COHERENCY_CACHED leaves the userspace PTE at the kernel's default
+ * write-back type, so loads hit the cache hierarchy normally.  This is the
+ * right default for anything a user program touches: on H100 the same
+ * buffer reads at ~11.8 GB/s cached versus ~32 MB/s write-combined — a
+ * ~360x difference on the read side — and cached is also the faster of the
+ * two for sequential stores, because full-cache-line writes to pinned
+ * pages beat write-combining.
+ *
+ * Note the ABI's default is NOT this: NVOS02_FLAGS_COHERENCY_UNCACHED is
+ * 0, so an allocation that simply omits the field gets UC-.  The value has
+ * to be asked for explicitly.  (WRITE_BACK is accepted too, but RM folds
+ * CACHED / WRITE_THROUGH / WRITE_PROTECT / WRITE_BACK onto one internal
+ * NV_MEMORY_CACHED, so the two are indistinguishable past that point.)
+ */
+NvHandle rm_alloc_sysmem_at(int ctl_fd, int dev_fd, NvHandle root,
+                                   NvHandle device, NvU64 size, void *want_addr,
+                                   void **out_cpu_ptr)
+{
+  return rm_alloc_sysmem_coh_at(ctl_fd, dev_fd, root, device, size, want_addr,
+                                NVOS02_FLAGS_COHERENCY_CACHED, out_cpu_ptr);
+}
+
+/*
+ * Write-combined variant, for memory the host writes and the GPU reads.
+ *
+ * Used for the control plane — pushbuffers, GPFIFO rings, USERD, release
+ * semaphores, the compute QMD / CB0 / SASS images.  Those are produced by
+ * the CPU in whole-buffer streaming stores and then consumed by the GPU;
+ * WC suits that shape and keeps the pages out of the CPU's cache, so no
+ * flush discipline is needed to make the GPU's view current.
+ *
+ * Do not reach for this for user data.  Anything the host reads back
+ * belongs in rm_alloc_sysmem_at.
+ */
+NvHandle rm_alloc_sysmem_wc_at(int ctl_fd, int dev_fd, NvHandle root,
+                                      NvHandle device, NvU64 size, void *want_addr,
+                                      void **out_cpu_ptr)
+{
+  return rm_alloc_sysmem_coh_at(ctl_fd, dev_fd, root, device, size, want_addr,
+                                NVOS02_FLAGS_COHERENCY_WRITE_COMBINE,
+                                out_cpu_ptr);
 }
 
 /*

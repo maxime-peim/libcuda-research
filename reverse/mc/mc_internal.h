@@ -461,9 +461,17 @@ NvHandle rm_alloc(int ctl_fd, NvHandle root, NvHandle parent,
 NvHandle rm_alloc_vidmem(int ctl_fd, NvHandle root, NvHandle device,
                          NvU64 size, NvU64 *out_phys);
 int      rm_register_client_fd(int ctl_fd, int dev_fd);
+/* Cached (write-back) host memory — the default, and what every buffer a
+ * user program reads should use. */
 NvHandle rm_alloc_sysmem_at(int ctl_fd, int dev_fd, NvHandle root,
                             NvHandle device, NvU64 size, void *want_va,
                             void **out_cpu_va);
+/* Write-combined host memory — control plane only (pushbuffer, GPFIFO,
+ * USERD, semaphores, QMD/CB0/SASS).  Host-write, GPU-read; do not use for
+ * anything the host reads back. */
+NvHandle rm_alloc_sysmem_wc_at(int ctl_fd, int dev_fd, NvHandle root,
+                               NvHandle device, NvU64 size, void *want_va,
+                               void **out_cpu_va);
 NvHandle rm_register_user_memory(int ctl_fd, int dev_fd, NvHandle root,
                                  NvHandle device, void *page_base,
                                  NvU64 page_covered_size);
@@ -624,6 +632,10 @@ void   mc_va_space_release_carrier(mc_ctx_t *ctx, mc_va_space_t *vas,
 NvU64  mc_va_space_alloc_scratch(mc_ctx_t *ctx, mc_va_space_t *vas,
                                  NvU64 size, NvU64 align,
                                  NvHandle *out_h_mem, void **out_cpu);
+/* Write-combined scratch — control plane only; see rm_alloc_sysmem_wc_at. */
+NvU64  mc_va_space_alloc_scratch_wc(mc_ctx_t *ctx, mc_va_space_t *vas,
+                                    NvU64 size, NvU64 align,
+                                    NvHandle *out_h_mem, void **out_cpu);
 NvU64  mc_va_space_alloc_vidmem (mc_ctx_t *ctx, mc_va_space_t *vas,
                                  NvU64 size, NvU64 align,
                                  NvHandle *out_h_mem);

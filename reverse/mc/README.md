@@ -140,14 +140,15 @@ CPU-dereferenceable in either VAS.
 
 ### Coherency note
 
-The library handles ordering in both transfer arms.  Under
-`MC_XFER_SM` the caller's buffer is only ever read by the Copy Engine,
-and CE reads of sysmem are cache-coherent DMA on x86 — dirty CPU cache
-lines are snooped, so no caller-side flushing is needed.  The channel
-state the SM kernel itself reads (pushbuffer, GPFIFO, USERD,
-semaphores, CB0) is library-owned write-combined memory made visible by
-the library's own SFENCE discipline; callers never touch it.  See the
-`mc_malloc_host` doc-comment in `mc.h`.
+Host allocs are cacheable (write-back) on the CPU side; the library
+handles ordering in both transfer arms.  Under `MC_XFER_SM` the
+caller's buffer is only ever read by the Copy Engine, and CE reads of
+sysmem are cache-coherent DMA on x86 — dirty CPU cache lines are
+snooped, so no caller-side flushing is needed.  The channel state the
+SM kernel itself reads (pushbuffer, GPFIFO, USERD, semaphores, CB0) is
+library-owned write-combined memory made visible by the library's own
+SFENCE discipline; callers never touch it.  See the `mc_malloc_host`
+doc-comment in `mc.h`.
 
 ## Minimal user program
 
