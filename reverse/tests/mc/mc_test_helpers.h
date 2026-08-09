@@ -39,6 +39,12 @@ typedef struct {
     size_t n_bytes;   /* --size; bounds: > 0, <= 4 GiB, dword-aligned */
     int    iters;     /* --iters; bounds: 1 .. INT_MAX */
     int    h2d;       /* --h2d; should the xfer be host to device */
+    int    wc;        /* --wc; allocate the host buffer write-combined
+                       * (mc_malloc_host_wc).  Only meaningful with
+                       * --h2d; tests that support it must reject the
+                       * combination --wc without --h2d, because a WC
+                       * D2H destination makes the verify read-back
+                       * catastrophically slow (~30 MB/s). */
 } mc_test_args_t;
 
 /* Parse argv into *args.  Caller seeds *args with its desired defaults

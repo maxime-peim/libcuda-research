@@ -43,6 +43,16 @@ typedef enum {
 
 void        *mc_malloc_device(mc_ctx_t *ctx, size_t n, mc_vas_t vas);
 void        *mc_malloc_host  (mc_ctx_t *ctx, size_t n, mc_vas_t vas);
+/* Write-combined variant — cudaHostAllocWriteCombined's analogue.  For
+ * H2D staging buffers the host never reads back: unsnooped DMA can be
+ * faster (measured gains varied by session; NVIDIA documents up to
+ * 40%), but CPU reads run ~370x slower.  See mc.h for numbers. */
+void        *mc_malloc_host_wc(mc_ctx_t *ctx, size_t n, mc_vas_t vas);
+/* Register memory the caller already owns, rather than allocating it —
+ * cudaHostRegister's analogue.  The pointer keeps its address; mc adds
+ * the GPU mapping.  mc_host_unregister removes it again. */
+mc_status_t  mc_host_register  (mc_ctx_t *ctx, void *ptr, size_t n, mc_vas_t vas);
+mc_status_t  mc_host_unregister(mc_ctx_t *ctx, void *ptr);
 void         mc_free         (mc_ctx_t *ctx, void *p);
 uint64_t     mc_gpu_va       (mc_ctx_t *ctx, const void *user_ptr);
 

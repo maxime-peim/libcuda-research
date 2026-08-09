@@ -64,18 +64,28 @@ int main(int argc, char **argv)
   case MC_TEST_ARGS_ERROR: return 2;
   }
 
+  if (args.wc && !args.h2d)
+  {
+    fprintf(stderr,
+            "mc_demo: --wc requires --h2d (a write-combined D2H "
+            "destination reads back at ~30 MB/s)\n");
+    return 2;
+  }
+
   dir_label       = args.h2d ? "H2D" : "D2H";
   const size_t nw = args.n_bytes / sizeof(uint32_t);
 
-  printf("mc_demo: size=%llu bytes (%llu MiB), iters=%d, dir=%s\n",
+  printf("mc_demo: size=%llu bytes (%llu MiB), iters=%d, dir=%s%s\n",
          (unsigned long long)args.n_bytes,
-         (unsigned long long)(args.n_bytes >> 20), args.iters, dir_label);
+         (unsigned long long)(args.n_bytes >> 20), args.iters, dir_label,
+         args.wc ? " (wc host buffer)" : "");
 
   /* ── Library init ──────────────────────────────────────────────────── */
   MC_CHECK(mc_init(&ctx));
 
   d_buf = mc_malloc_device(ctx, args.n_bytes, MC_VAS_UVM);
-  h_buf = mc_malloc_host  (ctx, args.n_bytes, MC_VAS_UVM);
+  h_buf = args.wc ? mc_malloc_host_wc(ctx, args.n_bytes, MC_VAS_UVM)
+                  : mc_malloc_host   (ctx, args.n_bytes, MC_VAS_UVM);
   if (!d_buf || !h_buf)
   {
     fprintf(stderr, "allocation failed\n");

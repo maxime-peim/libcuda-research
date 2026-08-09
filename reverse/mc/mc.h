@@ -170,15 +170,34 @@ void *mc_malloc_device(mc_ctx_t *ctx, size_t n, mc_vas_t vas);
  * make before handing the buffer to mc_memcpy(..., MC_XFER_HOST)
  * will be ordered correctly by the library's own fence discipline.
  * The same holds for mc_memcpy(..., MC_XFER_SM): the caller's buffer is
- * only ever read by the Copy Engine, never by the SM kernel, so no
- * caller-side flushing is needed.  The library's own SFENCE in the
- * submit path makes the caller's stores visible before the doorbell,
- * and where the buffer is cached, CE reads of sysmem are cache-coherent
- * DMA on x86 (dirty lines are snooped).  The channel state the SM
- * kernel does read (pushbuffer, GPFIFO, USERD, semaphores, CB0) is
- * library-owned write-combined memory whose visibility the library's
- * own SFENCE discipline guarantees; callers never touch it. */
+ * only ever read by the Copy Engine, never by the SM kernel, and no
+ * caller-side flushing is needed either way — for a cached buffer
+ * because CE reads of sysmem are cache-coherent DMA on x86 (dirty
+ * lines are snooped), and for an mc_malloc_host_wc buffer because the
+ * library's own SFENCE in the submit path drains the write-combining
+ * buffers before the doorbell.  The channel state the SM kernel
+ * does read (pushbuffer, GPFIFO, USERD, semaphores, CB0) is library-
+ * owned write-combined memory whose visibility the library's own
+ * SFENCE discipline guarantees; callers never touch it. */
 void *mc_malloc_host(mc_ctx_t *ctx, size_t n, mc_vas_t vas);
+
+/* Write-combined variant of mc_malloc_host — the analogue of
+ * cudaHostAllocWriteCombined, for buffers the CPU only WRITES (H2D
+ * staging).  Same VA-space semantics, same mc_free.
+ *
+ * The read penalty is the part that never varies, measured on H100 PCIe:
+ * a WC buffer reads back at ~32 MB/s versus ~11.8 GB/s cached — about
+ * 370x — because WC is uncached on the load path.  The DMA-side gain is
+ * real but confined to small transfers: WC memory is not snooped
+ * during DMA, which removes slow iterations rather than raising the
+ * ceiling.  Measured on H100 PCIe, a 4 MiB H2D runs at the same peak
+ * either way (51.6 GB/s) but averages 16% higher write-combined; by
+ * 64 MiB the two are indistinguishable (docs/findings.md §11).
+ * NVIDIA documents up to 40% for the CUDA equivalent.  Use this only
+ * when the host never reads the buffer back; a single accidental read
+ * loop costs more than the DMA gain saves.  mc_memcpy treats both
+ * variants identically. */
+void *mc_malloc_host_wc(mc_ctx_t *ctx, size_t n, mc_vas_t vas);
 
 /* Register an existing malloc/mmap-backed host range into mc's
  * allocation table, analogous to cudaHostRegister(ptr, n, 0).

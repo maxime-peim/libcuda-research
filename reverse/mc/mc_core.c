@@ -1244,7 +1244,8 @@ void *mc_malloc_device(mc_ctx_t *ctx, size_t n, mc_vas_t vas)
  *
  * On failure rolls back partial state and returns NULL.
  */
-void *mc_malloc_host(mc_ctx_t *ctx, size_t n, mc_vas_t vas)
+static void *malloc_host_impl(mc_ctx_t *ctx, size_t n, mc_vas_t vas,
+                              int want_wc)
 {
   mc_alloc_t *slot;
   void       *cpu_va = NULL;
@@ -1262,8 +1263,11 @@ void *mc_malloc_host(mc_ctx_t *ctx, size_t n, mc_vas_t vas)
   {
     cpu_va = va_pool_reserve((NvU64)n, "h_user");
     if (cpu_va == NULL) return NULL;
-    h_mem = rm_alloc_sysmem_at(ctx->ctl_fd, ctx->dev_fd, ctx->h_client,
-                               ctx->h_device, (NvU64)n, cpu_va, &cpu_va);
+    h_mem = want_wc
+              ? rm_alloc_sysmem_wc_at(ctx->ctl_fd, ctx->dev_fd, ctx->h_client,
+                                      ctx->h_device, (NvU64)n, cpu_va, &cpu_va)
+              : rm_alloc_sysmem_at(ctx->ctl_fd, ctx->dev_fd, ctx->h_client,
+                                   ctx->h_device, (NvU64)n, cpu_va, &cpu_va);
     if (!h_mem) return NULL;
     gpu_va = uvm_map_buffer_at(ctx->uvm_fd, ctx->dev_fd, ctx->h_client,
                                ctx->gpu_inst_uuid, h_mem, cpu_va, (NvU64)n,
@@ -1285,8 +1289,11 @@ void *mc_malloc_host(mc_ctx_t *ctx, size_t n, mc_vas_t vas)
      * kinds (host buffers in the FB carrier are still sysmem; only
      * the FB carrier's *channel resources* — PB/GPFIFO/USERD/sema —
      * live in FB). */
-    gpu_va = mc_va_space_alloc_scratch(ctx, &ctx->vas[vas],
-                                       (NvU64)n, 0, &h_mem, &cpu_va);
+    gpu_va = want_wc
+               ? mc_va_space_alloc_scratch_wc(ctx, &ctx->vas[vas],
+                                              (NvU64)n, 0, &h_mem, &cpu_va)
+               : mc_va_space_alloc_scratch(ctx, &ctx->vas[vas],
+                                           (NvU64)n, 0, &h_mem, &cpu_va);
     if (!gpu_va) return NULL;
   }
 
@@ -1297,6 +1304,16 @@ void *mc_malloc_host(mc_ctx_t *ctx, size_t n, mc_vas_t vas)
   slot->is_device = false;
   slot->vas       = vas;
   return cpu_va;
+}
+
+void *mc_malloc_host(mc_ctx_t *ctx, size_t n, mc_vas_t vas)
+{
+  return malloc_host_impl(ctx, n, vas, /*want_wc=*/0);
+}
+
+void *mc_malloc_host_wc(mc_ctx_t *ctx, size_t n, mc_vas_t vas)
+{
+  return malloc_host_impl(ctx, n, vas, /*want_wc=*/1);
 }
 
 mc_status_t mc_host_register(mc_ctx_t *ctx, void *ptr, size_t n, mc_vas_t vas)

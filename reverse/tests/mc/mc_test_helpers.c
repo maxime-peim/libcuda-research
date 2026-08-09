@@ -72,6 +72,8 @@ static void print_usage(const char *prog)
       "  --h2d         Run the timed transfer host->device instead of the\n"
       "                default device->host.  Tests that aren't directional\n"
       "                ignore this field.\n"
+      "  --wc          Allocate the host buffer write-combined\n"
+      "                (mc_malloc_host_wc).  Requires --h2d.\n"
       "  -h, --help    Show this message.\n"
       "\n"
       "Exit codes (by convention): 0 pass, 1 verify FAIL, 2 CLI error,\n"
@@ -133,6 +135,11 @@ mc_test_args_status_t mc_test_parse_args(int argc, char **argv,
     if (!strcmp(argv[i], "--h2d"))
     {
       args->h2d = 1;
+      continue;
+    }
+    if (!strcmp(argv[i], "--wc"))
+    {
+      args->wc = 1;
       continue;
     }
     fprintf(stderr, "%s: unknown argument '%s'\n", argv[0], argv[i]);
