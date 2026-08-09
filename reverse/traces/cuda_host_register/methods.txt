@@ -1,0 +1,1499 @@
+==============================================================================
+CAPTURE SUMMARY
+==============================================================================
+  t+0 anchor        : 3156880433000 ns (monotonic; all t+ timestamps below are relative to this)
+  duration          : 389.2 ms (389153000 ns)
+  fds opened        : 17 (/dev/nvidiactl×29, /dev/nvidia-uvm×4, /dev/nvidia0×15)
+  channels / TSGs   : 20 channels in 4 TSGs; 20 CE + 8 compute objects
+  allocations       : 117 handles; vidmem 447.2 MiB, sysmem 70.0 MiB
+  doorbells         : 109 total
+    chid=  5: 95 submissions
+    chid=  3: 3 submissions
+    chid=  4: 3 submissions
+    chid=  6: 3 submissions
+    chid=  7: 2 submissions
+
+==============================================================================
+PROCESS MAP — fds, allocations, mappings
+==============================================================================
+
+fd → path history (chronological):
+  fd=  9 /dev/nvidiactl       opens=2 closes=1
+  fd= 10 /dev/nvidia-uvm      opens=2 closes=0
+  fd= 11 /dev/nvidia-uvm      opens=2 closes=0
+  fd= 12 /dev/nvidia0         opens=1 closes=0
+  fd= 13 /dev/nvidia0         opens=1 closes=0
+  fd= 14 /dev/nvidia0         opens=1 closes=0
+  fd= 15 /dev/nvidia0         opens=1 closes=0
+  fd= 16 /dev/nvidiactl       opens=3 closes=3
+  fd= 18 /dev/nvidia0         opens=12 closes=11
+  fd= 20 /dev/nvidia0         opens=5 closes=4
+  fd= 22 /dev/nvidia0         opens=5 closes=4
+  fd= 24 /dev/nvidia0         opens=5 closes=4
+  fd= 26 /dev/nvidiactl       opens=1 closes=1
+  fd= 27 /dev/nvidia0         opens=4 closes=3
+  fd= 29 /dev/nvidia0         opens=1 closes=0
+  fd= 31 /dev/nvidia0         opens=1 closes=0
+  fd= 33 /dev/nvidia0         opens=1 closes=0
+
+allocations (117 handles, grouped by channel group):
+
+  ┌─ TSG 0x5c000015 KEPLER_CHANNEL_GROUP_A (8 channels)
+  │  ├─ 0x5c00001c HOPPER_CHANNEL_GPFIFO_A      sz=-         mmap=0 gpu_map=0 ctrl=3
+  │  │  ├─ 0x5c00001d HOPPER_COMPUTE_A             sz=-         mmap=0 gpu_map=0 ctrl=0
+  │  │  │  ├─ 0x5c000090 NV01_EVENT_OS_EVENT          sz=-         mmap=0 gpu_map=0 ctrl=0
+  │  │  │  ├─ 0x5c000091 NV01_EVENT_OS_EVENT          sz=-         mmap=0 gpu_map=0 ctrl=0
+  │  │  │  ├─ 0x5c000092 NV01_EVENT_OS_EVENT          sz=-         mmap=0 gpu_map=0 ctrl=0
+  │  │  │  └─ 0x5c000093 NV01_EVENT_OS_EVENT          sz=-         mmap=0 gpu_map=0 ctrl=0
+  │  │  └─ 0x5c00001e HOPPER_DMA_COPY_A            sz=-         mmap=0 gpu_map=0 ctrl=0
+  │  ├─ 0x5c000022 HOPPER_CHANNEL_GPFIFO_A      sz=-         mmap=0 gpu_map=0 ctrl=3
+  │  │  ├─ 0x5c000023 HOPPER_COMPUTE_A             sz=-         mmap=0 gpu_map=0 ctrl=0
+  │  │  └─ 0x5c000024 HOPPER_DMA_COPY_A            sz=-         mmap=0 gpu_map=0 ctrl=0
+  │  ├─ 0x5c000026 HOPPER_CHANNEL_GPFIFO_A      sz=-         mmap=0 gpu_map=0 ctrl=3
+  │  │  ├─ 0x5c000027 HOPPER_COMPUTE_A             sz=-         mmap=0 gpu_map=0 ctrl=0
+  │  │  └─ 0x5c000028 HOPPER_DMA_COPY_A            sz=-         mmap=0 gpu_map=0 ctrl=0
+  │  ├─ 0x5c00002a HOPPER_CHANNEL_GPFIFO_A      sz=-         mmap=0 gpu_map=0 ctrl=3
+  │  │  ├─ 0x5c00002b HOPPER_COMPUTE_A             sz=-         mmap=0 gpu_map=0 ctrl=0
+  │  │  └─ 0x5c00002c HOPPER_DMA_COPY_A            sz=-         mmap=0 gpu_map=0 ctrl=0
+  │  ├─ 0x5c00002e HOPPER_CHANNEL_GPFIFO_A      sz=-         mmap=0 gpu_map=0 ctrl=3
+  │  │  ├─ 0x5c00002f HOPPER_COMPUTE_A             sz=-         mmap=0 gpu_map=0 ctrl=0
+  │  │  └─ 0x5c000030 HOPPER_DMA_COPY_A            sz=-         mmap=0 gpu_map=0 ctrl=0
+  │  ├─ 0x5c000032 HOPPER_CHANNEL_GPFIFO_A      sz=-         mmap=0 gpu_map=0 ctrl=3
+  │  │  ├─ 0x5c000033 HOPPER_COMPUTE_A             sz=-         mmap=0 gpu_map=0 ctrl=0
+  │  │  └─ 0x5c000034 HOPPER_DMA_COPY_A            sz=-         mmap=0 gpu_map=0 ctrl=0
+  │  ├─ 0x5c000036 HOPPER_CHANNEL_GPFIFO_A      sz=-         mmap=0 gpu_map=0 ctrl=3
+  │  │  ├─ 0x5c000037 HOPPER_COMPUTE_A             sz=-         mmap=0 gpu_map=0 ctrl=0
+  │  │  └─ 0x5c000038 HOPPER_DMA_COPY_A            sz=-         mmap=0 gpu_map=0 ctrl=0
+  │  ├─ 0x5c00003a HOPPER_CHANNEL_GPFIFO_A      sz=-         mmap=0 gpu_map=0 ctrl=3
+  │  │  ├─ 0x5c00003b HOPPER_COMPUTE_A             sz=-         mmap=0 gpu_map=0 ctrl=0
+  │  │  └─ 0x5c00003c HOPPER_DMA_COPY_A            sz=-         mmap=0 gpu_map=0 ctrl=0
+  │  └─ 0x5c000016 FERMI_CONTEXT_SHARE_A        sz=-         mmap=0 gpu_map=0 ctrl=0
+  └─ end TSG 0x5c000015
+
+  ┌─ TSG 0x5c00003e KEPLER_CHANNEL_GROUP_A (4 channels)
+  │  ├─ 0x5c000040 HOPPER_CHANNEL_GPFIFO_A      sz=-         mmap=0 gpu_map=0 ctrl=2
+  │  │  └─ 0x5c000041 HOPPER_DMA_COPY_A            sz=-         mmap=0 gpu_map=0 ctrl=0
+  │  ├─ 0x5c000043 HOPPER_CHANNEL_GPFIFO_A      sz=-         mmap=0 gpu_map=0 ctrl=2
+  │  │  └─ 0x5c000044 HOPPER_DMA_COPY_A            sz=-         mmap=0 gpu_map=0 ctrl=0
+  │  ├─ 0x5c000046 HOPPER_CHANNEL_GPFIFO_A      sz=-         mmap=0 gpu_map=0 ctrl=2
+  │  │  └─ 0x5c000047 HOPPER_DMA_COPY_A            sz=-         mmap=0 gpu_map=0 ctrl=0
+  │  └─ 0x5c000049 HOPPER_CHANNEL_GPFIFO_A      sz=-         mmap=0 gpu_map=0 ctrl=2
+  │     └─ 0x5c00004a HOPPER_DMA_COPY_A            sz=-         mmap=0 gpu_map=0 ctrl=0
+  └─ end TSG 0x5c00003e
+
+  ┌─ TSG 0x5c00004c KEPLER_CHANNEL_GROUP_A (4 channels)
+  │  ├─ 0x5c00004e HOPPER_CHANNEL_GPFIFO_A      sz=-         mmap=0 gpu_map=0 ctrl=2
+  │  │  └─ 0x5c00004f HOPPER_DMA_COPY_A            sz=-         mmap=0 gpu_map=0 ctrl=0
+  │  ├─ 0x5c000051 HOPPER_CHANNEL_GPFIFO_A      sz=-         mmap=0 gpu_map=0 ctrl=2
+  │  │  └─ 0x5c000052 HOPPER_DMA_COPY_A            sz=-         mmap=0 gpu_map=0 ctrl=0
+  │  ├─ 0x5c000054 HOPPER_CHANNEL_GPFIFO_A      sz=-         mmap=0 gpu_map=0 ctrl=2
+  │  │  └─ 0x5c000055 HOPPER_DMA_COPY_A            sz=-         mmap=0 gpu_map=0 ctrl=0
+  │  └─ 0x5c000057 HOPPER_CHANNEL_GPFIFO_A      sz=-         mmap=0 gpu_map=0 ctrl=2
+  │     └─ 0x5c000058 HOPPER_DMA_COPY_A            sz=-         mmap=0 gpu_map=0 ctrl=0
+  └─ end TSG 0x5c00004c
+
+  ┌─ TSG 0x5c00005a KEPLER_CHANNEL_GROUP_A (4 channels)
+  │  ├─ 0x5c00005c HOPPER_CHANNEL_GPFIFO_A      sz=-         mmap=0 gpu_map=0 ctrl=2
+  │  │  └─ 0x5c00005d HOPPER_DMA_COPY_A            sz=-         mmap=0 gpu_map=0 ctrl=0
+  │  ├─ 0x5c00005f HOPPER_CHANNEL_GPFIFO_A      sz=-         mmap=0 gpu_map=0 ctrl=2
+  │  │  └─ 0x5c000060 HOPPER_DMA_COPY_A            sz=-         mmap=0 gpu_map=0 ctrl=0
+  │  ├─ 0x5c000062 HOPPER_CHANNEL_GPFIFO_A      sz=-         mmap=0 gpu_map=0 ctrl=2
+  │  │  └─ 0x5c000063 HOPPER_DMA_COPY_A            sz=-         mmap=0 gpu_map=0 ctrl=0
+  │  └─ 0x5c000065 HOPPER_CHANNEL_GPFIFO_A      sz=-         mmap=0 gpu_map=0 ctrl=2
+  │     └─ 0x5c000066 HOPPER_DMA_COPY_A            sz=-         mmap=0 gpu_map=0 ctrl=0
+  └─ end TSG 0x5c00005a
+
+device-level memory (not inside a channel group):
+  0x5c00000c NV50_MEMORY_VIRTUAL          sz=-         mmap=0 gpu_map=0 ctrl=0
+  0x5c00000e NV01_MEMORY_LOCAL_USER       sz=3.6M      mmap=0 gpu_map=1 ctrl=0
+  0x5c000011 NV01_MEMORY_LOCAL_USER       sz=2.0M      mmap=0 gpu_map=1 ctrl=0
+  0x5c000012 NV01_MEMORY_LOCAL_USER       sz=2.0M      mmap=0 gpu_map=1 ctrl=0
+  0x5c000013 NV01_MEMORY_LOCAL_USER       sz=2.0M      mmap=0 gpu_map=1 ctrl=0
+  0x5c000017 NV01_MEMORY_LOCAL_USER       sz=2.0M      mmap=1 gpu_map=2 ctrl=0
+  0x5c000019 NV01_MEMORY_SYSTEM           sz=56.0M     mmap=1 gpu_map=2 ctrl=0
+  0x5c00001b NV01_MEMORY_SYSTEM           sz=4096      mmap=1 gpu_map=0 ctrl=0
+  0x5c00001f NV01_MEMORY_SYSTEM           sz=2.0M      mmap=1 gpu_map=2 ctrl=0
+  0x5c000021 NV01_MEMORY_SYSTEM           sz=4096      mmap=1 gpu_map=0 ctrl=0
+  0x5c000025 NV01_MEMORY_SYSTEM           sz=4096      mmap=1 gpu_map=0 ctrl=0
+  0x5c000029 NV01_MEMORY_SYSTEM           sz=4096      mmap=1 gpu_map=0 ctrl=0
+  0x5c00002d NV01_MEMORY_SYSTEM           sz=4096      mmap=1 gpu_map=0 ctrl=0
+  0x5c000031 NV01_MEMORY_SYSTEM           sz=4096      mmap=1 gpu_map=0 ctrl=0
+  0x5c000035 NV01_MEMORY_SYSTEM           sz=4096      mmap=1 gpu_map=0 ctrl=0
+  0x5c000039 NV01_MEMORY_SYSTEM           sz=4096      mmap=1 gpu_map=0 ctrl=0
+  0x5c00003f NV01_MEMORY_SYSTEM           sz=4096      mmap=1 gpu_map=0 ctrl=0
+  0x5c000042 NV01_MEMORY_SYSTEM           sz=4096      mmap=1 gpu_map=0 ctrl=0
+  0x5c000045 NV01_MEMORY_SYSTEM           sz=4096      mmap=1 gpu_map=0 ctrl=0
+  0x5c000048 NV01_MEMORY_SYSTEM           sz=4096      mmap=1 gpu_map=0 ctrl=0
+  0x5c00004d NV01_MEMORY_SYSTEM           sz=4096      mmap=1 gpu_map=0 ctrl=0
+  0x5c000050 NV01_MEMORY_SYSTEM           sz=4096      mmap=1 gpu_map=0 ctrl=0
+  0x5c000053 NV01_MEMORY_SYSTEM           sz=4096      mmap=1 gpu_map=0 ctrl=0
+  0x5c000056 NV01_MEMORY_SYSTEM           sz=4096      mmap=1 gpu_map=0 ctrl=0
+  0x5c00005b NV01_MEMORY_SYSTEM           sz=4096      mmap=1 gpu_map=0 ctrl=0
+  0x5c00005e NV01_MEMORY_SYSTEM           sz=4096      mmap=1 gpu_map=0 ctrl=0
+  0x5c000061 NV01_MEMORY_SYSTEM           sz=4096      mmap=1 gpu_map=0 ctrl=0
+  0x5c000064 NV01_MEMORY_SYSTEM           sz=4096      mmap=1 gpu_map=0 ctrl=0
+  0x5c000068 NV01_MEMORY_SYSTEM           sz=2.0M      mmap=1 gpu_map=2 ctrl=0
+  0x5c00006a NV01_MEMORY_LOCAL_USER       sz=2.0M      mmap=0 gpu_map=1 ctrl=0
+  0x5c00006c NV01_MEMORY_LOCAL_USER       sz=2.0M      mmap=0 gpu_map=1 ctrl=0
+  0x5c00006e NV01_MEMORY_SYSTEM           sz=2.0M      mmap=1 gpu_map=2 ctrl=0
+  0x5c000072 NV01_MEMORY_LOCAL_USER       sz=2.0M      mmap=0 gpu_map=1 ctrl=0
+  0x5c000074 NV01_MEMORY_LOCAL_USER       sz=2.0M      mmap=0 gpu_map=1 ctrl=0
+  0x5c000078 NV01_MEMORY_LOCAL_USER       sz=2.0M      mmap=0 gpu_map=1 ctrl=0
+  0x5c00007d NV01_MEMORY_LOCAL_USER       sz=2.0M      mmap=0 gpu_map=1 ctrl=0
+  0x5c00007f NV01_MEMORY_LOCAL_USER       sz=2.0M      mmap=0 gpu_map=1 ctrl=0
+  0x5c000081 NV01_MEMORY_LOCAL_USER       sz=2.0M      mmap=0 gpu_map=1 ctrl=0
+  0x5c000083 NV01_MEMORY_SYSTEM           sz=2.0M      mmap=1 gpu_map=2 ctrl=0
+  0x5c000085 NV01_MEMORY_LOCAL_USER       sz=2.0M      mmap=0 gpu_map=1 ctrl=0
+  0x5c00008a NV01_MEMORY_SYSTEM           sz=5.9M      mmap=0 gpu_map=2 ctrl=0
+  0x5c00008c NV01_MEMORY_LOCAL_USER       sz=59.4M     mmap=0 gpu_map=1 ctrl=0
+  0x5c00008e NV01_MEMORY_LOCAL_USER       sz=2.0M      mmap=0 gpu_map=1 ctrl=0
+  0x5c000094 NV01_MEMORY_LOCAL_USER       sz=356.2M    mmap=0 gpu_map=1 ctrl=0
+
+other (16 handles — client, VA space, internal):
+  0x5c000001 NV_CONFIDENTIAL_COMPUTE      sz=-         mmap=0 gpu_map=0 ctrl=1
+  0x5c000002 NV01_DEVICE_0                sz=-         mmap=0 gpu_map=0 ctrl=26
+  0x5c000003 NV20_SUBDEVICE_0             sz=-         mmap=0 gpu_map=0 ctrl=59
+  0x5c000004 NV2081_BINAPI                sz=-         mmap=0 gpu_map=0 ctrl=1
+  0x5c000005 HOPPER_USERMODE_A            sz=-         mmap=1 gpu_map=0 ctrl=0
+  0x5c000006 HOPPER_USERMODE_A            sz=-         mmap=1 gpu_map=0 ctrl=0
+  0x5c000007 GF100_SUBDEVICE_MASTER       sz=-         mmap=0 gpu_map=0 ctrl=1
+  0x5c000008 RM_USER_SHARED_DATA          sz=-         mmap=0 gpu_map=0 ctrl=0
+  0x5c000009 FERMI_VASPACE_A              sz=-         mmap=0 gpu_map=0 ctrl=0
+  0x5c00000a FERMI_VASPACE_A              sz=-         mmap=0 gpu_map=0 ctrl=0
+  0x5c00000d NV50_THIRD_PARTY_P2P         sz=-         mmap=0 gpu_map=0 ctrl=1
+  0x5c00003d NV01_EVENT_OS_EVENT          sz=-         mmap=0 gpu_map=0 ctrl=0
+  0x5c00004b NV01_EVENT_OS_EVENT          sz=-         mmap=0 gpu_map=0 ctrl=0
+  0x5c000059 NV01_EVENT_OS_EVENT          sz=-         mmap=0 gpu_map=0 ctrl=0
+  0x5c000067 NV01_EVENT_OS_EVENT          sz=-         mmap=0 gpu_map=0 ctrl=0
+  0x5c000089 GT200_DEBUGGER               sz=-         mmap=0 gpu_map=0 ctrl=1
+
+==============================================================================
+per-doorbell method decode
+==============================================================================
+
+
+=== PB_EVENTS: 109 doorbells, 109 resolved, 0 unresolved ===
+seq=4716 chid=  3 idx=  0 pb_va=0x203600000 pb_len=32  → hMemory=0x5c000019 class=NV01_MEMORY_SYSTEM offset=50331648 sizeMiB=56.00
+seq=4717 chid=  4 idx=  0 pb_va=0x203800000 pb_len=32  → hMemory=0x5c000019 class=NV01_MEMORY_SYSTEM offset=52428800 sizeMiB=56.00
+seq=4718 chid=  5 idx=  0 pb_va=0x203a00000 pb_len=32  → hMemory=0x5c000019 class=NV01_MEMORY_SYSTEM offset=54525952 sizeMiB=56.00
+seq=4719 chid=  6 idx=  0 pb_va=0x203c00000 pb_len=32  → hMemory=0x5c000019 class=NV01_MEMORY_SYSTEM offset=56623104 sizeMiB=56.00
+seq=4720 chid=  3 idx=  0 pb_va=0x202e00000 pb_len=32  → hMemory=0x5c000019 class=NV01_MEMORY_SYSTEM offset=41943040 sizeMiB=56.00
+seq=4721 chid=  4 idx=  0 pb_va=0x203000000 pb_len=32  → hMemory=0x5c000019 class=NV01_MEMORY_SYSTEM offset=44040192 sizeMiB=56.00
+seq=4722 chid=  5 idx=  0 pb_va=0x203200000 pb_len=32  → hMemory=0x5c000019 class=NV01_MEMORY_SYSTEM offset=46137344 sizeMiB=56.00
+seq=4723 chid=  6 idx=  0 pb_va=0x203400000 pb_len=32  → hMemory=0x5c000019 class=NV01_MEMORY_SYSTEM offset=48234496 sizeMiB=56.00
+seq=4724 chid=  5 idx=  0 pb_va=0x202600000 pb_len=32  → hMemory=0x5c000019 class=NV01_MEMORY_SYSTEM offset=33554432 sizeMiB=56.00
+seq=4726 chid=  7 idx=  0 pb_va=0x202a00000 pb_len=32  → hMemory=0x5c000019 class=NV01_MEMORY_SYSTEM offset=37748736 sizeMiB=56.00
+seq=4727 chid=  8 idx=  0 pb_va=0x202c00000 pb_len=32  → hMemory=0x5c000019 class=NV01_MEMORY_SYSTEM offset=39845888 sizeMiB=56.00
+seq=4729 chid=  3 idx=  0 pb_va=0x200a00000 pb_len=880  → hMemory=0x5c000019 class=NV01_MEMORY_SYSTEM offset=4194304 sizeMiB=56.00
+seq=4730 chid=  4 idx=  0 pb_va=0x200e00000 pb_len=880  → hMemory=0x5c000019 class=NV01_MEMORY_SYSTEM offset=8388608 sizeMiB=56.00
+seq=4731 chid=  5 idx=  0 pb_va=0x201200000 pb_len=880  → hMemory=0x5c000019 class=NV01_MEMORY_SYSTEM offset=12582912 sizeMiB=56.00
+seq=4732 chid=  6 idx=  0 pb_va=0x201600000 pb_len=880  → hMemory=0x5c000019 class=NV01_MEMORY_SYSTEM offset=16777216 sizeMiB=56.00
+seq=4733 chid=  7 idx=  0 pb_va=0x201a00000 pb_len=880  → hMemory=0x5c000019 class=NV01_MEMORY_SYSTEM offset=20971520 sizeMiB=56.00
+seq=4734 chid=  8 idx=  0 pb_va=0x201e00000 pb_len=880  → hMemory=0x5c000019 class=NV01_MEMORY_SYSTEM offset=25165824 sizeMiB=56.00
+seq=4735 chid=  9 idx=  0 pb_va=0x202200000 pb_len=880  → hMemory=0x5c000019 class=NV01_MEMORY_SYSTEM offset=29360128 sizeMiB=56.00
+seq=4736..4738 (×3  ) chid=  5 idx=1..3 pb_len=76  → hMemory=0x5c000019 class=NV01_MEMORY_SYSTEM offset=33554464..33554616 sizeMiB=56.00
+seq=4749..4812 (×64 ) chid=  5 idx=4..67 pb_len=76  → hMemory=0x5c000019 class=NV01_MEMORY_SYSTEM offset=33554692..33559480 sizeMiB=56.00
+seq=4816..4828 (×13 ) chid=  5 idx=68..80 pb_len=76  → hMemory=0x5c000019 class=NV01_MEMORY_SYSTEM offset=33559556..33560468 sizeMiB=56.00
+seq=4852 chid=  5 idx= 81 pb_va=0x2026017e0 pb_len=60  → hMemory=0x5c000019 class=NV01_MEMORY_SYSTEM offset=33560544 sizeMiB=56.00
+seq=4855 chid=  5 idx= 82 pb_va=0x20260181c pb_len=60  → hMemory=0x5c000019 class=NV01_MEMORY_SYSTEM offset=33560604 sizeMiB=56.00
+seq=4858..4859 (×2  ) chid=  5 idx=83..84 pb_len=60  → hMemory=0x5c000019 class=NV01_MEMORY_SYSTEM offset=33560664..33560724 sizeMiB=56.00
+seq=4862 chid=  5 idx= 85 pb_va=0x2026018d0 pb_len=60  → hMemory=0x5c000019 class=NV01_MEMORY_SYSTEM offset=33560784 sizeMiB=56.00
+seq=4877..4878 (×2  ) chid=  5 idx=86..87 pb_len=76  → hMemory=0x5c000019 class=NV01_MEMORY_SYSTEM offset=33560844..33560920 sizeMiB=56.00
+seq=4880..4881 (×2  ) chid=  5 idx=88..89 pb_len=76  → hMemory=0x5c000019 class=NV01_MEMORY_SYSTEM offset=33560996..33561072 sizeMiB=56.00
+seq=4888 chid=  5 idx= 90 pb_va=0x202601a3c pb_len=60  → hMemory=0x5c000019 class=NV01_MEMORY_SYSTEM offset=33561148 sizeMiB=56.00
+seq=4903 chid=  5 idx= 91 pb_va=0x202601a78 pb_len=76  → hMemory=0x5c000019 class=NV01_MEMORY_SYSTEM offset=33561208 sizeMiB=56.00
+
+=== PB_BYTES_DECODE: 109 submissions, 1775 decoded methods ===
+
+--- seq=4716 chid=3 idx=0 nbytes=32 ---
+  [sch4] HOPPER_CHANNEL_GPFIFO_A/SET_OBJECT               class=0xc8b5 (HOPPER_DMA_COPY_A)
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_VA               role=semaphore  va=0x20440fef0 → hMemory=0x5c00001f class=NV01_MEMORY_SYSTEM offset=65264
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_PAYLOAD          data=0x00000001
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000014 (DATA_TRANSFER_TYPE=NONE | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=RELEASE_SEMAPHORE_WITH_TIMESTAMP | SRC_MEMORY_LAYOUT=BLOCKLINEAR | DST_MEMORY_LAYOUT=BLOCKLINEAR | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+
+--- seq=4717 chid=4 idx=0 nbytes=32 ---
+  [sch4] HOPPER_CHANNEL_GPFIFO_A/SET_OBJECT               class=0xc8b5 (HOPPER_DMA_COPY_A)
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_VA               role=semaphore  va=0x20440fee0 → hMemory=0x5c00001f class=NV01_MEMORY_SYSTEM offset=65248
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_PAYLOAD          data=0x00000001
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000014 (DATA_TRANSFER_TYPE=NONE | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=RELEASE_SEMAPHORE_WITH_TIMESTAMP | SRC_MEMORY_LAYOUT=BLOCKLINEAR | DST_MEMORY_LAYOUT=BLOCKLINEAR | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+
+--- seq=4718 chid=5 idx=0 nbytes=32 ---
+  [sch4] HOPPER_CHANNEL_GPFIFO_A/SET_OBJECT               class=0xc8b5 (HOPPER_DMA_COPY_A)
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_VA               role=semaphore  va=0x20440fed0 → hMemory=0x5c00001f class=NV01_MEMORY_SYSTEM offset=65232
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_PAYLOAD          data=0x00000001
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000014 (DATA_TRANSFER_TYPE=NONE | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=RELEASE_SEMAPHORE_WITH_TIMESTAMP | SRC_MEMORY_LAYOUT=BLOCKLINEAR | DST_MEMORY_LAYOUT=BLOCKLINEAR | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+
+--- seq=4719 chid=6 idx=0 nbytes=32 ---
+  [sch4] HOPPER_CHANNEL_GPFIFO_A/SET_OBJECT               class=0xc8b5 (HOPPER_DMA_COPY_A)
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_VA               role=semaphore  va=0x20440fec0 → hMemory=0x5c00001f class=NV01_MEMORY_SYSTEM offset=65216
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_PAYLOAD          data=0x00000001
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000014 (DATA_TRANSFER_TYPE=NONE | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=RELEASE_SEMAPHORE_WITH_TIMESTAMP | SRC_MEMORY_LAYOUT=BLOCKLINEAR | DST_MEMORY_LAYOUT=BLOCKLINEAR | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+
+--- seq=4720 chid=3 idx=0 nbytes=32 ---
+  [sch4] HOPPER_CHANNEL_GPFIFO_A/SET_OBJECT               class=0xc8b5 (HOPPER_DMA_COPY_A)
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_VA               role=semaphore  va=0x20440ff30 → hMemory=0x5c00001f class=NV01_MEMORY_SYSTEM offset=65328
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_PAYLOAD          data=0x00000001
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000014 (DATA_TRANSFER_TYPE=NONE | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=RELEASE_SEMAPHORE_WITH_TIMESTAMP | SRC_MEMORY_LAYOUT=BLOCKLINEAR | DST_MEMORY_LAYOUT=BLOCKLINEAR | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+
+--- seq=4721 chid=4 idx=0 nbytes=32 ---
+  [sch4] HOPPER_CHANNEL_GPFIFO_A/SET_OBJECT               class=0xc8b5 (HOPPER_DMA_COPY_A)
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_VA               role=semaphore  va=0x20440ff20 → hMemory=0x5c00001f class=NV01_MEMORY_SYSTEM offset=65312
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_PAYLOAD          data=0x00000001
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000014 (DATA_TRANSFER_TYPE=NONE | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=RELEASE_SEMAPHORE_WITH_TIMESTAMP | SRC_MEMORY_LAYOUT=BLOCKLINEAR | DST_MEMORY_LAYOUT=BLOCKLINEAR | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+
+--- seq=4722 chid=5 idx=0 nbytes=32 ---
+  [sch4] HOPPER_CHANNEL_GPFIFO_A/SET_OBJECT               class=0xc8b5 (HOPPER_DMA_COPY_A)
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_VA               role=semaphore  va=0x20440ff10 → hMemory=0x5c00001f class=NV01_MEMORY_SYSTEM offset=65296
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_PAYLOAD          data=0x00000001
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000014 (DATA_TRANSFER_TYPE=NONE | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=RELEASE_SEMAPHORE_WITH_TIMESTAMP | SRC_MEMORY_LAYOUT=BLOCKLINEAR | DST_MEMORY_LAYOUT=BLOCKLINEAR | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+
+--- seq=4723 chid=6 idx=0 nbytes=32 ---
+  [sch4] HOPPER_CHANNEL_GPFIFO_A/SET_OBJECT               class=0xc8b5 (HOPPER_DMA_COPY_A)
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_VA               role=semaphore  va=0x20440ff00 → hMemory=0x5c00001f class=NV01_MEMORY_SYSTEM offset=65280
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_PAYLOAD          data=0x00000001
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000014 (DATA_TRANSFER_TYPE=NONE | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=RELEASE_SEMAPHORE_WITH_TIMESTAMP | SRC_MEMORY_LAYOUT=BLOCKLINEAR | DST_MEMORY_LAYOUT=BLOCKLINEAR | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+
+--- seq=4724 chid=5 idx=0 nbytes=32 ---
+  [sch4] HOPPER_CHANNEL_GPFIFO_A/SET_OBJECT               class=0xc8b5 (HOPPER_DMA_COPY_A)
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_VA               role=semaphore  va=0x20440ff70 → hMemory=0x5c00001f class=NV01_MEMORY_SYSTEM offset=65392
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_PAYLOAD          data=0x00000001
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000014 (DATA_TRANSFER_TYPE=NONE | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=RELEASE_SEMAPHORE_WITH_TIMESTAMP | SRC_MEMORY_LAYOUT=BLOCKLINEAR | DST_MEMORY_LAYOUT=BLOCKLINEAR | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+
+--- seq=4726 chid=7 idx=0 nbytes=32 ---
+  [sch4] HOPPER_CHANNEL_GPFIFO_A/SET_OBJECT               class=0xc8b5 (HOPPER_DMA_COPY_A)
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_VA               role=semaphore  va=0x20440ff50 → hMemory=0x5c00001f class=NV01_MEMORY_SYSTEM offset=65360
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_PAYLOAD          data=0x00000001
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000014 (DATA_TRANSFER_TYPE=NONE | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=RELEASE_SEMAPHORE_WITH_TIMESTAMP | SRC_MEMORY_LAYOUT=BLOCKLINEAR | DST_MEMORY_LAYOUT=BLOCKLINEAR | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+
+--- seq=4727 chid=8 idx=0 nbytes=32 ---
+  [sch4] HOPPER_CHANNEL_GPFIFO_A/SET_OBJECT               class=0xc8b5 (HOPPER_DMA_COPY_A)
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_VA               role=semaphore  va=0x20440ff40 → hMemory=0x5c00001f class=NV01_MEMORY_SYSTEM offset=65344
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_PAYLOAD          data=0x00000001
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000014 (DATA_TRANSFER_TYPE=NONE | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=RELEASE_SEMAPHORE_WITH_TIMESTAMP | SRC_MEMORY_LAYOUT=BLOCKLINEAR | DST_MEMORY_LAYOUT=BLOCKLINEAR | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+
+--- seq=4729 chid=3 idx=0 nbytes=880 ---
+  [sch1] HOPPER_CHANNEL_GPFIFO_A/SET_OBJECT               class=0xcbc0 (HOPPER_COMPUTE_A)
+  [sch1] HOPPER_COMPUTE_A/NO_OPERATION                    data=0x00000000
+  [sch1] HOPPER_COMPUTE_A/SET_SHADER_SHARED_MEMORY_WINDOW_A data=0x000073c3
+  [sch1] HOPPER_COMPUTE_A/SET_SHADER_SHARED_MEMORY_WINDOW_B data=0x00000000
+  [sch1] HOPPER_COMPUTE_A/SET_SPA_VERSION                 data=0x00000900
+  [sch1] HOPPER_COMPUTE_A::method_0x07ac                  data=0x00000001
+  [sch1] HOPPER_COMPUTE_A/SET_QMD_VERSION                 data=0x00010040
+  [sch1] HOPPER_COMPUTE_A/SET_CWD_REF_COUNTER             ×64   (256 bytes) [0x001c803f, 0x001c803e, 0x001c803d, ..., 0x001c8000]
+  [sch1] HOPPER_COMPUTE_A/SET_RESERVED_SW_METHOD07        data=0x00000001
+  [sch1] HOPPER_COMPUTE_A/SET_VALID_SPAN_OVERFLOW_AREA_A  data=0x00000002
+  [sch1] HOPPER_COMPUTE_A/SET_VALID_SPAN_OVERFLOW_AREA_B  data=0x00000000
+  [sch1] HOPPER_COMPUTE_A/SET_VALID_SPAN_OVERFLOW_AREA_C  data=0x00390000
+  [sch1] HOPPER_COMPUTE_A/SET_SHADER_LOCAL_MEMORY_NON_THROTTLED_C data=0x00000039
+  [sch1] HOPPER_COMPUTE_A/LOAD_MME_INSTRUCTION_RAM_POINTER data=0x00000000
+  [sch1] HOPPER_COMPUTE_A/LOAD_MME_INSTRUCTION_RAM        ×15   (60 bytes) [0x00140003, 0x1d00001b, 0x71c08300, ..., 0x318c0300]
+  [sch1] HOPPER_COMPUTE_A/LOAD_MME_START_ADDRESS_RAM_POINTER data=0x00000000
+  [sch1] HOPPER_COMPUTE_A/LOAD_MME_START_ADDRESS_RAM      data=0x00000000
+  [sch1] HOPPER_COMPUTE_A/LOAD_MME_INSTRUCTION_RAM_POINTER data=0x0000000f
+  [sch1] HOPPER_COMPUTE_A/LOAD_MME_INSTRUCTION_RAM        ×24   (96 bytes) [0x00000003, 0x1d080000, 0x31c00300, ..., 0x318c0300]
+  [sch1] HOPPER_COMPUTE_A/LOAD_MME_START_ADDRESS_RAM_POINTER data=0x00000001
+  [sch1] HOPPER_COMPUTE_A/LOAD_MME_START_ADDRESS_RAM      data=0x0000000f
+  [sch4] HOPPER_CHANNEL_GPFIFO_A/SET_OBJECT               class=0xc8b5 (HOPPER_DMA_COPY_A)
+  [sch1] HOPPER_COMPUTE_A/SET_TEX_HEADER_POOL_A           data=0x00000100
+  [sch1] HOPPER_COMPUTE_A/SET_TEX_HEADER_POOL_B           data=0x00000000
+  [sch1] HOPPER_COMPUTE_A/SET_TEX_HEADER_POOL_C           data=0x000fffff
+  [sch1] HOPPER_COMPUTE_A/SET_TEX_SAMPLER_POOL_A          data=0x00000100
+  [sch1] HOPPER_COMPUTE_A/SET_TEX_SAMPLER_POOL_B          data=0x02000000
+  [sch1] HOPPER_COMPUTE_A/SET_TEX_SAMPLER_POOL_C          data=0x00000000
+  [sch1] HOPPER_COMPUTE_A/SET_REPORT_SEMAPHORE_A          data=0x00000002
+  [sch1] HOPPER_COMPUTE_A/SET_REPORT_SEMAPHORE_B          data=0x0440ffe0
+  [sch1] HOPPER_COMPUTE_A/SET_REPORT_SEMAPHORE_C          data=0x00000001
+  [sch1] HOPPER_COMPUTE_A/SET_REPORT_SEMAPHORE_D          data=0x00000000
+
+--- seq=4730 chid=4 idx=0 nbytes=880 ---
+  [sch1] HOPPER_CHANNEL_GPFIFO_A/SET_OBJECT               class=0xcbc0 (HOPPER_COMPUTE_A)
+  [sch1] HOPPER_COMPUTE_A/NO_OPERATION                    data=0x00000000
+  [sch1] HOPPER_COMPUTE_A/SET_SHADER_SHARED_MEMORY_WINDOW_A data=0x000073c3
+  [sch1] HOPPER_COMPUTE_A/SET_SHADER_SHARED_MEMORY_WINDOW_B data=0x00000000
+  [sch1] HOPPER_COMPUTE_A/SET_SPA_VERSION                 data=0x00000900
+  [sch1] HOPPER_COMPUTE_A::method_0x07ac                  data=0x00000001
+  [sch1] HOPPER_COMPUTE_A/SET_QMD_VERSION                 data=0x00010040
+  [sch1] HOPPER_COMPUTE_A/SET_CWD_REF_COUNTER             ×64   (256 bytes) [0x001c803f, 0x001c803e, 0x001c803d, ..., 0x001c8000]
+  [sch1] HOPPER_COMPUTE_A/SET_RESERVED_SW_METHOD07        data=0x00000001
+  [sch1] HOPPER_COMPUTE_A/SET_VALID_SPAN_OVERFLOW_AREA_A  data=0x00000002
+  [sch1] HOPPER_COMPUTE_A/SET_VALID_SPAN_OVERFLOW_AREA_B  data=0x00000000
+  [sch1] HOPPER_COMPUTE_A/SET_VALID_SPAN_OVERFLOW_AREA_C  data=0x00390000
+  [sch1] HOPPER_COMPUTE_A/SET_SHADER_LOCAL_MEMORY_NON_THROTTLED_C data=0x00000039
+  [sch1] HOPPER_COMPUTE_A/LOAD_MME_INSTRUCTION_RAM_POINTER data=0x00000000
+  [sch1] HOPPER_COMPUTE_A/LOAD_MME_INSTRUCTION_RAM        ×15   (60 bytes) [0x00140003, 0x1d00001b, 0x71c08300, ..., 0x318c0300]
+  [sch1] HOPPER_COMPUTE_A/LOAD_MME_START_ADDRESS_RAM_POINTER data=0x00000000
+  [sch1] HOPPER_COMPUTE_A/LOAD_MME_START_ADDRESS_RAM      data=0x00000000
+  [sch1] HOPPER_COMPUTE_A/LOAD_MME_INSTRUCTION_RAM_POINTER data=0x0000000f
+  [sch1] HOPPER_COMPUTE_A/LOAD_MME_INSTRUCTION_RAM        ×24   (96 bytes) [0x00000003, 0x1d080000, 0x31c00300, ..., 0x318c0300]
+  [sch1] HOPPER_COMPUTE_A/LOAD_MME_START_ADDRESS_RAM_POINTER data=0x00000001
+  [sch1] HOPPER_COMPUTE_A/LOAD_MME_START_ADDRESS_RAM      data=0x0000000f
+  [sch4] HOPPER_CHANNEL_GPFIFO_A/SET_OBJECT               class=0xc8b5 (HOPPER_DMA_COPY_A)
+  [sch1] HOPPER_COMPUTE_A/SET_TEX_HEADER_POOL_A           data=0x00000100
+  [sch1] HOPPER_COMPUTE_A/SET_TEX_HEADER_POOL_B           data=0x00000000
+  [sch1] HOPPER_COMPUTE_A/SET_TEX_HEADER_POOL_C           data=0x000fffff
+  [sch1] HOPPER_COMPUTE_A/SET_TEX_SAMPLER_POOL_A          data=0x00000100
+  [sch1] HOPPER_COMPUTE_A/SET_TEX_SAMPLER_POOL_B          data=0x02000000
+  [sch1] HOPPER_COMPUTE_A/SET_TEX_SAMPLER_POOL_C          data=0x00000000
+  [sch1] HOPPER_COMPUTE_A/SET_REPORT_SEMAPHORE_A          data=0x00000002
+  [sch1] HOPPER_COMPUTE_A/SET_REPORT_SEMAPHORE_B          data=0x0440ffd0
+  [sch1] HOPPER_COMPUTE_A/SET_REPORT_SEMAPHORE_C          data=0x00000001
+  [sch1] HOPPER_COMPUTE_A/SET_REPORT_SEMAPHORE_D          data=0x00000000
+
+--- seq=4731 chid=5 idx=0 nbytes=880 ---
+  [sch1] HOPPER_CHANNEL_GPFIFO_A/SET_OBJECT               class=0xcbc0 (HOPPER_COMPUTE_A)
+  [sch1] HOPPER_COMPUTE_A/NO_OPERATION                    data=0x00000000
+  [sch1] HOPPER_COMPUTE_A/SET_SHADER_SHARED_MEMORY_WINDOW_A data=0x000073c3
+  [sch1] HOPPER_COMPUTE_A/SET_SHADER_SHARED_MEMORY_WINDOW_B data=0x00000000
+  [sch1] HOPPER_COMPUTE_A/SET_SPA_VERSION                 data=0x00000900
+  [sch1] HOPPER_COMPUTE_A::method_0x07ac                  data=0x00000001
+  [sch1] HOPPER_COMPUTE_A/SET_QMD_VERSION                 data=0x00010040
+  [sch1] HOPPER_COMPUTE_A/SET_CWD_REF_COUNTER             ×64   (256 bytes) [0x001c803f, 0x001c803e, 0x001c803d, ..., 0x001c8000]
+  [sch1] HOPPER_COMPUTE_A/SET_RESERVED_SW_METHOD07        data=0x00000001
+  [sch1] HOPPER_COMPUTE_A/SET_VALID_SPAN_OVERFLOW_AREA_A  data=0x00000002
+  [sch1] HOPPER_COMPUTE_A/SET_VALID_SPAN_OVERFLOW_AREA_B  data=0x00000000
+  [sch1] HOPPER_COMPUTE_A/SET_VALID_SPAN_OVERFLOW_AREA_C  data=0x00390000
+  [sch1] HOPPER_COMPUTE_A/SET_SHADER_LOCAL_MEMORY_NON_THROTTLED_C data=0x00000039
+  [sch1] HOPPER_COMPUTE_A/LOAD_MME_INSTRUCTION_RAM_POINTER data=0x00000000
+  [sch1] HOPPER_COMPUTE_A/LOAD_MME_INSTRUCTION_RAM        ×15   (60 bytes) [0x00140003, 0x1d00001b, 0x71c08300, ..., 0x318c0300]
+  [sch1] HOPPER_COMPUTE_A/LOAD_MME_START_ADDRESS_RAM_POINTER data=0x00000000
+  [sch1] HOPPER_COMPUTE_A/LOAD_MME_START_ADDRESS_RAM      data=0x00000000
+  [sch1] HOPPER_COMPUTE_A/LOAD_MME_INSTRUCTION_RAM_POINTER data=0x0000000f
+  [sch1] HOPPER_COMPUTE_A/LOAD_MME_INSTRUCTION_RAM        ×24   (96 bytes) [0x00000003, 0x1d080000, 0x31c00300, ..., 0x318c0300]
+  [sch1] HOPPER_COMPUTE_A/LOAD_MME_START_ADDRESS_RAM_POINTER data=0x00000001
+  [sch1] HOPPER_COMPUTE_A/LOAD_MME_START_ADDRESS_RAM      data=0x0000000f
+  [sch4] HOPPER_CHANNEL_GPFIFO_A/SET_OBJECT               class=0xc8b5 (HOPPER_DMA_COPY_A)
+  [sch1] HOPPER_COMPUTE_A/SET_TEX_HEADER_POOL_A           data=0x00000100
+  [sch1] HOPPER_COMPUTE_A/SET_TEX_HEADER_POOL_B           data=0x00000000
+  [sch1] HOPPER_COMPUTE_A/SET_TEX_HEADER_POOL_C           data=0x000fffff
+  [sch1] HOPPER_COMPUTE_A/SET_TEX_SAMPLER_POOL_A          data=0x00000100
+  [sch1] HOPPER_COMPUTE_A/SET_TEX_SAMPLER_POOL_B          data=0x02000000
+  [sch1] HOPPER_COMPUTE_A/SET_TEX_SAMPLER_POOL_C          data=0x00000000
+  [sch1] HOPPER_COMPUTE_A/SET_REPORT_SEMAPHORE_A          data=0x00000002
+  [sch1] HOPPER_COMPUTE_A/SET_REPORT_SEMAPHORE_B          data=0x0440ffc0
+  [sch1] HOPPER_COMPUTE_A/SET_REPORT_SEMAPHORE_C          data=0x00000001
+  [sch1] HOPPER_COMPUTE_A/SET_REPORT_SEMAPHORE_D          data=0x00000000
+
+--- seq=4732 chid=6 idx=0 nbytes=880 ---
+  [sch1] HOPPER_CHANNEL_GPFIFO_A/SET_OBJECT               class=0xcbc0 (HOPPER_COMPUTE_A)
+  [sch1] HOPPER_COMPUTE_A/NO_OPERATION                    data=0x00000000
+  [sch1] HOPPER_COMPUTE_A/SET_SHADER_SHARED_MEMORY_WINDOW_A data=0x000073c3
+  [sch1] HOPPER_COMPUTE_A/SET_SHADER_SHARED_MEMORY_WINDOW_B data=0x00000000
+  [sch1] HOPPER_COMPUTE_A/SET_SPA_VERSION                 data=0x00000900
+  [sch1] HOPPER_COMPUTE_A::method_0x07ac                  data=0x00000001
+  [sch1] HOPPER_COMPUTE_A/SET_QMD_VERSION                 data=0x00010040
+  [sch1] HOPPER_COMPUTE_A/SET_CWD_REF_COUNTER             ×64   (256 bytes) [0x001c803f, 0x001c803e, 0x001c803d, ..., 0x001c8000]
+  [sch1] HOPPER_COMPUTE_A/SET_RESERVED_SW_METHOD07        data=0x00000001
+  [sch1] HOPPER_COMPUTE_A/SET_VALID_SPAN_OVERFLOW_AREA_A  data=0x00000002
+  [sch1] HOPPER_COMPUTE_A/SET_VALID_SPAN_OVERFLOW_AREA_B  data=0x00000000
+  [sch1] HOPPER_COMPUTE_A/SET_VALID_SPAN_OVERFLOW_AREA_C  data=0x00390000
+  [sch1] HOPPER_COMPUTE_A/SET_SHADER_LOCAL_MEMORY_NON_THROTTLED_C data=0x00000039
+  [sch1] HOPPER_COMPUTE_A/LOAD_MME_INSTRUCTION_RAM_POINTER data=0x00000000
+  [sch1] HOPPER_COMPUTE_A/LOAD_MME_INSTRUCTION_RAM        ×15   (60 bytes) [0x00140003, 0x1d00001b, 0x71c08300, ..., 0x318c0300]
+  [sch1] HOPPER_COMPUTE_A/LOAD_MME_START_ADDRESS_RAM_POINTER data=0x00000000
+  [sch1] HOPPER_COMPUTE_A/LOAD_MME_START_ADDRESS_RAM      data=0x00000000
+  [sch1] HOPPER_COMPUTE_A/LOAD_MME_INSTRUCTION_RAM_POINTER data=0x0000000f
+  [sch1] HOPPER_COMPUTE_A/LOAD_MME_INSTRUCTION_RAM        ×24   (96 bytes) [0x00000003, 0x1d080000, 0x31c00300, ..., 0x318c0300]
+  [sch1] HOPPER_COMPUTE_A/LOAD_MME_START_ADDRESS_RAM_POINTER data=0x00000001
+  [sch1] HOPPER_COMPUTE_A/LOAD_MME_START_ADDRESS_RAM      data=0x0000000f
+  [sch4] HOPPER_CHANNEL_GPFIFO_A/SET_OBJECT               class=0xc8b5 (HOPPER_DMA_COPY_A)
+  [sch1] HOPPER_COMPUTE_A/SET_TEX_HEADER_POOL_A           data=0x00000100
+  [sch1] HOPPER_COMPUTE_A/SET_TEX_HEADER_POOL_B           data=0x00000000
+  [sch1] HOPPER_COMPUTE_A/SET_TEX_HEADER_POOL_C           data=0x000fffff
+  [sch1] HOPPER_COMPUTE_A/SET_TEX_SAMPLER_POOL_A          data=0x00000100
+  [sch1] HOPPER_COMPUTE_A/SET_TEX_SAMPLER_POOL_B          data=0x02000000
+  [sch1] HOPPER_COMPUTE_A/SET_TEX_SAMPLER_POOL_C          data=0x00000000
+  [sch1] HOPPER_COMPUTE_A/SET_REPORT_SEMAPHORE_A          data=0x00000002
+  [sch1] HOPPER_COMPUTE_A/SET_REPORT_SEMAPHORE_B          data=0x0440ffb0
+  [sch1] HOPPER_COMPUTE_A/SET_REPORT_SEMAPHORE_C          data=0x00000001
+  [sch1] HOPPER_COMPUTE_A/SET_REPORT_SEMAPHORE_D          data=0x00000000
+
+--- seq=4733 chid=7 idx=0 nbytes=880 ---
+  [sch1] HOPPER_CHANNEL_GPFIFO_A/SET_OBJECT               class=0xcbc0 (HOPPER_COMPUTE_A)
+  [sch1] HOPPER_COMPUTE_A/NO_OPERATION                    data=0x00000000
+  [sch1] HOPPER_COMPUTE_A/SET_SHADER_SHARED_MEMORY_WINDOW_A data=0x000073c3
+  [sch1] HOPPER_COMPUTE_A/SET_SHADER_SHARED_MEMORY_WINDOW_B data=0x00000000
+  [sch1] HOPPER_COMPUTE_A/SET_SPA_VERSION                 data=0x00000900
+  [sch1] HOPPER_COMPUTE_A::method_0x07ac                  data=0x00000001
+  [sch1] HOPPER_COMPUTE_A/SET_QMD_VERSION                 data=0x00010040
+  [sch1] HOPPER_COMPUTE_A/SET_CWD_REF_COUNTER             ×64   (256 bytes) [0x001c803f, 0x001c803e, 0x001c803d, ..., 0x001c8000]
+  [sch1] HOPPER_COMPUTE_A/SET_RESERVED_SW_METHOD07        data=0x00000001
+  [sch1] HOPPER_COMPUTE_A/SET_VALID_SPAN_OVERFLOW_AREA_A  data=0x00000002
+  [sch1] HOPPER_COMPUTE_A/SET_VALID_SPAN_OVERFLOW_AREA_B  data=0x00000000
+  [sch1] HOPPER_COMPUTE_A/SET_VALID_SPAN_OVERFLOW_AREA_C  data=0x00390000
+  [sch1] HOPPER_COMPUTE_A/SET_SHADER_LOCAL_MEMORY_NON_THROTTLED_C data=0x00000039
+  [sch1] HOPPER_COMPUTE_A/LOAD_MME_INSTRUCTION_RAM_POINTER data=0x00000000
+  [sch1] HOPPER_COMPUTE_A/LOAD_MME_INSTRUCTION_RAM        ×15   (60 bytes) [0x00140003, 0x1d00001b, 0x71c08300, ..., 0x318c0300]
+  [sch1] HOPPER_COMPUTE_A/LOAD_MME_START_ADDRESS_RAM_POINTER data=0x00000000
+  [sch1] HOPPER_COMPUTE_A/LOAD_MME_START_ADDRESS_RAM      data=0x00000000
+  [sch1] HOPPER_COMPUTE_A/LOAD_MME_INSTRUCTION_RAM_POINTER data=0x0000000f
+  [sch1] HOPPER_COMPUTE_A/LOAD_MME_INSTRUCTION_RAM        ×24   (96 bytes) [0x00000003, 0x1d080000, 0x31c00300, ..., 0x318c0300]
+  [sch1] HOPPER_COMPUTE_A/LOAD_MME_START_ADDRESS_RAM_POINTER data=0x00000001
+  [sch1] HOPPER_COMPUTE_A/LOAD_MME_START_ADDRESS_RAM      data=0x0000000f
+  [sch4] HOPPER_CHANNEL_GPFIFO_A/SET_OBJECT               class=0xc8b5 (HOPPER_DMA_COPY_A)
+  [sch1] HOPPER_COMPUTE_A/SET_TEX_HEADER_POOL_A           data=0x00000100
+  [sch1] HOPPER_COMPUTE_A/SET_TEX_HEADER_POOL_B           data=0x00000000
+  [sch1] HOPPER_COMPUTE_A/SET_TEX_HEADER_POOL_C           data=0x000fffff
+  [sch1] HOPPER_COMPUTE_A/SET_TEX_SAMPLER_POOL_A          data=0x00000100
+  [sch1] HOPPER_COMPUTE_A/SET_TEX_SAMPLER_POOL_B          data=0x02000000
+  [sch1] HOPPER_COMPUTE_A/SET_TEX_SAMPLER_POOL_C          data=0x00000000
+  [sch1] HOPPER_COMPUTE_A/SET_REPORT_SEMAPHORE_A          data=0x00000002
+  [sch1] HOPPER_COMPUTE_A/SET_REPORT_SEMAPHORE_B          data=0x0440ffa0
+  [sch1] HOPPER_COMPUTE_A/SET_REPORT_SEMAPHORE_C          data=0x00000001
+  [sch1] HOPPER_COMPUTE_A/SET_REPORT_SEMAPHORE_D          data=0x00000000
+
+--- seq=4734 chid=8 idx=0 nbytes=880 ---
+  [sch1] HOPPER_CHANNEL_GPFIFO_A/SET_OBJECT               class=0xcbc0 (HOPPER_COMPUTE_A)
+  [sch1] HOPPER_COMPUTE_A/NO_OPERATION                    data=0x00000000
+  [sch1] HOPPER_COMPUTE_A/SET_SHADER_SHARED_MEMORY_WINDOW_A data=0x000073c3
+  [sch1] HOPPER_COMPUTE_A/SET_SHADER_SHARED_MEMORY_WINDOW_B data=0x00000000
+  [sch1] HOPPER_COMPUTE_A/SET_SPA_VERSION                 data=0x00000900
+  [sch1] HOPPER_COMPUTE_A::method_0x07ac                  data=0x00000001
+  [sch1] HOPPER_COMPUTE_A/SET_QMD_VERSION                 data=0x00010040
+  [sch1] HOPPER_COMPUTE_A/SET_CWD_REF_COUNTER             ×64   (256 bytes) [0x001c803f, 0x001c803e, 0x001c803d, ..., 0x001c8000]
+  [sch1] HOPPER_COMPUTE_A/SET_RESERVED_SW_METHOD07        data=0x00000001
+  [sch1] HOPPER_COMPUTE_A/SET_VALID_SPAN_OVERFLOW_AREA_A  data=0x00000002
+  [sch1] HOPPER_COMPUTE_A/SET_VALID_SPAN_OVERFLOW_AREA_B  data=0x00000000
+  [sch1] HOPPER_COMPUTE_A/SET_VALID_SPAN_OVERFLOW_AREA_C  data=0x00390000
+  [sch1] HOPPER_COMPUTE_A/SET_SHADER_LOCAL_MEMORY_NON_THROTTLED_C data=0x00000039
+  [sch1] HOPPER_COMPUTE_A/LOAD_MME_INSTRUCTION_RAM_POINTER data=0x00000000
+  [sch1] HOPPER_COMPUTE_A/LOAD_MME_INSTRUCTION_RAM        ×15   (60 bytes) [0x00140003, 0x1d00001b, 0x71c08300, ..., 0x318c0300]
+  [sch1] HOPPER_COMPUTE_A/LOAD_MME_START_ADDRESS_RAM_POINTER data=0x00000000
+  [sch1] HOPPER_COMPUTE_A/LOAD_MME_START_ADDRESS_RAM      data=0x00000000
+  [sch1] HOPPER_COMPUTE_A/LOAD_MME_INSTRUCTION_RAM_POINTER data=0x0000000f
+  [sch1] HOPPER_COMPUTE_A/LOAD_MME_INSTRUCTION_RAM        ×24   (96 bytes) [0x00000003, 0x1d080000, 0x31c00300, ..., 0x318c0300]
+  [sch1] HOPPER_COMPUTE_A/LOAD_MME_START_ADDRESS_RAM_POINTER data=0x00000001
+  [sch1] HOPPER_COMPUTE_A/LOAD_MME_START_ADDRESS_RAM      data=0x0000000f
+  [sch4] HOPPER_CHANNEL_GPFIFO_A/SET_OBJECT               class=0xc8b5 (HOPPER_DMA_COPY_A)
+  [sch1] HOPPER_COMPUTE_A/SET_TEX_HEADER_POOL_A           data=0x00000100
+  [sch1] HOPPER_COMPUTE_A/SET_TEX_HEADER_POOL_B           data=0x00000000
+  [sch1] HOPPER_COMPUTE_A/SET_TEX_HEADER_POOL_C           data=0x000fffff
+  [sch1] HOPPER_COMPUTE_A/SET_TEX_SAMPLER_POOL_A          data=0x00000100
+  [sch1] HOPPER_COMPUTE_A/SET_TEX_SAMPLER_POOL_B          data=0x02000000
+  [sch1] HOPPER_COMPUTE_A/SET_TEX_SAMPLER_POOL_C          data=0x00000000
+  [sch1] HOPPER_COMPUTE_A/SET_REPORT_SEMAPHORE_A          data=0x00000002
+  [sch1] HOPPER_COMPUTE_A/SET_REPORT_SEMAPHORE_B          data=0x0440ff90
+  [sch1] HOPPER_COMPUTE_A/SET_REPORT_SEMAPHORE_C          data=0x00000001
+  [sch1] HOPPER_COMPUTE_A/SET_REPORT_SEMAPHORE_D          data=0x00000000
+
+--- seq=4735 chid=9 idx=0 nbytes=880 ---
+  [sch1] HOPPER_CHANNEL_GPFIFO_A/SET_OBJECT               class=0xcbc0 (HOPPER_COMPUTE_A)
+  [sch1] HOPPER_COMPUTE_A/NO_OPERATION                    data=0x00000000
+  [sch1] HOPPER_COMPUTE_A/SET_SHADER_SHARED_MEMORY_WINDOW_A data=0x000073c3
+  [sch1] HOPPER_COMPUTE_A/SET_SHADER_SHARED_MEMORY_WINDOW_B data=0x00000000
+  [sch1] HOPPER_COMPUTE_A/SET_SPA_VERSION                 data=0x00000900
+  [sch1] HOPPER_COMPUTE_A::method_0x07ac                  data=0x00000001
+  [sch1] HOPPER_COMPUTE_A/SET_QMD_VERSION                 data=0x00010040
+  [sch1] HOPPER_COMPUTE_A/SET_CWD_REF_COUNTER             ×64   (256 bytes) [0x001c803f, 0x001c803e, 0x001c803d, ..., 0x001c8000]
+  [sch1] HOPPER_COMPUTE_A/SET_RESERVED_SW_METHOD07        data=0x00000001
+  [sch1] HOPPER_COMPUTE_A/SET_VALID_SPAN_OVERFLOW_AREA_A  data=0x00000002
+  [sch1] HOPPER_COMPUTE_A/SET_VALID_SPAN_OVERFLOW_AREA_B  data=0x00000000
+  [sch1] HOPPER_COMPUTE_A/SET_VALID_SPAN_OVERFLOW_AREA_C  data=0x00390000
+  [sch1] HOPPER_COMPUTE_A/SET_SHADER_LOCAL_MEMORY_NON_THROTTLED_C data=0x00000039
+  [sch1] HOPPER_COMPUTE_A/LOAD_MME_INSTRUCTION_RAM_POINTER data=0x00000000
+  [sch1] HOPPER_COMPUTE_A/LOAD_MME_INSTRUCTION_RAM        ×15   (60 bytes) [0x00140003, 0x1d00001b, 0x71c08300, ..., 0x318c0300]
+  [sch1] HOPPER_COMPUTE_A/LOAD_MME_START_ADDRESS_RAM_POINTER data=0x00000000
+  [sch1] HOPPER_COMPUTE_A/LOAD_MME_START_ADDRESS_RAM      data=0x00000000
+  [sch1] HOPPER_COMPUTE_A/LOAD_MME_INSTRUCTION_RAM_POINTER data=0x0000000f
+  [sch1] HOPPER_COMPUTE_A/LOAD_MME_INSTRUCTION_RAM        ×24   (96 bytes) [0x00000003, 0x1d080000, 0x31c00300, ..., 0x318c0300]
+  [sch1] HOPPER_COMPUTE_A/LOAD_MME_START_ADDRESS_RAM_POINTER data=0x00000001
+  [sch1] HOPPER_COMPUTE_A/LOAD_MME_START_ADDRESS_RAM      data=0x0000000f
+  [sch4] HOPPER_CHANNEL_GPFIFO_A/SET_OBJECT               class=0xc8b5 (HOPPER_DMA_COPY_A)
+  [sch1] HOPPER_COMPUTE_A/SET_TEX_HEADER_POOL_A           data=0x00000100
+  [sch1] HOPPER_COMPUTE_A/SET_TEX_HEADER_POOL_B           data=0x00000000
+  [sch1] HOPPER_COMPUTE_A/SET_TEX_HEADER_POOL_C           data=0x000fffff
+  [sch1] HOPPER_COMPUTE_A/SET_TEX_SAMPLER_POOL_A          data=0x00000100
+  [sch1] HOPPER_COMPUTE_A/SET_TEX_SAMPLER_POOL_B          data=0x02000000
+  [sch1] HOPPER_COMPUTE_A/SET_TEX_SAMPLER_POOL_C          data=0x00000000
+  [sch1] HOPPER_COMPUTE_A/SET_REPORT_SEMAPHORE_A          data=0x00000002
+  [sch1] HOPPER_COMPUTE_A/SET_REPORT_SEMAPHORE_B          data=0x0440ff80
+  [sch1] HOPPER_COMPUTE_A/SET_REPORT_SEMAPHORE_C          data=0x00000001
+  [sch1] HOPPER_COMPUTE_A/SET_REPORT_SEMAPHORE_D          data=0x00000000
+
+--- seq=4736 chid=5 idx=1 nbytes=76 ---
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_CONST_A              data=0x00000000
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_COMPONENTS           data=0x00030004
+  [sch4] HOPPER_DMA_COPY_A/LINE_COUNT                     data=0x00000001
+  [sch4] HOPPER_DMA_COPY_A/OFFSET_OUT_VA                  role=CE_dst     va=0x204420000 → hMemory=0x5c00001f class=NV01_MEMORY_SYSTEM offset=131072
+  [sch4] HOPPER_DMA_COPY_A/LINE_LENGTH_IN                 data=0x00002000
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000586 (DATA_TRANSFER_TYPE=NON_PIPELINED | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=NONE | SRC_MEMORY_LAYOUT=PITCH | DST_MEMORY_LAYOUT=PITCH | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_VA               role=semaphore  va=0x20440ff70 → hMemory=0x5c00001f class=NV01_MEMORY_SYSTEM offset=65392
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_PAYLOAD          data=0x00000002
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000014 (DATA_TRANSFER_TYPE=NONE | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=RELEASE_SEMAPHORE_WITH_TIMESTAMP | SRC_MEMORY_LAYOUT=BLOCKLINEAR | DST_MEMORY_LAYOUT=BLOCKLINEAR | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+
+--- seq=4737 chid=5 idx=2 nbytes=76 ---
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_CONST_A              data=0x00000000
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_COMPONENTS           data=0x00030004
+  [sch4] HOPPER_DMA_COPY_A/LINE_COUNT                     data=0x00000001
+  [sch4] HOPPER_DMA_COPY_A/OFFSET_OUT_VA                  role=CE_dst     va=0x204428000 → hMemory=0x5c00001f class=NV01_MEMORY_SYSTEM offset=163840
+  [sch4] HOPPER_DMA_COPY_A/LINE_LENGTH_IN                 data=0x00002000
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000586 (DATA_TRANSFER_TYPE=NON_PIPELINED | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=NONE | SRC_MEMORY_LAYOUT=PITCH | DST_MEMORY_LAYOUT=PITCH | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_VA               role=semaphore  va=0x20440ff70 → hMemory=0x5c00001f class=NV01_MEMORY_SYSTEM offset=65392
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_PAYLOAD          data=0x00000003
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000014 (DATA_TRANSFER_TYPE=NONE | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=RELEASE_SEMAPHORE_WITH_TIMESTAMP | SRC_MEMORY_LAYOUT=BLOCKLINEAR | DST_MEMORY_LAYOUT=BLOCKLINEAR | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+
+--- seq=4738 chid=5 idx=3 nbytes=76 ---
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_CONST_A              data=0x00000000
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_COMPONENTS           data=0x00030004
+  [sch4] HOPPER_DMA_COPY_A/LINE_COUNT                     data=0x00000001
+  [sch4] HOPPER_DMA_COPY_A/OFFSET_OUT_VA                  role=CE_dst     va=0x204430000 → hMemory=0x5c00001f class=NV01_MEMORY_SYSTEM offset=196608
+  [sch4] HOPPER_DMA_COPY_A/LINE_LENGTH_IN                 data=0x00002000
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000586 (DATA_TRANSFER_TYPE=NON_PIPELINED | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=NONE | SRC_MEMORY_LAYOUT=PITCH | DST_MEMORY_LAYOUT=PITCH | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_VA               role=semaphore  va=0x20440ff70 → hMemory=0x5c00001f class=NV01_MEMORY_SYSTEM offset=65392
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_PAYLOAD          data=0x00000004
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000014 (DATA_TRANSFER_TYPE=NONE | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=RELEASE_SEMAPHORE_WITH_TIMESTAMP | SRC_MEMORY_LAYOUT=BLOCKLINEAR | DST_MEMORY_LAYOUT=BLOCKLINEAR | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+
+--- seq=4749 chid=5 idx=4 nbytes=76 ---
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_CONST_A              data=0x00000000
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_COMPONENTS           data=0x00030004
+  [sch4] HOPPER_DMA_COPY_A/LINE_COUNT                     data=0x00000001
+  [sch4] HOPPER_DMA_COPY_A/OFFSET_OUT_VA                  role=CE_dst     va=0x205000000 → hMemory=0x5c000081 class=NV01_MEMORY_LOCAL_USER offset=0
+  [sch4] HOPPER_DMA_COPY_A/LINE_LENGTH_IN                 data=0x00000004
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000586 (DATA_TRANSFER_TYPE=NON_PIPELINED | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=NONE | SRC_MEMORY_LAYOUT=PITCH | DST_MEMORY_LAYOUT=PITCH | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_VA               role=semaphore  va=0x20440ff70 → hMemory=0x5c00001f class=NV01_MEMORY_SYSTEM offset=65392
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_PAYLOAD          data=0x00000005
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000014 (DATA_TRANSFER_TYPE=NONE | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=RELEASE_SEMAPHORE_WITH_TIMESTAMP | SRC_MEMORY_LAYOUT=BLOCKLINEAR | DST_MEMORY_LAYOUT=BLOCKLINEAR | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+
+--- seq=4750 chid=5 idx=5 nbytes=76 ---
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_CONST_A              data=0x00000000
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_COMPONENTS           data=0x00030004
+  [sch4] HOPPER_DMA_COPY_A/LINE_COUNT                     data=0x00000001
+  [sch4] HOPPER_DMA_COPY_A/OFFSET_OUT_VA                  role=CE_dst     va=0x205000100 → hMemory=0x5c000081 class=NV01_MEMORY_LOCAL_USER offset=256
+  [sch4] HOPPER_DMA_COPY_A/LINE_LENGTH_IN                 data=0x00000004
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000586 (DATA_TRANSFER_TYPE=NON_PIPELINED | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=NONE | SRC_MEMORY_LAYOUT=PITCH | DST_MEMORY_LAYOUT=PITCH | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_VA               role=semaphore  va=0x20440ff70 → hMemory=0x5c00001f class=NV01_MEMORY_SYSTEM offset=65392
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_PAYLOAD          data=0x00000006
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000014 (DATA_TRANSFER_TYPE=NONE | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=RELEASE_SEMAPHORE_WITH_TIMESTAMP | SRC_MEMORY_LAYOUT=BLOCKLINEAR | DST_MEMORY_LAYOUT=BLOCKLINEAR | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+
+--- seq=4751 chid=5 idx=6 nbytes=76 ---
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_CONST_A              data=0x00000000
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_COMPONENTS           data=0x00030004
+  [sch4] HOPPER_DMA_COPY_A/LINE_COUNT                     data=0x00000001
+  [sch4] HOPPER_DMA_COPY_A/OFFSET_OUT_VA                  role=CE_dst     va=0x205000200 → hMemory=0x5c000081 class=NV01_MEMORY_LOCAL_USER offset=512
+  [sch4] HOPPER_DMA_COPY_A/LINE_LENGTH_IN                 data=0x00000004
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000586 (DATA_TRANSFER_TYPE=NON_PIPELINED | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=NONE | SRC_MEMORY_LAYOUT=PITCH | DST_MEMORY_LAYOUT=PITCH | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_VA               role=semaphore  va=0x20440ff70 → hMemory=0x5c00001f class=NV01_MEMORY_SYSTEM offset=65392
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_PAYLOAD          data=0x00000007
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000014 (DATA_TRANSFER_TYPE=NONE | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=RELEASE_SEMAPHORE_WITH_TIMESTAMP | SRC_MEMORY_LAYOUT=BLOCKLINEAR | DST_MEMORY_LAYOUT=BLOCKLINEAR | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+
+--- seq=4752 chid=5 idx=7 nbytes=76 ---
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_CONST_A              data=0x00000000
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_COMPONENTS           data=0x00030004
+  [sch4] HOPPER_DMA_COPY_A/LINE_COUNT                     data=0x00000001
+  [sch4] HOPPER_DMA_COPY_A/OFFSET_OUT_VA                  role=CE_dst     va=0x205000300 → hMemory=0x5c000081 class=NV01_MEMORY_LOCAL_USER offset=768
+  [sch4] HOPPER_DMA_COPY_A/LINE_LENGTH_IN                 data=0x00000004
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000586 (DATA_TRANSFER_TYPE=NON_PIPELINED | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=NONE | SRC_MEMORY_LAYOUT=PITCH | DST_MEMORY_LAYOUT=PITCH | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_VA               role=semaphore  va=0x20440ff70 → hMemory=0x5c00001f class=NV01_MEMORY_SYSTEM offset=65392
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_PAYLOAD          data=0x00000008
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000014 (DATA_TRANSFER_TYPE=NONE | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=RELEASE_SEMAPHORE_WITH_TIMESTAMP | SRC_MEMORY_LAYOUT=BLOCKLINEAR | DST_MEMORY_LAYOUT=BLOCKLINEAR | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+
+--- seq=4753 chid=5 idx=8 nbytes=76 ---
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_CONST_A              data=0x00000000
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_COMPONENTS           data=0x00030004
+  [sch4] HOPPER_DMA_COPY_A/LINE_COUNT                     data=0x00000001
+  [sch4] HOPPER_DMA_COPY_A/OFFSET_OUT_VA                  role=CE_dst     va=0x205000400 → hMemory=0x5c000081 class=NV01_MEMORY_LOCAL_USER offset=1024
+  [sch4] HOPPER_DMA_COPY_A/LINE_LENGTH_IN                 data=0x00000004
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000586 (DATA_TRANSFER_TYPE=NON_PIPELINED | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=NONE | SRC_MEMORY_LAYOUT=PITCH | DST_MEMORY_LAYOUT=PITCH | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_VA               role=semaphore  va=0x20440ff70 → hMemory=0x5c00001f class=NV01_MEMORY_SYSTEM offset=65392
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_PAYLOAD          data=0x00000009
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000014 (DATA_TRANSFER_TYPE=NONE | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=RELEASE_SEMAPHORE_WITH_TIMESTAMP | SRC_MEMORY_LAYOUT=BLOCKLINEAR | DST_MEMORY_LAYOUT=BLOCKLINEAR | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+
+--- seq=4754 chid=5 idx=9 nbytes=76 ---
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_CONST_A              data=0x00000000
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_COMPONENTS           data=0x00030004
+  [sch4] HOPPER_DMA_COPY_A/LINE_COUNT                     data=0x00000001
+  [sch4] HOPPER_DMA_COPY_A/OFFSET_OUT_VA                  role=CE_dst     va=0x205000500 → hMemory=0x5c000081 class=NV01_MEMORY_LOCAL_USER offset=1280
+  [sch4] HOPPER_DMA_COPY_A/LINE_LENGTH_IN                 data=0x00000004
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000586 (DATA_TRANSFER_TYPE=NON_PIPELINED | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=NONE | SRC_MEMORY_LAYOUT=PITCH | DST_MEMORY_LAYOUT=PITCH | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_VA               role=semaphore  va=0x20440ff70 → hMemory=0x5c00001f class=NV01_MEMORY_SYSTEM offset=65392
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_PAYLOAD          data=0x0000000a
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000014 (DATA_TRANSFER_TYPE=NONE | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=RELEASE_SEMAPHORE_WITH_TIMESTAMP | SRC_MEMORY_LAYOUT=BLOCKLINEAR | DST_MEMORY_LAYOUT=BLOCKLINEAR | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+
+--- seq=4755 chid=5 idx=10 nbytes=76 ---
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_CONST_A              data=0x00000000
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_COMPONENTS           data=0x00030004
+  [sch4] HOPPER_DMA_COPY_A/LINE_COUNT                     data=0x00000001
+  [sch4] HOPPER_DMA_COPY_A/OFFSET_OUT_VA                  role=CE_dst     va=0x205000600 → hMemory=0x5c000081 class=NV01_MEMORY_LOCAL_USER offset=1536
+  [sch4] HOPPER_DMA_COPY_A/LINE_LENGTH_IN                 data=0x00000004
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000586 (DATA_TRANSFER_TYPE=NON_PIPELINED | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=NONE | SRC_MEMORY_LAYOUT=PITCH | DST_MEMORY_LAYOUT=PITCH | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_VA               role=semaphore  va=0x20440ff70 → hMemory=0x5c00001f class=NV01_MEMORY_SYSTEM offset=65392
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_PAYLOAD          data=0x0000000b
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000014 (DATA_TRANSFER_TYPE=NONE | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=RELEASE_SEMAPHORE_WITH_TIMESTAMP | SRC_MEMORY_LAYOUT=BLOCKLINEAR | DST_MEMORY_LAYOUT=BLOCKLINEAR | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+
+--- seq=4756 chid=5 idx=11 nbytes=76 ---
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_CONST_A              data=0x00000000
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_COMPONENTS           data=0x00030004
+  [sch4] HOPPER_DMA_COPY_A/LINE_COUNT                     data=0x00000001
+  [sch4] HOPPER_DMA_COPY_A/OFFSET_OUT_VA                  role=CE_dst     va=0x205000700 → hMemory=0x5c000081 class=NV01_MEMORY_LOCAL_USER offset=1792
+  [sch4] HOPPER_DMA_COPY_A/LINE_LENGTH_IN                 data=0x00000004
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000586 (DATA_TRANSFER_TYPE=NON_PIPELINED | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=NONE | SRC_MEMORY_LAYOUT=PITCH | DST_MEMORY_LAYOUT=PITCH | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_VA               role=semaphore  va=0x20440ff70 → hMemory=0x5c00001f class=NV01_MEMORY_SYSTEM offset=65392
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_PAYLOAD          data=0x0000000c
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000014 (DATA_TRANSFER_TYPE=NONE | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=RELEASE_SEMAPHORE_WITH_TIMESTAMP | SRC_MEMORY_LAYOUT=BLOCKLINEAR | DST_MEMORY_LAYOUT=BLOCKLINEAR | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+
+--- seq=4757 chid=5 idx=12 nbytes=76 ---
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_CONST_A              data=0x00000000
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_COMPONENTS           data=0x00030004
+  [sch4] HOPPER_DMA_COPY_A/LINE_COUNT                     data=0x00000001
+  [sch4] HOPPER_DMA_COPY_A/OFFSET_OUT_VA                  role=CE_dst     va=0x205000800 → hMemory=0x5c000081 class=NV01_MEMORY_LOCAL_USER offset=2048
+  [sch4] HOPPER_DMA_COPY_A/LINE_LENGTH_IN                 data=0x00000004
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000586 (DATA_TRANSFER_TYPE=NON_PIPELINED | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=NONE | SRC_MEMORY_LAYOUT=PITCH | DST_MEMORY_LAYOUT=PITCH | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_VA               role=semaphore  va=0x20440ff70 → hMemory=0x5c00001f class=NV01_MEMORY_SYSTEM offset=65392
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_PAYLOAD          data=0x0000000d
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000014 (DATA_TRANSFER_TYPE=NONE | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=RELEASE_SEMAPHORE_WITH_TIMESTAMP | SRC_MEMORY_LAYOUT=BLOCKLINEAR | DST_MEMORY_LAYOUT=BLOCKLINEAR | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+
+--- seq=4758 chid=5 idx=13 nbytes=76 ---
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_CONST_A              data=0x00000000
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_COMPONENTS           data=0x00030004
+  [sch4] HOPPER_DMA_COPY_A/LINE_COUNT                     data=0x00000001
+  [sch4] HOPPER_DMA_COPY_A/OFFSET_OUT_VA                  role=CE_dst     va=0x205000900 → hMemory=0x5c000081 class=NV01_MEMORY_LOCAL_USER offset=2304
+  [sch4] HOPPER_DMA_COPY_A/LINE_LENGTH_IN                 data=0x00000004
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000586 (DATA_TRANSFER_TYPE=NON_PIPELINED | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=NONE | SRC_MEMORY_LAYOUT=PITCH | DST_MEMORY_LAYOUT=PITCH | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_VA               role=semaphore  va=0x20440ff70 → hMemory=0x5c00001f class=NV01_MEMORY_SYSTEM offset=65392
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_PAYLOAD          data=0x0000000e
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000014 (DATA_TRANSFER_TYPE=NONE | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=RELEASE_SEMAPHORE_WITH_TIMESTAMP | SRC_MEMORY_LAYOUT=BLOCKLINEAR | DST_MEMORY_LAYOUT=BLOCKLINEAR | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+
+--- seq=4759 chid=5 idx=14 nbytes=76 ---
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_CONST_A              data=0x00000000
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_COMPONENTS           data=0x00030004
+  [sch4] HOPPER_DMA_COPY_A/LINE_COUNT                     data=0x00000001
+  [sch4] HOPPER_DMA_COPY_A/OFFSET_OUT_VA                  role=CE_dst     va=0x205000a00 → hMemory=0x5c000081 class=NV01_MEMORY_LOCAL_USER offset=2560
+  [sch4] HOPPER_DMA_COPY_A/LINE_LENGTH_IN                 data=0x00000004
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000586 (DATA_TRANSFER_TYPE=NON_PIPELINED | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=NONE | SRC_MEMORY_LAYOUT=PITCH | DST_MEMORY_LAYOUT=PITCH | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_VA               role=semaphore  va=0x20440ff70 → hMemory=0x5c00001f class=NV01_MEMORY_SYSTEM offset=65392
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_PAYLOAD          data=0x0000000f
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000014 (DATA_TRANSFER_TYPE=NONE | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=RELEASE_SEMAPHORE_WITH_TIMESTAMP | SRC_MEMORY_LAYOUT=BLOCKLINEAR | DST_MEMORY_LAYOUT=BLOCKLINEAR | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+
+--- seq=4760 chid=5 idx=15 nbytes=76 ---
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_CONST_A              data=0x00000000
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_COMPONENTS           data=0x00030004
+  [sch4] HOPPER_DMA_COPY_A/LINE_COUNT                     data=0x00000001
+  [sch4] HOPPER_DMA_COPY_A/OFFSET_OUT_VA                  role=CE_dst     va=0x205000b00 → hMemory=0x5c000081 class=NV01_MEMORY_LOCAL_USER offset=2816
+  [sch4] HOPPER_DMA_COPY_A/LINE_LENGTH_IN                 data=0x00000004
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000586 (DATA_TRANSFER_TYPE=NON_PIPELINED | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=NONE | SRC_MEMORY_LAYOUT=PITCH | DST_MEMORY_LAYOUT=PITCH | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_VA               role=semaphore  va=0x20440ff70 → hMemory=0x5c00001f class=NV01_MEMORY_SYSTEM offset=65392
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_PAYLOAD          data=0x00000010
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000014 (DATA_TRANSFER_TYPE=NONE | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=RELEASE_SEMAPHORE_WITH_TIMESTAMP | SRC_MEMORY_LAYOUT=BLOCKLINEAR | DST_MEMORY_LAYOUT=BLOCKLINEAR | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+
+--- seq=4761 chid=5 idx=16 nbytes=76 ---
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_CONST_A              data=0x00000000
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_COMPONENTS           data=0x00030004
+  [sch4] HOPPER_DMA_COPY_A/LINE_COUNT                     data=0x00000001
+  [sch4] HOPPER_DMA_COPY_A/OFFSET_OUT_VA                  role=CE_dst     va=0x205000c00 → hMemory=0x5c000081 class=NV01_MEMORY_LOCAL_USER offset=3072
+  [sch4] HOPPER_DMA_COPY_A/LINE_LENGTH_IN                 data=0x00000004
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000586 (DATA_TRANSFER_TYPE=NON_PIPELINED | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=NONE | SRC_MEMORY_LAYOUT=PITCH | DST_MEMORY_LAYOUT=PITCH | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_VA               role=semaphore  va=0x20440ff70 → hMemory=0x5c00001f class=NV01_MEMORY_SYSTEM offset=65392
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_PAYLOAD          data=0x00000011
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000014 (DATA_TRANSFER_TYPE=NONE | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=RELEASE_SEMAPHORE_WITH_TIMESTAMP | SRC_MEMORY_LAYOUT=BLOCKLINEAR | DST_MEMORY_LAYOUT=BLOCKLINEAR | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+
+--- seq=4762 chid=5 idx=17 nbytes=76 ---
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_CONST_A              data=0x00000000
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_COMPONENTS           data=0x00030004
+  [sch4] HOPPER_DMA_COPY_A/LINE_COUNT                     data=0x00000001
+  [sch4] HOPPER_DMA_COPY_A/OFFSET_OUT_VA                  role=CE_dst     va=0x205000d00 → hMemory=0x5c000081 class=NV01_MEMORY_LOCAL_USER offset=3328
+  [sch4] HOPPER_DMA_COPY_A/LINE_LENGTH_IN                 data=0x00000004
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000586 (DATA_TRANSFER_TYPE=NON_PIPELINED | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=NONE | SRC_MEMORY_LAYOUT=PITCH | DST_MEMORY_LAYOUT=PITCH | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_VA               role=semaphore  va=0x20440ff70 → hMemory=0x5c00001f class=NV01_MEMORY_SYSTEM offset=65392
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_PAYLOAD          data=0x00000012
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000014 (DATA_TRANSFER_TYPE=NONE | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=RELEASE_SEMAPHORE_WITH_TIMESTAMP | SRC_MEMORY_LAYOUT=BLOCKLINEAR | DST_MEMORY_LAYOUT=BLOCKLINEAR | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+
+--- seq=4763 chid=5 idx=18 nbytes=76 ---
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_CONST_A              data=0x00000000
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_COMPONENTS           data=0x00030004
+  [sch4] HOPPER_DMA_COPY_A/LINE_COUNT                     data=0x00000001
+  [sch4] HOPPER_DMA_COPY_A/OFFSET_OUT_VA                  role=CE_dst     va=0x205000e00 → hMemory=0x5c000081 class=NV01_MEMORY_LOCAL_USER offset=3584
+  [sch4] HOPPER_DMA_COPY_A/LINE_LENGTH_IN                 data=0x00000004
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000586 (DATA_TRANSFER_TYPE=NON_PIPELINED | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=NONE | SRC_MEMORY_LAYOUT=PITCH | DST_MEMORY_LAYOUT=PITCH | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_VA               role=semaphore  va=0x20440ff70 → hMemory=0x5c00001f class=NV01_MEMORY_SYSTEM offset=65392
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_PAYLOAD          data=0x00000013
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000014 (DATA_TRANSFER_TYPE=NONE | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=RELEASE_SEMAPHORE_WITH_TIMESTAMP | SRC_MEMORY_LAYOUT=BLOCKLINEAR | DST_MEMORY_LAYOUT=BLOCKLINEAR | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+
+--- seq=4764 chid=5 idx=19 nbytes=76 ---
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_CONST_A              data=0x00000000
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_COMPONENTS           data=0x00030004
+  [sch4] HOPPER_DMA_COPY_A/LINE_COUNT                     data=0x00000001
+  [sch4] HOPPER_DMA_COPY_A/OFFSET_OUT_VA                  role=CE_dst     va=0x205000f00 → hMemory=0x5c000081 class=NV01_MEMORY_LOCAL_USER offset=3840
+  [sch4] HOPPER_DMA_COPY_A/LINE_LENGTH_IN                 data=0x00000004
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000586 (DATA_TRANSFER_TYPE=NON_PIPELINED | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=NONE | SRC_MEMORY_LAYOUT=PITCH | DST_MEMORY_LAYOUT=PITCH | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_VA               role=semaphore  va=0x20440ff70 → hMemory=0x5c00001f class=NV01_MEMORY_SYSTEM offset=65392
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_PAYLOAD          data=0x00000014
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000014 (DATA_TRANSFER_TYPE=NONE | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=RELEASE_SEMAPHORE_WITH_TIMESTAMP | SRC_MEMORY_LAYOUT=BLOCKLINEAR | DST_MEMORY_LAYOUT=BLOCKLINEAR | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+
+--- seq=4765 chid=5 idx=20 nbytes=76 ---
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_CONST_A              data=0x00000000
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_COMPONENTS           data=0x00030004
+  [sch4] HOPPER_DMA_COPY_A/LINE_COUNT                     data=0x00000001
+  [sch4] HOPPER_DMA_COPY_A/OFFSET_OUT_VA                  role=CE_dst     va=0x205001000 → hMemory=0x5c000081 class=NV01_MEMORY_LOCAL_USER offset=4096
+  [sch4] HOPPER_DMA_COPY_A/LINE_LENGTH_IN                 data=0x00000004
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000586 (DATA_TRANSFER_TYPE=NON_PIPELINED | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=NONE | SRC_MEMORY_LAYOUT=PITCH | DST_MEMORY_LAYOUT=PITCH | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_VA               role=semaphore  va=0x20440ff70 → hMemory=0x5c00001f class=NV01_MEMORY_SYSTEM offset=65392
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_PAYLOAD          data=0x00000015
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000014 (DATA_TRANSFER_TYPE=NONE | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=RELEASE_SEMAPHORE_WITH_TIMESTAMP | SRC_MEMORY_LAYOUT=BLOCKLINEAR | DST_MEMORY_LAYOUT=BLOCKLINEAR | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+
+--- seq=4766 chid=5 idx=21 nbytes=76 ---
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_CONST_A              data=0x00000000
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_COMPONENTS           data=0x00030004
+  [sch4] HOPPER_DMA_COPY_A/LINE_COUNT                     data=0x00000001
+  [sch4] HOPPER_DMA_COPY_A/OFFSET_OUT_VA                  role=CE_dst     va=0x205001100 → hMemory=0x5c000081 class=NV01_MEMORY_LOCAL_USER offset=4352
+  [sch4] HOPPER_DMA_COPY_A/LINE_LENGTH_IN                 data=0x00000004
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000586 (DATA_TRANSFER_TYPE=NON_PIPELINED | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=NONE | SRC_MEMORY_LAYOUT=PITCH | DST_MEMORY_LAYOUT=PITCH | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_VA               role=semaphore  va=0x20440ff70 → hMemory=0x5c00001f class=NV01_MEMORY_SYSTEM offset=65392
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_PAYLOAD          data=0x00000016
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000014 (DATA_TRANSFER_TYPE=NONE | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=RELEASE_SEMAPHORE_WITH_TIMESTAMP | SRC_MEMORY_LAYOUT=BLOCKLINEAR | DST_MEMORY_LAYOUT=BLOCKLINEAR | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+
+--- seq=4767 chid=5 idx=22 nbytes=76 ---
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_CONST_A              data=0x00000000
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_COMPONENTS           data=0x00030004
+  [sch4] HOPPER_DMA_COPY_A/LINE_COUNT                     data=0x00000001
+  [sch4] HOPPER_DMA_COPY_A/OFFSET_OUT_VA                  role=CE_dst     va=0x205001200 → hMemory=0x5c000081 class=NV01_MEMORY_LOCAL_USER offset=4608
+  [sch4] HOPPER_DMA_COPY_A/LINE_LENGTH_IN                 data=0x00000004
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000586 (DATA_TRANSFER_TYPE=NON_PIPELINED | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=NONE | SRC_MEMORY_LAYOUT=PITCH | DST_MEMORY_LAYOUT=PITCH | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_VA               role=semaphore  va=0x20440ff70 → hMemory=0x5c00001f class=NV01_MEMORY_SYSTEM offset=65392
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_PAYLOAD          data=0x00000017
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000014 (DATA_TRANSFER_TYPE=NONE | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=RELEASE_SEMAPHORE_WITH_TIMESTAMP | SRC_MEMORY_LAYOUT=BLOCKLINEAR | DST_MEMORY_LAYOUT=BLOCKLINEAR | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+
+--- seq=4768 chid=5 idx=23 nbytes=76 ---
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_CONST_A              data=0x00000000
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_COMPONENTS           data=0x00030004
+  [sch4] HOPPER_DMA_COPY_A/LINE_COUNT                     data=0x00000001
+  [sch4] HOPPER_DMA_COPY_A/OFFSET_OUT_VA                  role=CE_dst     va=0x205001300 → hMemory=0x5c000081 class=NV01_MEMORY_LOCAL_USER offset=4864
+  [sch4] HOPPER_DMA_COPY_A/LINE_LENGTH_IN                 data=0x00000004
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000586 (DATA_TRANSFER_TYPE=NON_PIPELINED | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=NONE | SRC_MEMORY_LAYOUT=PITCH | DST_MEMORY_LAYOUT=PITCH | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_VA               role=semaphore  va=0x20440ff70 → hMemory=0x5c00001f class=NV01_MEMORY_SYSTEM offset=65392
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_PAYLOAD          data=0x00000018
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000014 (DATA_TRANSFER_TYPE=NONE | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=RELEASE_SEMAPHORE_WITH_TIMESTAMP | SRC_MEMORY_LAYOUT=BLOCKLINEAR | DST_MEMORY_LAYOUT=BLOCKLINEAR | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+
+--- seq=4769 chid=5 idx=24 nbytes=76 ---
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_CONST_A              data=0x00000000
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_COMPONENTS           data=0x00030004
+  [sch4] HOPPER_DMA_COPY_A/LINE_COUNT                     data=0x00000001
+  [sch4] HOPPER_DMA_COPY_A/OFFSET_OUT_VA                  role=CE_dst     va=0x205001400 → hMemory=0x5c000081 class=NV01_MEMORY_LOCAL_USER offset=5120
+  [sch4] HOPPER_DMA_COPY_A/LINE_LENGTH_IN                 data=0x00000004
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000586 (DATA_TRANSFER_TYPE=NON_PIPELINED | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=NONE | SRC_MEMORY_LAYOUT=PITCH | DST_MEMORY_LAYOUT=PITCH | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_VA               role=semaphore  va=0x20440ff70 → hMemory=0x5c00001f class=NV01_MEMORY_SYSTEM offset=65392
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_PAYLOAD          data=0x00000019
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000014 (DATA_TRANSFER_TYPE=NONE | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=RELEASE_SEMAPHORE_WITH_TIMESTAMP | SRC_MEMORY_LAYOUT=BLOCKLINEAR | DST_MEMORY_LAYOUT=BLOCKLINEAR | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+
+--- seq=4770 chid=5 idx=25 nbytes=76 ---
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_CONST_A              data=0x00000000
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_COMPONENTS           data=0x00030004
+  [sch4] HOPPER_DMA_COPY_A/LINE_COUNT                     data=0x00000001
+  [sch4] HOPPER_DMA_COPY_A/OFFSET_OUT_VA                  role=CE_dst     va=0x205001500 → hMemory=0x5c000081 class=NV01_MEMORY_LOCAL_USER offset=5376
+  [sch4] HOPPER_DMA_COPY_A/LINE_LENGTH_IN                 data=0x00000004
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000586 (DATA_TRANSFER_TYPE=NON_PIPELINED | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=NONE | SRC_MEMORY_LAYOUT=PITCH | DST_MEMORY_LAYOUT=PITCH | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_VA               role=semaphore  va=0x20440ff70 → hMemory=0x5c00001f class=NV01_MEMORY_SYSTEM offset=65392
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_PAYLOAD          data=0x0000001a
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000014 (DATA_TRANSFER_TYPE=NONE | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=RELEASE_SEMAPHORE_WITH_TIMESTAMP | SRC_MEMORY_LAYOUT=BLOCKLINEAR | DST_MEMORY_LAYOUT=BLOCKLINEAR | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+
+--- seq=4771 chid=5 idx=26 nbytes=76 ---
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_CONST_A              data=0x00000000
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_COMPONENTS           data=0x00030004
+  [sch4] HOPPER_DMA_COPY_A/LINE_COUNT                     data=0x00000001
+  [sch4] HOPPER_DMA_COPY_A/OFFSET_OUT_VA                  role=CE_dst     va=0x205001600 → hMemory=0x5c000081 class=NV01_MEMORY_LOCAL_USER offset=5632
+  [sch4] HOPPER_DMA_COPY_A/LINE_LENGTH_IN                 data=0x00000004
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000586 (DATA_TRANSFER_TYPE=NON_PIPELINED | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=NONE | SRC_MEMORY_LAYOUT=PITCH | DST_MEMORY_LAYOUT=PITCH | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_VA               role=semaphore  va=0x20440ff70 → hMemory=0x5c00001f class=NV01_MEMORY_SYSTEM offset=65392
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_PAYLOAD          data=0x0000001b
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000014 (DATA_TRANSFER_TYPE=NONE | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=RELEASE_SEMAPHORE_WITH_TIMESTAMP | SRC_MEMORY_LAYOUT=BLOCKLINEAR | DST_MEMORY_LAYOUT=BLOCKLINEAR | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+
+--- seq=4772 chid=5 idx=27 nbytes=76 ---
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_CONST_A              data=0x00000000
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_COMPONENTS           data=0x00030004
+  [sch4] HOPPER_DMA_COPY_A/LINE_COUNT                     data=0x00000001
+  [sch4] HOPPER_DMA_COPY_A/OFFSET_OUT_VA                  role=CE_dst     va=0x205001700 → hMemory=0x5c000081 class=NV01_MEMORY_LOCAL_USER offset=5888
+  [sch4] HOPPER_DMA_COPY_A/LINE_LENGTH_IN                 data=0x00000004
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000586 (DATA_TRANSFER_TYPE=NON_PIPELINED | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=NONE | SRC_MEMORY_LAYOUT=PITCH | DST_MEMORY_LAYOUT=PITCH | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_VA               role=semaphore  va=0x20440ff70 → hMemory=0x5c00001f class=NV01_MEMORY_SYSTEM offset=65392
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_PAYLOAD          data=0x0000001c
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000014 (DATA_TRANSFER_TYPE=NONE | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=RELEASE_SEMAPHORE_WITH_TIMESTAMP | SRC_MEMORY_LAYOUT=BLOCKLINEAR | DST_MEMORY_LAYOUT=BLOCKLINEAR | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+
+--- seq=4773 chid=5 idx=28 nbytes=76 ---
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_CONST_A              data=0x00000000
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_COMPONENTS           data=0x00030004
+  [sch4] HOPPER_DMA_COPY_A/LINE_COUNT                     data=0x00000001
+  [sch4] HOPPER_DMA_COPY_A/OFFSET_OUT_VA                  role=CE_dst     va=0x205001800 → hMemory=0x5c000081 class=NV01_MEMORY_LOCAL_USER offset=6144
+  [sch4] HOPPER_DMA_COPY_A/LINE_LENGTH_IN                 data=0x00000004
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000586 (DATA_TRANSFER_TYPE=NON_PIPELINED | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=NONE | SRC_MEMORY_LAYOUT=PITCH | DST_MEMORY_LAYOUT=PITCH | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_VA               role=semaphore  va=0x20440ff70 → hMemory=0x5c00001f class=NV01_MEMORY_SYSTEM offset=65392
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_PAYLOAD          data=0x0000001d
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000014 (DATA_TRANSFER_TYPE=NONE | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=RELEASE_SEMAPHORE_WITH_TIMESTAMP | SRC_MEMORY_LAYOUT=BLOCKLINEAR | DST_MEMORY_LAYOUT=BLOCKLINEAR | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+
+--- seq=4774 chid=5 idx=29 nbytes=76 ---
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_CONST_A              data=0x00000000
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_COMPONENTS           data=0x00030004
+  [sch4] HOPPER_DMA_COPY_A/LINE_COUNT                     data=0x00000001
+  [sch4] HOPPER_DMA_COPY_A/OFFSET_OUT_VA                  role=CE_dst     va=0x205001900 → hMemory=0x5c000081 class=NV01_MEMORY_LOCAL_USER offset=6400
+  [sch4] HOPPER_DMA_COPY_A/LINE_LENGTH_IN                 data=0x00000004
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000586 (DATA_TRANSFER_TYPE=NON_PIPELINED | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=NONE | SRC_MEMORY_LAYOUT=PITCH | DST_MEMORY_LAYOUT=PITCH | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_VA               role=semaphore  va=0x20440ff70 → hMemory=0x5c00001f class=NV01_MEMORY_SYSTEM offset=65392
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_PAYLOAD          data=0x0000001e
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000014 (DATA_TRANSFER_TYPE=NONE | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=RELEASE_SEMAPHORE_WITH_TIMESTAMP | SRC_MEMORY_LAYOUT=BLOCKLINEAR | DST_MEMORY_LAYOUT=BLOCKLINEAR | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+
+--- seq=4775 chid=5 idx=30 nbytes=76 ---
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_CONST_A              data=0x00000000
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_COMPONENTS           data=0x00030004
+  [sch4] HOPPER_DMA_COPY_A/LINE_COUNT                     data=0x00000001
+  [sch4] HOPPER_DMA_COPY_A/OFFSET_OUT_VA                  role=CE_dst     va=0x205001a00 → hMemory=0x5c000081 class=NV01_MEMORY_LOCAL_USER offset=6656
+  [sch4] HOPPER_DMA_COPY_A/LINE_LENGTH_IN                 data=0x00000004
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000586 (DATA_TRANSFER_TYPE=NON_PIPELINED | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=NONE | SRC_MEMORY_LAYOUT=PITCH | DST_MEMORY_LAYOUT=PITCH | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_VA               role=semaphore  va=0x20440ff70 → hMemory=0x5c00001f class=NV01_MEMORY_SYSTEM offset=65392
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_PAYLOAD          data=0x0000001f
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000014 (DATA_TRANSFER_TYPE=NONE | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=RELEASE_SEMAPHORE_WITH_TIMESTAMP | SRC_MEMORY_LAYOUT=BLOCKLINEAR | DST_MEMORY_LAYOUT=BLOCKLINEAR | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+
+--- seq=4776 chid=5 idx=31 nbytes=76 ---
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_CONST_A              data=0x00000000
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_COMPONENTS           data=0x00030004
+  [sch4] HOPPER_DMA_COPY_A/LINE_COUNT                     data=0x00000001
+  [sch4] HOPPER_DMA_COPY_A/OFFSET_OUT_VA                  role=CE_dst     va=0x205001b00 → hMemory=0x5c000081 class=NV01_MEMORY_LOCAL_USER offset=6912
+  [sch4] HOPPER_DMA_COPY_A/LINE_LENGTH_IN                 data=0x00000004
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000586 (DATA_TRANSFER_TYPE=NON_PIPELINED | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=NONE | SRC_MEMORY_LAYOUT=PITCH | DST_MEMORY_LAYOUT=PITCH | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_VA               role=semaphore  va=0x20440ff70 → hMemory=0x5c00001f class=NV01_MEMORY_SYSTEM offset=65392
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_PAYLOAD          data=0x00000020
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000014 (DATA_TRANSFER_TYPE=NONE | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=RELEASE_SEMAPHORE_WITH_TIMESTAMP | SRC_MEMORY_LAYOUT=BLOCKLINEAR | DST_MEMORY_LAYOUT=BLOCKLINEAR | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+
+--- seq=4777 chid=5 idx=32 nbytes=76 ---
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_CONST_A              data=0x00000000
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_COMPONENTS           data=0x00030004
+  [sch4] HOPPER_DMA_COPY_A/LINE_COUNT                     data=0x00000001
+  [sch4] HOPPER_DMA_COPY_A/OFFSET_OUT_VA                  role=CE_dst     va=0x205001c00 → hMemory=0x5c000081 class=NV01_MEMORY_LOCAL_USER offset=7168
+  [sch4] HOPPER_DMA_COPY_A/LINE_LENGTH_IN                 data=0x00000004
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000586 (DATA_TRANSFER_TYPE=NON_PIPELINED | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=NONE | SRC_MEMORY_LAYOUT=PITCH | DST_MEMORY_LAYOUT=PITCH | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_VA               role=semaphore  va=0x20440ff70 → hMemory=0x5c00001f class=NV01_MEMORY_SYSTEM offset=65392
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_PAYLOAD          data=0x00000021
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000014 (DATA_TRANSFER_TYPE=NONE | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=RELEASE_SEMAPHORE_WITH_TIMESTAMP | SRC_MEMORY_LAYOUT=BLOCKLINEAR | DST_MEMORY_LAYOUT=BLOCKLINEAR | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+
+--- seq=4778 chid=5 idx=33 nbytes=76 ---
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_CONST_A              data=0x00000000
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_COMPONENTS           data=0x00030004
+  [sch4] HOPPER_DMA_COPY_A/LINE_COUNT                     data=0x00000001
+  [sch4] HOPPER_DMA_COPY_A/OFFSET_OUT_VA                  role=CE_dst     va=0x205001d00 → hMemory=0x5c000081 class=NV01_MEMORY_LOCAL_USER offset=7424
+  [sch4] HOPPER_DMA_COPY_A/LINE_LENGTH_IN                 data=0x00000004
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000586 (DATA_TRANSFER_TYPE=NON_PIPELINED | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=NONE | SRC_MEMORY_LAYOUT=PITCH | DST_MEMORY_LAYOUT=PITCH | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_VA               role=semaphore  va=0x20440ff70 → hMemory=0x5c00001f class=NV01_MEMORY_SYSTEM offset=65392
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_PAYLOAD          data=0x00000022
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000014 (DATA_TRANSFER_TYPE=NONE | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=RELEASE_SEMAPHORE_WITH_TIMESTAMP | SRC_MEMORY_LAYOUT=BLOCKLINEAR | DST_MEMORY_LAYOUT=BLOCKLINEAR | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+
+--- seq=4779 chid=5 idx=34 nbytes=76 ---
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_CONST_A              data=0x00000000
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_COMPONENTS           data=0x00030004
+  [sch4] HOPPER_DMA_COPY_A/LINE_COUNT                     data=0x00000001
+  [sch4] HOPPER_DMA_COPY_A/OFFSET_OUT_VA                  role=CE_dst     va=0x205001e00 → hMemory=0x5c000081 class=NV01_MEMORY_LOCAL_USER offset=7680
+  [sch4] HOPPER_DMA_COPY_A/LINE_LENGTH_IN                 data=0x00000004
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000586 (DATA_TRANSFER_TYPE=NON_PIPELINED | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=NONE | SRC_MEMORY_LAYOUT=PITCH | DST_MEMORY_LAYOUT=PITCH | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_VA               role=semaphore  va=0x20440ff70 → hMemory=0x5c00001f class=NV01_MEMORY_SYSTEM offset=65392
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_PAYLOAD          data=0x00000023
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000014 (DATA_TRANSFER_TYPE=NONE | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=RELEASE_SEMAPHORE_WITH_TIMESTAMP | SRC_MEMORY_LAYOUT=BLOCKLINEAR | DST_MEMORY_LAYOUT=BLOCKLINEAR | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+
+--- seq=4780 chid=5 idx=35 nbytes=76 ---
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_CONST_A              data=0x00000000
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_COMPONENTS           data=0x00030004
+  [sch4] HOPPER_DMA_COPY_A/LINE_COUNT                     data=0x00000001
+  [sch4] HOPPER_DMA_COPY_A/OFFSET_OUT_VA                  role=CE_dst     va=0x205001f00 → hMemory=0x5c000081 class=NV01_MEMORY_LOCAL_USER offset=7936
+  [sch4] HOPPER_DMA_COPY_A/LINE_LENGTH_IN                 data=0x00000004
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000586 (DATA_TRANSFER_TYPE=NON_PIPELINED | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=NONE | SRC_MEMORY_LAYOUT=PITCH | DST_MEMORY_LAYOUT=PITCH | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_VA               role=semaphore  va=0x20440ff70 → hMemory=0x5c00001f class=NV01_MEMORY_SYSTEM offset=65392
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_PAYLOAD          data=0x00000024
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000014 (DATA_TRANSFER_TYPE=NONE | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=RELEASE_SEMAPHORE_WITH_TIMESTAMP | SRC_MEMORY_LAYOUT=BLOCKLINEAR | DST_MEMORY_LAYOUT=BLOCKLINEAR | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+
+--- seq=4781 chid=5 idx=36 nbytes=76 ---
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_CONST_A              data=0x00000000
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_COMPONENTS           data=0x00030004
+  [sch4] HOPPER_DMA_COPY_A/LINE_COUNT                     data=0x00000001
+  [sch4] HOPPER_DMA_COPY_A/OFFSET_OUT_VA                  role=CE_dst     va=0x205002000 → hMemory=0x5c000081 class=NV01_MEMORY_LOCAL_USER offset=8192
+  [sch4] HOPPER_DMA_COPY_A/LINE_LENGTH_IN                 data=0x00000004
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000586 (DATA_TRANSFER_TYPE=NON_PIPELINED | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=NONE | SRC_MEMORY_LAYOUT=PITCH | DST_MEMORY_LAYOUT=PITCH | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_VA               role=semaphore  va=0x20440ff70 → hMemory=0x5c00001f class=NV01_MEMORY_SYSTEM offset=65392
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_PAYLOAD          data=0x00000025
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000014 (DATA_TRANSFER_TYPE=NONE | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=RELEASE_SEMAPHORE_WITH_TIMESTAMP | SRC_MEMORY_LAYOUT=BLOCKLINEAR | DST_MEMORY_LAYOUT=BLOCKLINEAR | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+
+--- seq=4782 chid=5 idx=37 nbytes=76 ---
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_CONST_A              data=0x00000000
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_COMPONENTS           data=0x00030004
+  [sch4] HOPPER_DMA_COPY_A/LINE_COUNT                     data=0x00000001
+  [sch4] HOPPER_DMA_COPY_A/OFFSET_OUT_VA                  role=CE_dst     va=0x205002100 → hMemory=0x5c000081 class=NV01_MEMORY_LOCAL_USER offset=8448
+  [sch4] HOPPER_DMA_COPY_A/LINE_LENGTH_IN                 data=0x00000004
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000586 (DATA_TRANSFER_TYPE=NON_PIPELINED | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=NONE | SRC_MEMORY_LAYOUT=PITCH | DST_MEMORY_LAYOUT=PITCH | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_VA               role=semaphore  va=0x20440ff70 → hMemory=0x5c00001f class=NV01_MEMORY_SYSTEM offset=65392
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_PAYLOAD          data=0x00000026
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000014 (DATA_TRANSFER_TYPE=NONE | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=RELEASE_SEMAPHORE_WITH_TIMESTAMP | SRC_MEMORY_LAYOUT=BLOCKLINEAR | DST_MEMORY_LAYOUT=BLOCKLINEAR | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+
+--- seq=4783 chid=5 idx=38 nbytes=76 ---
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_CONST_A              data=0x00000000
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_COMPONENTS           data=0x00030004
+  [sch4] HOPPER_DMA_COPY_A/LINE_COUNT                     data=0x00000001
+  [sch4] HOPPER_DMA_COPY_A/OFFSET_OUT_VA                  role=CE_dst     va=0x205002200 → hMemory=0x5c000081 class=NV01_MEMORY_LOCAL_USER offset=8704
+  [sch4] HOPPER_DMA_COPY_A/LINE_LENGTH_IN                 data=0x00000004
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000586 (DATA_TRANSFER_TYPE=NON_PIPELINED | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=NONE | SRC_MEMORY_LAYOUT=PITCH | DST_MEMORY_LAYOUT=PITCH | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_VA               role=semaphore  va=0x20440ff70 → hMemory=0x5c00001f class=NV01_MEMORY_SYSTEM offset=65392
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_PAYLOAD          data=0x00000027
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000014 (DATA_TRANSFER_TYPE=NONE | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=RELEASE_SEMAPHORE_WITH_TIMESTAMP | SRC_MEMORY_LAYOUT=BLOCKLINEAR | DST_MEMORY_LAYOUT=BLOCKLINEAR | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+
+--- seq=4784 chid=5 idx=39 nbytes=76 ---
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_CONST_A              data=0x00000000
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_COMPONENTS           data=0x00030004
+  [sch4] HOPPER_DMA_COPY_A/LINE_COUNT                     data=0x00000001
+  [sch4] HOPPER_DMA_COPY_A/OFFSET_OUT_VA                  role=CE_dst     va=0x205002300 → hMemory=0x5c000081 class=NV01_MEMORY_LOCAL_USER offset=8960
+  [sch4] HOPPER_DMA_COPY_A/LINE_LENGTH_IN                 data=0x00000004
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000586 (DATA_TRANSFER_TYPE=NON_PIPELINED | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=NONE | SRC_MEMORY_LAYOUT=PITCH | DST_MEMORY_LAYOUT=PITCH | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_VA               role=semaphore  va=0x20440ff70 → hMemory=0x5c00001f class=NV01_MEMORY_SYSTEM offset=65392
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_PAYLOAD          data=0x00000028
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000014 (DATA_TRANSFER_TYPE=NONE | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=RELEASE_SEMAPHORE_WITH_TIMESTAMP | SRC_MEMORY_LAYOUT=BLOCKLINEAR | DST_MEMORY_LAYOUT=BLOCKLINEAR | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+
+--- seq=4785 chid=5 idx=40 nbytes=76 ---
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_CONST_A              data=0x00000000
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_COMPONENTS           data=0x00030004
+  [sch4] HOPPER_DMA_COPY_A/LINE_COUNT                     data=0x00000001
+  [sch4] HOPPER_DMA_COPY_A/OFFSET_OUT_VA                  role=CE_dst     va=0x205002400 → hMemory=0x5c000081 class=NV01_MEMORY_LOCAL_USER offset=9216
+  [sch4] HOPPER_DMA_COPY_A/LINE_LENGTH_IN                 data=0x00000004
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000586 (DATA_TRANSFER_TYPE=NON_PIPELINED | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=NONE | SRC_MEMORY_LAYOUT=PITCH | DST_MEMORY_LAYOUT=PITCH | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_VA               role=semaphore  va=0x20440ff70 → hMemory=0x5c00001f class=NV01_MEMORY_SYSTEM offset=65392
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_PAYLOAD          data=0x00000029
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000014 (DATA_TRANSFER_TYPE=NONE | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=RELEASE_SEMAPHORE_WITH_TIMESTAMP | SRC_MEMORY_LAYOUT=BLOCKLINEAR | DST_MEMORY_LAYOUT=BLOCKLINEAR | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+
+--- seq=4786 chid=5 idx=41 nbytes=76 ---
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_CONST_A              data=0x00000000
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_COMPONENTS           data=0x00030004
+  [sch4] HOPPER_DMA_COPY_A/LINE_COUNT                     data=0x00000001
+  [sch4] HOPPER_DMA_COPY_A/OFFSET_OUT_VA                  role=CE_dst     va=0x205002500 → hMemory=0x5c000081 class=NV01_MEMORY_LOCAL_USER offset=9472
+  [sch4] HOPPER_DMA_COPY_A/LINE_LENGTH_IN                 data=0x00000004
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000586 (DATA_TRANSFER_TYPE=NON_PIPELINED | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=NONE | SRC_MEMORY_LAYOUT=PITCH | DST_MEMORY_LAYOUT=PITCH | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_VA               role=semaphore  va=0x20440ff70 → hMemory=0x5c00001f class=NV01_MEMORY_SYSTEM offset=65392
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_PAYLOAD          data=0x0000002a
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000014 (DATA_TRANSFER_TYPE=NONE | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=RELEASE_SEMAPHORE_WITH_TIMESTAMP | SRC_MEMORY_LAYOUT=BLOCKLINEAR | DST_MEMORY_LAYOUT=BLOCKLINEAR | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+
+--- seq=4787 chid=5 idx=42 nbytes=76 ---
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_CONST_A              data=0x00000000
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_COMPONENTS           data=0x00030004
+  [sch4] HOPPER_DMA_COPY_A/LINE_COUNT                     data=0x00000001
+  [sch4] HOPPER_DMA_COPY_A/OFFSET_OUT_VA                  role=CE_dst     va=0x205002600 → hMemory=0x5c000081 class=NV01_MEMORY_LOCAL_USER offset=9728
+  [sch4] HOPPER_DMA_COPY_A/LINE_LENGTH_IN                 data=0x00000004
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000586 (DATA_TRANSFER_TYPE=NON_PIPELINED | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=NONE | SRC_MEMORY_LAYOUT=PITCH | DST_MEMORY_LAYOUT=PITCH | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_VA               role=semaphore  va=0x20440ff70 → hMemory=0x5c00001f class=NV01_MEMORY_SYSTEM offset=65392
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_PAYLOAD          data=0x0000002b
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000014 (DATA_TRANSFER_TYPE=NONE | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=RELEASE_SEMAPHORE_WITH_TIMESTAMP | SRC_MEMORY_LAYOUT=BLOCKLINEAR | DST_MEMORY_LAYOUT=BLOCKLINEAR | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+
+--- seq=4788 chid=5 idx=43 nbytes=76 ---
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_CONST_A              data=0x00000000
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_COMPONENTS           data=0x00030004
+  [sch4] HOPPER_DMA_COPY_A/LINE_COUNT                     data=0x00000001
+  [sch4] HOPPER_DMA_COPY_A/OFFSET_OUT_VA                  role=CE_dst     va=0x205002700 → hMemory=0x5c000081 class=NV01_MEMORY_LOCAL_USER offset=9984
+  [sch4] HOPPER_DMA_COPY_A/LINE_LENGTH_IN                 data=0x00000004
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000586 (DATA_TRANSFER_TYPE=NON_PIPELINED | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=NONE | SRC_MEMORY_LAYOUT=PITCH | DST_MEMORY_LAYOUT=PITCH | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_VA               role=semaphore  va=0x20440ff70 → hMemory=0x5c00001f class=NV01_MEMORY_SYSTEM offset=65392
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_PAYLOAD          data=0x0000002c
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000014 (DATA_TRANSFER_TYPE=NONE | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=RELEASE_SEMAPHORE_WITH_TIMESTAMP | SRC_MEMORY_LAYOUT=BLOCKLINEAR | DST_MEMORY_LAYOUT=BLOCKLINEAR | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+
+--- seq=4789 chid=5 idx=44 nbytes=76 ---
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_CONST_A              data=0x00000000
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_COMPONENTS           data=0x00030004
+  [sch4] HOPPER_DMA_COPY_A/LINE_COUNT                     data=0x00000001
+  [sch4] HOPPER_DMA_COPY_A/OFFSET_OUT_VA                  role=CE_dst     va=0x205002800 → hMemory=0x5c000081 class=NV01_MEMORY_LOCAL_USER offset=10240
+  [sch4] HOPPER_DMA_COPY_A/LINE_LENGTH_IN                 data=0x00000004
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000586 (DATA_TRANSFER_TYPE=NON_PIPELINED | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=NONE | SRC_MEMORY_LAYOUT=PITCH | DST_MEMORY_LAYOUT=PITCH | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_VA               role=semaphore  va=0x20440ff70 → hMemory=0x5c00001f class=NV01_MEMORY_SYSTEM offset=65392
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_PAYLOAD          data=0x0000002d
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000014 (DATA_TRANSFER_TYPE=NONE | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=RELEASE_SEMAPHORE_WITH_TIMESTAMP | SRC_MEMORY_LAYOUT=BLOCKLINEAR | DST_MEMORY_LAYOUT=BLOCKLINEAR | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+
+--- seq=4790 chid=5 idx=45 nbytes=76 ---
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_CONST_A              data=0x00000000
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_COMPONENTS           data=0x00030004
+  [sch4] HOPPER_DMA_COPY_A/LINE_COUNT                     data=0x00000001
+  [sch4] HOPPER_DMA_COPY_A/OFFSET_OUT_VA                  role=CE_dst     va=0x205002900 → hMemory=0x5c000081 class=NV01_MEMORY_LOCAL_USER offset=10496
+  [sch4] HOPPER_DMA_COPY_A/LINE_LENGTH_IN                 data=0x00000004
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000586 (DATA_TRANSFER_TYPE=NON_PIPELINED | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=NONE | SRC_MEMORY_LAYOUT=PITCH | DST_MEMORY_LAYOUT=PITCH | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_VA               role=semaphore  va=0x20440ff70 → hMemory=0x5c00001f class=NV01_MEMORY_SYSTEM offset=65392
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_PAYLOAD          data=0x0000002e
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000014 (DATA_TRANSFER_TYPE=NONE | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=RELEASE_SEMAPHORE_WITH_TIMESTAMP | SRC_MEMORY_LAYOUT=BLOCKLINEAR | DST_MEMORY_LAYOUT=BLOCKLINEAR | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+
+--- seq=4791 chid=5 idx=46 nbytes=76 ---
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_CONST_A              data=0x00000000
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_COMPONENTS           data=0x00030004
+  [sch4] HOPPER_DMA_COPY_A/LINE_COUNT                     data=0x00000001
+  [sch4] HOPPER_DMA_COPY_A/OFFSET_OUT_VA                  role=CE_dst     va=0x205002a00 → hMemory=0x5c000081 class=NV01_MEMORY_LOCAL_USER offset=10752
+  [sch4] HOPPER_DMA_COPY_A/LINE_LENGTH_IN                 data=0x00000004
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000586 (DATA_TRANSFER_TYPE=NON_PIPELINED | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=NONE | SRC_MEMORY_LAYOUT=PITCH | DST_MEMORY_LAYOUT=PITCH | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_VA               role=semaphore  va=0x20440ff70 → hMemory=0x5c00001f class=NV01_MEMORY_SYSTEM offset=65392
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_PAYLOAD          data=0x0000002f
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000014 (DATA_TRANSFER_TYPE=NONE | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=RELEASE_SEMAPHORE_WITH_TIMESTAMP | SRC_MEMORY_LAYOUT=BLOCKLINEAR | DST_MEMORY_LAYOUT=BLOCKLINEAR | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+
+--- seq=4792 chid=5 idx=47 nbytes=76 ---
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_CONST_A              data=0x00000000
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_COMPONENTS           data=0x00030004
+  [sch4] HOPPER_DMA_COPY_A/LINE_COUNT                     data=0x00000001
+  [sch4] HOPPER_DMA_COPY_A/OFFSET_OUT_VA                  role=CE_dst     va=0x205002b00 → hMemory=0x5c000081 class=NV01_MEMORY_LOCAL_USER offset=11008
+  [sch4] HOPPER_DMA_COPY_A/LINE_LENGTH_IN                 data=0x00000004
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000586 (DATA_TRANSFER_TYPE=NON_PIPELINED | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=NONE | SRC_MEMORY_LAYOUT=PITCH | DST_MEMORY_LAYOUT=PITCH | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_VA               role=semaphore  va=0x20440ff70 → hMemory=0x5c00001f class=NV01_MEMORY_SYSTEM offset=65392
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_PAYLOAD          data=0x00000030
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000014 (DATA_TRANSFER_TYPE=NONE | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=RELEASE_SEMAPHORE_WITH_TIMESTAMP | SRC_MEMORY_LAYOUT=BLOCKLINEAR | DST_MEMORY_LAYOUT=BLOCKLINEAR | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+
+--- seq=4793 chid=5 idx=48 nbytes=76 ---
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_CONST_A              data=0x00000000
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_COMPONENTS           data=0x00030004
+  [sch4] HOPPER_DMA_COPY_A/LINE_COUNT                     data=0x00000001
+  [sch4] HOPPER_DMA_COPY_A/OFFSET_OUT_VA                  role=CE_dst     va=0x205002c00 → hMemory=0x5c000081 class=NV01_MEMORY_LOCAL_USER offset=11264
+  [sch4] HOPPER_DMA_COPY_A/LINE_LENGTH_IN                 data=0x00000004
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000586 (DATA_TRANSFER_TYPE=NON_PIPELINED | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=NONE | SRC_MEMORY_LAYOUT=PITCH | DST_MEMORY_LAYOUT=PITCH | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_VA               role=semaphore  va=0x20440ff70 → hMemory=0x5c00001f class=NV01_MEMORY_SYSTEM offset=65392
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_PAYLOAD          data=0x00000031
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000014 (DATA_TRANSFER_TYPE=NONE | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=RELEASE_SEMAPHORE_WITH_TIMESTAMP | SRC_MEMORY_LAYOUT=BLOCKLINEAR | DST_MEMORY_LAYOUT=BLOCKLINEAR | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+
+--- seq=4794 chid=5 idx=49 nbytes=76 ---
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_CONST_A              data=0x00000000
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_COMPONENTS           data=0x00030004
+  [sch4] HOPPER_DMA_COPY_A/LINE_COUNT                     data=0x00000001
+  [sch4] HOPPER_DMA_COPY_A/OFFSET_OUT_VA                  role=CE_dst     va=0x205002d00 → hMemory=0x5c000081 class=NV01_MEMORY_LOCAL_USER offset=11520
+  [sch4] HOPPER_DMA_COPY_A/LINE_LENGTH_IN                 data=0x00000004
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000586 (DATA_TRANSFER_TYPE=NON_PIPELINED | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=NONE | SRC_MEMORY_LAYOUT=PITCH | DST_MEMORY_LAYOUT=PITCH | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_VA               role=semaphore  va=0x20440ff70 → hMemory=0x5c00001f class=NV01_MEMORY_SYSTEM offset=65392
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_PAYLOAD          data=0x00000032
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000014 (DATA_TRANSFER_TYPE=NONE | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=RELEASE_SEMAPHORE_WITH_TIMESTAMP | SRC_MEMORY_LAYOUT=BLOCKLINEAR | DST_MEMORY_LAYOUT=BLOCKLINEAR | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+
+--- seq=4795 chid=5 idx=50 nbytes=76 ---
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_CONST_A              data=0x00000000
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_COMPONENTS           data=0x00030004
+  [sch4] HOPPER_DMA_COPY_A/LINE_COUNT                     data=0x00000001
+  [sch4] HOPPER_DMA_COPY_A/OFFSET_OUT_VA                  role=CE_dst     va=0x205002e00 → hMemory=0x5c000081 class=NV01_MEMORY_LOCAL_USER offset=11776
+  [sch4] HOPPER_DMA_COPY_A/LINE_LENGTH_IN                 data=0x00000004
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000586 (DATA_TRANSFER_TYPE=NON_PIPELINED | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=NONE | SRC_MEMORY_LAYOUT=PITCH | DST_MEMORY_LAYOUT=PITCH | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_VA               role=semaphore  va=0x20440ff70 → hMemory=0x5c00001f class=NV01_MEMORY_SYSTEM offset=65392
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_PAYLOAD          data=0x00000033
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000014 (DATA_TRANSFER_TYPE=NONE | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=RELEASE_SEMAPHORE_WITH_TIMESTAMP | SRC_MEMORY_LAYOUT=BLOCKLINEAR | DST_MEMORY_LAYOUT=BLOCKLINEAR | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+
+--- seq=4796 chid=5 idx=51 nbytes=76 ---
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_CONST_A              data=0x00000000
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_COMPONENTS           data=0x00030004
+  [sch4] HOPPER_DMA_COPY_A/LINE_COUNT                     data=0x00000001
+  [sch4] HOPPER_DMA_COPY_A/OFFSET_OUT_VA                  role=CE_dst     va=0x205002f00 → hMemory=0x5c000081 class=NV01_MEMORY_LOCAL_USER offset=12032
+  [sch4] HOPPER_DMA_COPY_A/LINE_LENGTH_IN                 data=0x00000004
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000586 (DATA_TRANSFER_TYPE=NON_PIPELINED | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=NONE | SRC_MEMORY_LAYOUT=PITCH | DST_MEMORY_LAYOUT=PITCH | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_VA               role=semaphore  va=0x20440ff70 → hMemory=0x5c00001f class=NV01_MEMORY_SYSTEM offset=65392
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_PAYLOAD          data=0x00000034
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000014 (DATA_TRANSFER_TYPE=NONE | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=RELEASE_SEMAPHORE_WITH_TIMESTAMP | SRC_MEMORY_LAYOUT=BLOCKLINEAR | DST_MEMORY_LAYOUT=BLOCKLINEAR | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+
+--- seq=4797 chid=5 idx=52 nbytes=76 ---
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_CONST_A              data=0x00000000
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_COMPONENTS           data=0x00030004
+  [sch4] HOPPER_DMA_COPY_A/LINE_COUNT                     data=0x00000001
+  [sch4] HOPPER_DMA_COPY_A/OFFSET_OUT_VA                  role=CE_dst     va=0x205003000 → hMemory=0x5c000081 class=NV01_MEMORY_LOCAL_USER offset=12288
+  [sch4] HOPPER_DMA_COPY_A/LINE_LENGTH_IN                 data=0x00000004
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000586 (DATA_TRANSFER_TYPE=NON_PIPELINED | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=NONE | SRC_MEMORY_LAYOUT=PITCH | DST_MEMORY_LAYOUT=PITCH | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_VA               role=semaphore  va=0x20440ff70 → hMemory=0x5c00001f class=NV01_MEMORY_SYSTEM offset=65392
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_PAYLOAD          data=0x00000035
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000014 (DATA_TRANSFER_TYPE=NONE | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=RELEASE_SEMAPHORE_WITH_TIMESTAMP | SRC_MEMORY_LAYOUT=BLOCKLINEAR | DST_MEMORY_LAYOUT=BLOCKLINEAR | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+
+--- seq=4798 chid=5 idx=53 nbytes=76 ---
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_CONST_A              data=0x00000000
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_COMPONENTS           data=0x00030004
+  [sch4] HOPPER_DMA_COPY_A/LINE_COUNT                     data=0x00000001
+  [sch4] HOPPER_DMA_COPY_A/OFFSET_OUT_VA                  role=CE_dst     va=0x205003100 → hMemory=0x5c000081 class=NV01_MEMORY_LOCAL_USER offset=12544
+  [sch4] HOPPER_DMA_COPY_A/LINE_LENGTH_IN                 data=0x00000004
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000586 (DATA_TRANSFER_TYPE=NON_PIPELINED | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=NONE | SRC_MEMORY_LAYOUT=PITCH | DST_MEMORY_LAYOUT=PITCH | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_VA               role=semaphore  va=0x20440ff70 → hMemory=0x5c00001f class=NV01_MEMORY_SYSTEM offset=65392
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_PAYLOAD          data=0x00000036
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000014 (DATA_TRANSFER_TYPE=NONE | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=RELEASE_SEMAPHORE_WITH_TIMESTAMP | SRC_MEMORY_LAYOUT=BLOCKLINEAR | DST_MEMORY_LAYOUT=BLOCKLINEAR | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+
+--- seq=4799 chid=5 idx=54 nbytes=76 ---
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_CONST_A              data=0x00000000
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_COMPONENTS           data=0x00030004
+  [sch4] HOPPER_DMA_COPY_A/LINE_COUNT                     data=0x00000001
+  [sch4] HOPPER_DMA_COPY_A/OFFSET_OUT_VA                  role=CE_dst     va=0x205003200 → hMemory=0x5c000081 class=NV01_MEMORY_LOCAL_USER offset=12800
+  [sch4] HOPPER_DMA_COPY_A/LINE_LENGTH_IN                 data=0x00000004
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000586 (DATA_TRANSFER_TYPE=NON_PIPELINED | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=NONE | SRC_MEMORY_LAYOUT=PITCH | DST_MEMORY_LAYOUT=PITCH | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_VA               role=semaphore  va=0x20440ff70 → hMemory=0x5c00001f class=NV01_MEMORY_SYSTEM offset=65392
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_PAYLOAD          data=0x00000037
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000014 (DATA_TRANSFER_TYPE=NONE | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=RELEASE_SEMAPHORE_WITH_TIMESTAMP | SRC_MEMORY_LAYOUT=BLOCKLINEAR | DST_MEMORY_LAYOUT=BLOCKLINEAR | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+
+--- seq=4800 chid=5 idx=55 nbytes=76 ---
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_CONST_A              data=0x00000000
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_COMPONENTS           data=0x00030004
+  [sch4] HOPPER_DMA_COPY_A/LINE_COUNT                     data=0x00000001
+  [sch4] HOPPER_DMA_COPY_A/OFFSET_OUT_VA                  role=CE_dst     va=0x205003300 → hMemory=0x5c000081 class=NV01_MEMORY_LOCAL_USER offset=13056
+  [sch4] HOPPER_DMA_COPY_A/LINE_LENGTH_IN                 data=0x00000004
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000586 (DATA_TRANSFER_TYPE=NON_PIPELINED | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=NONE | SRC_MEMORY_LAYOUT=PITCH | DST_MEMORY_LAYOUT=PITCH | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_VA               role=semaphore  va=0x20440ff70 → hMemory=0x5c00001f class=NV01_MEMORY_SYSTEM offset=65392
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_PAYLOAD          data=0x00000038
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000014 (DATA_TRANSFER_TYPE=NONE | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=RELEASE_SEMAPHORE_WITH_TIMESTAMP | SRC_MEMORY_LAYOUT=BLOCKLINEAR | DST_MEMORY_LAYOUT=BLOCKLINEAR | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+
+--- seq=4801 chid=5 idx=56 nbytes=76 ---
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_CONST_A              data=0x00000000
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_COMPONENTS           data=0x00030004
+  [sch4] HOPPER_DMA_COPY_A/LINE_COUNT                     data=0x00000001
+  [sch4] HOPPER_DMA_COPY_A/OFFSET_OUT_VA                  role=CE_dst     va=0x205003400 → hMemory=0x5c000081 class=NV01_MEMORY_LOCAL_USER offset=13312
+  [sch4] HOPPER_DMA_COPY_A/LINE_LENGTH_IN                 data=0x00000004
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000586 (DATA_TRANSFER_TYPE=NON_PIPELINED | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=NONE | SRC_MEMORY_LAYOUT=PITCH | DST_MEMORY_LAYOUT=PITCH | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_VA               role=semaphore  va=0x20440ff70 → hMemory=0x5c00001f class=NV01_MEMORY_SYSTEM offset=65392
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_PAYLOAD          data=0x00000039
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000014 (DATA_TRANSFER_TYPE=NONE | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=RELEASE_SEMAPHORE_WITH_TIMESTAMP | SRC_MEMORY_LAYOUT=BLOCKLINEAR | DST_MEMORY_LAYOUT=BLOCKLINEAR | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+
+--- seq=4802 chid=5 idx=57 nbytes=76 ---
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_CONST_A              data=0x00000000
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_COMPONENTS           data=0x00030004
+  [sch4] HOPPER_DMA_COPY_A/LINE_COUNT                     data=0x00000001
+  [sch4] HOPPER_DMA_COPY_A/OFFSET_OUT_VA                  role=CE_dst     va=0x205003500 → hMemory=0x5c000081 class=NV01_MEMORY_LOCAL_USER offset=13568
+  [sch4] HOPPER_DMA_COPY_A/LINE_LENGTH_IN                 data=0x00000004
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000586 (DATA_TRANSFER_TYPE=NON_PIPELINED | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=NONE | SRC_MEMORY_LAYOUT=PITCH | DST_MEMORY_LAYOUT=PITCH | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_VA               role=semaphore  va=0x20440ff70 → hMemory=0x5c00001f class=NV01_MEMORY_SYSTEM offset=65392
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_PAYLOAD          data=0x0000003a
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000014 (DATA_TRANSFER_TYPE=NONE | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=RELEASE_SEMAPHORE_WITH_TIMESTAMP | SRC_MEMORY_LAYOUT=BLOCKLINEAR | DST_MEMORY_LAYOUT=BLOCKLINEAR | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+
+--- seq=4803 chid=5 idx=58 nbytes=76 ---
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_CONST_A              data=0x00000000
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_COMPONENTS           data=0x00030004
+  [sch4] HOPPER_DMA_COPY_A/LINE_COUNT                     data=0x00000001
+  [sch4] HOPPER_DMA_COPY_A/OFFSET_OUT_VA                  role=CE_dst     va=0x205003600 → hMemory=0x5c000081 class=NV01_MEMORY_LOCAL_USER offset=13824
+  [sch4] HOPPER_DMA_COPY_A/LINE_LENGTH_IN                 data=0x00000004
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000586 (DATA_TRANSFER_TYPE=NON_PIPELINED | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=NONE | SRC_MEMORY_LAYOUT=PITCH | DST_MEMORY_LAYOUT=PITCH | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_VA               role=semaphore  va=0x20440ff70 → hMemory=0x5c00001f class=NV01_MEMORY_SYSTEM offset=65392
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_PAYLOAD          data=0x0000003b
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000014 (DATA_TRANSFER_TYPE=NONE | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=RELEASE_SEMAPHORE_WITH_TIMESTAMP | SRC_MEMORY_LAYOUT=BLOCKLINEAR | DST_MEMORY_LAYOUT=BLOCKLINEAR | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+
+--- seq=4804 chid=5 idx=59 nbytes=76 ---
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_CONST_A              data=0x00000000
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_COMPONENTS           data=0x00030004
+  [sch4] HOPPER_DMA_COPY_A/LINE_COUNT                     data=0x00000001
+  [sch4] HOPPER_DMA_COPY_A/OFFSET_OUT_VA                  role=CE_dst     va=0x205003700 → hMemory=0x5c000081 class=NV01_MEMORY_LOCAL_USER offset=14080
+  [sch4] HOPPER_DMA_COPY_A/LINE_LENGTH_IN                 data=0x00000004
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000586 (DATA_TRANSFER_TYPE=NON_PIPELINED | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=NONE | SRC_MEMORY_LAYOUT=PITCH | DST_MEMORY_LAYOUT=PITCH | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_VA               role=semaphore  va=0x20440ff70 → hMemory=0x5c00001f class=NV01_MEMORY_SYSTEM offset=65392
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_PAYLOAD          data=0x0000003c
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000014 (DATA_TRANSFER_TYPE=NONE | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=RELEASE_SEMAPHORE_WITH_TIMESTAMP | SRC_MEMORY_LAYOUT=BLOCKLINEAR | DST_MEMORY_LAYOUT=BLOCKLINEAR | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+
+--- seq=4805 chid=5 idx=60 nbytes=76 ---
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_CONST_A              data=0x00000000
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_COMPONENTS           data=0x00030004
+  [sch4] HOPPER_DMA_COPY_A/LINE_COUNT                     data=0x00000001
+  [sch4] HOPPER_DMA_COPY_A/OFFSET_OUT_VA                  role=CE_dst     va=0x205003800 → hMemory=0x5c000081 class=NV01_MEMORY_LOCAL_USER offset=14336
+  [sch4] HOPPER_DMA_COPY_A/LINE_LENGTH_IN                 data=0x00000004
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000586 (DATA_TRANSFER_TYPE=NON_PIPELINED | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=NONE | SRC_MEMORY_LAYOUT=PITCH | DST_MEMORY_LAYOUT=PITCH | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_VA               role=semaphore  va=0x20440ff70 → hMemory=0x5c00001f class=NV01_MEMORY_SYSTEM offset=65392
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_PAYLOAD          data=0x0000003d
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000014 (DATA_TRANSFER_TYPE=NONE | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=RELEASE_SEMAPHORE_WITH_TIMESTAMP | SRC_MEMORY_LAYOUT=BLOCKLINEAR | DST_MEMORY_LAYOUT=BLOCKLINEAR | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+
+--- seq=4806 chid=5 idx=61 nbytes=76 ---
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_CONST_A              data=0x00000000
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_COMPONENTS           data=0x00030004
+  [sch4] HOPPER_DMA_COPY_A/LINE_COUNT                     data=0x00000001
+  [sch4] HOPPER_DMA_COPY_A/OFFSET_OUT_VA                  role=CE_dst     va=0x205003900 → hMemory=0x5c000081 class=NV01_MEMORY_LOCAL_USER offset=14592
+  [sch4] HOPPER_DMA_COPY_A/LINE_LENGTH_IN                 data=0x00000004
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000586 (DATA_TRANSFER_TYPE=NON_PIPELINED | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=NONE | SRC_MEMORY_LAYOUT=PITCH | DST_MEMORY_LAYOUT=PITCH | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_VA               role=semaphore  va=0x20440ff70 → hMemory=0x5c00001f class=NV01_MEMORY_SYSTEM offset=65392
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_PAYLOAD          data=0x0000003e
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000014 (DATA_TRANSFER_TYPE=NONE | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=RELEASE_SEMAPHORE_WITH_TIMESTAMP | SRC_MEMORY_LAYOUT=BLOCKLINEAR | DST_MEMORY_LAYOUT=BLOCKLINEAR | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+
+--- seq=4807 chid=5 idx=62 nbytes=76 ---
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_CONST_A              data=0x00000000
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_COMPONENTS           data=0x00030004
+  [sch4] HOPPER_DMA_COPY_A/LINE_COUNT                     data=0x00000001
+  [sch4] HOPPER_DMA_COPY_A/OFFSET_OUT_VA                  role=CE_dst     va=0x205003a00 → hMemory=0x5c000081 class=NV01_MEMORY_LOCAL_USER offset=14848
+  [sch4] HOPPER_DMA_COPY_A/LINE_LENGTH_IN                 data=0x00000004
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000586 (DATA_TRANSFER_TYPE=NON_PIPELINED | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=NONE | SRC_MEMORY_LAYOUT=PITCH | DST_MEMORY_LAYOUT=PITCH | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_VA               role=semaphore  va=0x20440ff70 → hMemory=0x5c00001f class=NV01_MEMORY_SYSTEM offset=65392
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_PAYLOAD          data=0x0000003f
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000014 (DATA_TRANSFER_TYPE=NONE | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=RELEASE_SEMAPHORE_WITH_TIMESTAMP | SRC_MEMORY_LAYOUT=BLOCKLINEAR | DST_MEMORY_LAYOUT=BLOCKLINEAR | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+
+--- seq=4808 chid=5 idx=63 nbytes=76 ---
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_CONST_A              data=0x00000000
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_COMPONENTS           data=0x00030004
+  [sch4] HOPPER_DMA_COPY_A/LINE_COUNT                     data=0x00000001
+  [sch4] HOPPER_DMA_COPY_A/OFFSET_OUT_VA                  role=CE_dst     va=0x205003b00 → hMemory=0x5c000081 class=NV01_MEMORY_LOCAL_USER offset=15104
+  [sch4] HOPPER_DMA_COPY_A/LINE_LENGTH_IN                 data=0x00000004
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000586 (DATA_TRANSFER_TYPE=NON_PIPELINED | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=NONE | SRC_MEMORY_LAYOUT=PITCH | DST_MEMORY_LAYOUT=PITCH | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_VA               role=semaphore  va=0x20440ff70 → hMemory=0x5c00001f class=NV01_MEMORY_SYSTEM offset=65392
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_PAYLOAD          data=0x00000040
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000014 (DATA_TRANSFER_TYPE=NONE | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=RELEASE_SEMAPHORE_WITH_TIMESTAMP | SRC_MEMORY_LAYOUT=BLOCKLINEAR | DST_MEMORY_LAYOUT=BLOCKLINEAR | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+
+--- seq=4809 chid=5 idx=64 nbytes=76 ---
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_CONST_A              data=0x00000000
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_COMPONENTS           data=0x00030004
+  [sch4] HOPPER_DMA_COPY_A/LINE_COUNT                     data=0x00000001
+  [sch4] HOPPER_DMA_COPY_A/OFFSET_OUT_VA                  role=CE_dst     va=0x205003c00 → hMemory=0x5c000081 class=NV01_MEMORY_LOCAL_USER offset=15360
+  [sch4] HOPPER_DMA_COPY_A/LINE_LENGTH_IN                 data=0x00000004
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000586 (DATA_TRANSFER_TYPE=NON_PIPELINED | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=NONE | SRC_MEMORY_LAYOUT=PITCH | DST_MEMORY_LAYOUT=PITCH | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_VA               role=semaphore  va=0x20440ff70 → hMemory=0x5c00001f class=NV01_MEMORY_SYSTEM offset=65392
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_PAYLOAD          data=0x00000041
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000014 (DATA_TRANSFER_TYPE=NONE | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=RELEASE_SEMAPHORE_WITH_TIMESTAMP | SRC_MEMORY_LAYOUT=BLOCKLINEAR | DST_MEMORY_LAYOUT=BLOCKLINEAR | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+
+--- seq=4810 chid=5 idx=65 nbytes=76 ---
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_CONST_A              data=0x00000000
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_COMPONENTS           data=0x00030004
+  [sch4] HOPPER_DMA_COPY_A/LINE_COUNT                     data=0x00000001
+  [sch4] HOPPER_DMA_COPY_A/OFFSET_OUT_VA                  role=CE_dst     va=0x205003d00 → hMemory=0x5c000081 class=NV01_MEMORY_LOCAL_USER offset=15616
+  [sch4] HOPPER_DMA_COPY_A/LINE_LENGTH_IN                 data=0x00000004
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000586 (DATA_TRANSFER_TYPE=NON_PIPELINED | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=NONE | SRC_MEMORY_LAYOUT=PITCH | DST_MEMORY_LAYOUT=PITCH | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_VA               role=semaphore  va=0x20440ff70 → hMemory=0x5c00001f class=NV01_MEMORY_SYSTEM offset=65392
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_PAYLOAD          data=0x00000042
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000014 (DATA_TRANSFER_TYPE=NONE | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=RELEASE_SEMAPHORE_WITH_TIMESTAMP | SRC_MEMORY_LAYOUT=BLOCKLINEAR | DST_MEMORY_LAYOUT=BLOCKLINEAR | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+
+--- seq=4811 chid=5 idx=66 nbytes=76 ---
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_CONST_A              data=0x00000000
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_COMPONENTS           data=0x00030004
+  [sch4] HOPPER_DMA_COPY_A/LINE_COUNT                     data=0x00000001
+  [sch4] HOPPER_DMA_COPY_A/OFFSET_OUT_VA                  role=CE_dst     va=0x205003e00 → hMemory=0x5c000081 class=NV01_MEMORY_LOCAL_USER offset=15872
+  [sch4] HOPPER_DMA_COPY_A/LINE_LENGTH_IN                 data=0x00000004
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000586 (DATA_TRANSFER_TYPE=NON_PIPELINED | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=NONE | SRC_MEMORY_LAYOUT=PITCH | DST_MEMORY_LAYOUT=PITCH | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_VA               role=semaphore  va=0x20440ff70 → hMemory=0x5c00001f class=NV01_MEMORY_SYSTEM offset=65392
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_PAYLOAD          data=0x00000043
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000014 (DATA_TRANSFER_TYPE=NONE | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=RELEASE_SEMAPHORE_WITH_TIMESTAMP | SRC_MEMORY_LAYOUT=BLOCKLINEAR | DST_MEMORY_LAYOUT=BLOCKLINEAR | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+
+--- seq=4812 chid=5 idx=67 nbytes=76 ---
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_CONST_A              data=0x00000000
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_COMPONENTS           data=0x00030004
+  [sch4] HOPPER_DMA_COPY_A/LINE_COUNT                     data=0x00000001
+  [sch4] HOPPER_DMA_COPY_A/OFFSET_OUT_VA                  role=CE_dst     va=0x205003f00 → hMemory=0x5c000081 class=NV01_MEMORY_LOCAL_USER offset=16128
+  [sch4] HOPPER_DMA_COPY_A/LINE_LENGTH_IN                 data=0x00000004
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000586 (DATA_TRANSFER_TYPE=NON_PIPELINED | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=NONE | SRC_MEMORY_LAYOUT=PITCH | DST_MEMORY_LAYOUT=PITCH | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_VA               role=semaphore  va=0x20440ff70 → hMemory=0x5c00001f class=NV01_MEMORY_SYSTEM offset=65392
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_PAYLOAD          data=0x00000044
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000014 (DATA_TRANSFER_TYPE=NONE | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=RELEASE_SEMAPHORE_WITH_TIMESTAMP | SRC_MEMORY_LAYOUT=BLOCKLINEAR | DST_MEMORY_LAYOUT=BLOCKLINEAR | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+
+--- seq=4816 chid=5 idx=68 nbytes=76 ---
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_CONST_A              data=0x00000000
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_COMPONENTS           data=0x00030004
+  [sch4] HOPPER_DMA_COPY_A/LINE_COUNT                     data=0x00000001
+  [sch4] HOPPER_DMA_COPY_A/OFFSET_OUT_VA                  role=CE_dst     va=0x10004c00200 → hMemory=0x5c000078 class=NV01_MEMORY_LOCAL_USER offset=512
+  [sch4] HOPPER_DMA_COPY_A/LINE_LENGTH_IN                 data=0x00000001
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000586 (DATA_TRANSFER_TYPE=NON_PIPELINED | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=NONE | SRC_MEMORY_LAYOUT=PITCH | DST_MEMORY_LAYOUT=PITCH | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_VA               role=semaphore  va=0x20440ff70 → hMemory=0x5c00001f class=NV01_MEMORY_SYSTEM offset=65392
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_PAYLOAD          data=0x00000045
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000014 (DATA_TRANSFER_TYPE=NONE | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=RELEASE_SEMAPHORE_WITH_TIMESTAMP | SRC_MEMORY_LAYOUT=BLOCKLINEAR | DST_MEMORY_LAYOUT=BLOCKLINEAR | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+
+--- seq=4817 chid=5 idx=69 nbytes=76 ---
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_CONST_A              data=0x00000000
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_COMPONENTS           data=0x00030004
+  [sch4] HOPPER_DMA_COPY_A/LINE_COUNT                     data=0x00000001
+  [sch4] HOPPER_DMA_COPY_A/OFFSET_OUT_VA                  role=CE_dst     va=0x10004c00300 → hMemory=0x5c000078 class=NV01_MEMORY_LOCAL_USER offset=768
+  [sch4] HOPPER_DMA_COPY_A/LINE_LENGTH_IN                 data=0x00000001
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000586 (DATA_TRANSFER_TYPE=NON_PIPELINED | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=NONE | SRC_MEMORY_LAYOUT=PITCH | DST_MEMORY_LAYOUT=PITCH | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_VA               role=semaphore  va=0x20440ff70 → hMemory=0x5c00001f class=NV01_MEMORY_SYSTEM offset=65392
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_PAYLOAD          data=0x00000046
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000014 (DATA_TRANSFER_TYPE=NONE | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=RELEASE_SEMAPHORE_WITH_TIMESTAMP | SRC_MEMORY_LAYOUT=BLOCKLINEAR | DST_MEMORY_LAYOUT=BLOCKLINEAR | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+
+--- seq=4818 chid=5 idx=70 nbytes=76 ---
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_CONST_A              data=0x00000000
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_COMPONENTS           data=0x00030004
+  [sch4] HOPPER_DMA_COPY_A/LINE_COUNT                     data=0x00000001
+  [sch4] HOPPER_DMA_COPY_A/OFFSET_OUT_VA                  role=CE_dst     va=0x10004c00400 → hMemory=0x5c000078 class=NV01_MEMORY_LOCAL_USER offset=1024
+  [sch4] HOPPER_DMA_COPY_A/LINE_LENGTH_IN                 data=0x00000002
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000586 (DATA_TRANSFER_TYPE=NON_PIPELINED | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=NONE | SRC_MEMORY_LAYOUT=PITCH | DST_MEMORY_LAYOUT=PITCH | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_VA               role=semaphore  va=0x20440ff70 → hMemory=0x5c00001f class=NV01_MEMORY_SYSTEM offset=65392
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_PAYLOAD          data=0x00000047
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000014 (DATA_TRANSFER_TYPE=NONE | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=RELEASE_SEMAPHORE_WITH_TIMESTAMP | SRC_MEMORY_LAYOUT=BLOCKLINEAR | DST_MEMORY_LAYOUT=BLOCKLINEAR | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+
+--- seq=4819 chid=5 idx=71 nbytes=76 ---
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_CONST_A              data=0x00000000
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_COMPONENTS           data=0x00030004
+  [sch4] HOPPER_DMA_COPY_A/LINE_COUNT                     data=0x00000001
+  [sch4] HOPPER_DMA_COPY_A/OFFSET_OUT_VA                  role=CE_dst     va=0x10004c00500 → hMemory=0x5c000078 class=NV01_MEMORY_LOCAL_USER offset=1280
+  [sch4] HOPPER_DMA_COPY_A/LINE_LENGTH_IN                 data=0x00000004
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000586 (DATA_TRANSFER_TYPE=NON_PIPELINED | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=NONE | SRC_MEMORY_LAYOUT=PITCH | DST_MEMORY_LAYOUT=PITCH | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_VA               role=semaphore  va=0x20440ff70 → hMemory=0x5c00001f class=NV01_MEMORY_SYSTEM offset=65392
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_PAYLOAD          data=0x00000048
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000014 (DATA_TRANSFER_TYPE=NONE | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=RELEASE_SEMAPHORE_WITH_TIMESTAMP | SRC_MEMORY_LAYOUT=BLOCKLINEAR | DST_MEMORY_LAYOUT=BLOCKLINEAR | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+
+--- seq=4820 chid=5 idx=72 nbytes=76 ---
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_CONST_A              data=0x00000000
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_COMPONENTS           data=0x00030004
+  [sch4] HOPPER_DMA_COPY_A/LINE_COUNT                     data=0x00000001
+  [sch4] HOPPER_DMA_COPY_A/OFFSET_OUT_VA                  role=CE_dst     va=0x10004c00600 → hMemory=0x5c000078 class=NV01_MEMORY_LOCAL_USER offset=1536
+  [sch4] HOPPER_DMA_COPY_A/LINE_LENGTH_IN                 data=0x00000001
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000586 (DATA_TRANSFER_TYPE=NON_PIPELINED | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=NONE | SRC_MEMORY_LAYOUT=PITCH | DST_MEMORY_LAYOUT=PITCH | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_VA               role=semaphore  va=0x20440ff70 → hMemory=0x5c00001f class=NV01_MEMORY_SYSTEM offset=65392
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_PAYLOAD          data=0x00000049
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000014 (DATA_TRANSFER_TYPE=NONE | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=RELEASE_SEMAPHORE_WITH_TIMESTAMP | SRC_MEMORY_LAYOUT=BLOCKLINEAR | DST_MEMORY_LAYOUT=BLOCKLINEAR | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+
+--- seq=4821 chid=5 idx=73 nbytes=76 ---
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_CONST_A              data=0x00000000
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_COMPONENTS           data=0x00030004
+  [sch4] HOPPER_DMA_COPY_A/LINE_COUNT                     data=0x00000001
+  [sch4] HOPPER_DMA_COPY_A/OFFSET_OUT_VA                  role=CE_dst     va=0x10004c00700 → hMemory=0x5c000078 class=NV01_MEMORY_LOCAL_USER offset=1792
+  [sch4] HOPPER_DMA_COPY_A/LINE_LENGTH_IN                 data=0x00000002
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000586 (DATA_TRANSFER_TYPE=NON_PIPELINED | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=NONE | SRC_MEMORY_LAYOUT=PITCH | DST_MEMORY_LAYOUT=PITCH | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_VA               role=semaphore  va=0x20440ff70 → hMemory=0x5c00001f class=NV01_MEMORY_SYSTEM offset=65392
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_PAYLOAD          data=0x0000004a
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000014 (DATA_TRANSFER_TYPE=NONE | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=RELEASE_SEMAPHORE_WITH_TIMESTAMP | SRC_MEMORY_LAYOUT=BLOCKLINEAR | DST_MEMORY_LAYOUT=BLOCKLINEAR | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+
+--- seq=4822 chid=5 idx=74 nbytes=76 ---
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_CONST_A              data=0x00000000
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_COMPONENTS           data=0x00030004
+  [sch4] HOPPER_DMA_COPY_A/LINE_COUNT                     data=0x00000001
+  [sch4] HOPPER_DMA_COPY_A/OFFSET_OUT_VA                  role=CE_dst     va=0x10004c00800 → hMemory=0x5c000078 class=NV01_MEMORY_LOCAL_USER offset=2048
+  [sch4] HOPPER_DMA_COPY_A/LINE_LENGTH_IN                 data=0x00002400
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000586 (DATA_TRANSFER_TYPE=NON_PIPELINED | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=NONE | SRC_MEMORY_LAYOUT=PITCH | DST_MEMORY_LAYOUT=PITCH | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_VA               role=semaphore  va=0x20440ff70 → hMemory=0x5c00001f class=NV01_MEMORY_SYSTEM offset=65392
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_PAYLOAD          data=0x0000004b
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000014 (DATA_TRANSFER_TYPE=NONE | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=RELEASE_SEMAPHORE_WITH_TIMESTAMP | SRC_MEMORY_LAYOUT=BLOCKLINEAR | DST_MEMORY_LAYOUT=BLOCKLINEAR | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+
+--- seq=4823 chid=5 idx=75 nbytes=76 ---
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_CONST_A              data=0x00000000
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_COMPONENTS           data=0x00030004
+  [sch4] HOPPER_DMA_COPY_A/LINE_COUNT                     data=0x00000001
+  [sch4] HOPPER_DMA_COPY_A/OFFSET_OUT_VA                  role=CE_dst     va=0x10004c09a00 → hMemory=0x5c000078 class=NV01_MEMORY_LOCAL_USER offset=39424
+  [sch4] HOPPER_DMA_COPY_A/LINE_LENGTH_IN                 data=0x00000001
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000586 (DATA_TRANSFER_TYPE=NON_PIPELINED | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=NONE | SRC_MEMORY_LAYOUT=PITCH | DST_MEMORY_LAYOUT=PITCH | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_VA               role=semaphore  va=0x20440ff70 → hMemory=0x5c00001f class=NV01_MEMORY_SYSTEM offset=65392
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_PAYLOAD          data=0x0000004c
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000014 (DATA_TRANSFER_TYPE=NONE | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=RELEASE_SEMAPHORE_WITH_TIMESTAMP | SRC_MEMORY_LAYOUT=BLOCKLINEAR | DST_MEMORY_LAYOUT=BLOCKLINEAR | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+
+--- seq=4824 chid=5 idx=76 nbytes=76 ---
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_CONST_A              data=0x00000000
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_COMPONENTS           data=0x00030004
+  [sch4] HOPPER_DMA_COPY_A/LINE_COUNT                     data=0x00000001
+  [sch4] HOPPER_DMA_COPY_A/OFFSET_OUT_VA                  role=CE_dst     va=0x10004c09b00 → hMemory=0x5c000078 class=NV01_MEMORY_LOCAL_USER offset=39680
+  [sch4] HOPPER_DMA_COPY_A/LINE_LENGTH_IN                 data=0x00000001
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000586 (DATA_TRANSFER_TYPE=NON_PIPELINED | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=NONE | SRC_MEMORY_LAYOUT=PITCH | DST_MEMORY_LAYOUT=PITCH | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_VA               role=semaphore  va=0x20440ff70 → hMemory=0x5c00001f class=NV01_MEMORY_SYSTEM offset=65392
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_PAYLOAD          data=0x0000004d
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000014 (DATA_TRANSFER_TYPE=NONE | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=RELEASE_SEMAPHORE_WITH_TIMESTAMP | SRC_MEMORY_LAYOUT=BLOCKLINEAR | DST_MEMORY_LAYOUT=BLOCKLINEAR | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+
+--- seq=4825 chid=5 idx=77 nbytes=76 ---
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_CONST_A              data=0x00000000
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_COMPONENTS           data=0x00030004
+  [sch4] HOPPER_DMA_COPY_A/LINE_COUNT                     data=0x00000001
+  [sch4] HOPPER_DMA_COPY_A/OFFSET_OUT_VA                  role=CE_dst     va=0x10004c09c00 → hMemory=0x5c000078 class=NV01_MEMORY_LOCAL_USER offset=39936
+  [sch4] HOPPER_DMA_COPY_A/LINE_LENGTH_IN                 data=0x00000001
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000586 (DATA_TRANSFER_TYPE=NON_PIPELINED | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=NONE | SRC_MEMORY_LAYOUT=PITCH | DST_MEMORY_LAYOUT=PITCH | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_VA               role=semaphore  va=0x20440ff70 → hMemory=0x5c00001f class=NV01_MEMORY_SYSTEM offset=65392
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_PAYLOAD          data=0x0000004e
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000014 (DATA_TRANSFER_TYPE=NONE | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=RELEASE_SEMAPHORE_WITH_TIMESTAMP | SRC_MEMORY_LAYOUT=BLOCKLINEAR | DST_MEMORY_LAYOUT=BLOCKLINEAR | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+
+--- seq=4826 chid=5 idx=78 nbytes=76 ---
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_CONST_A              data=0x00000000
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_COMPONENTS           data=0x00030004
+  [sch4] HOPPER_DMA_COPY_A/LINE_COUNT                     data=0x00000001
+  [sch4] HOPPER_DMA_COPY_A/OFFSET_OUT_VA                  role=CE_dst     va=0x10004c09d00 → hMemory=0x5c000078 class=NV01_MEMORY_LOCAL_USER offset=40192
+  [sch4] HOPPER_DMA_COPY_A/LINE_LENGTH_IN                 data=0x0000201e
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000586 (DATA_TRANSFER_TYPE=NON_PIPELINED | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=NONE | SRC_MEMORY_LAYOUT=PITCH | DST_MEMORY_LAYOUT=PITCH | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_VA               role=semaphore  va=0x20440ff70 → hMemory=0x5c00001f class=NV01_MEMORY_SYSTEM offset=65392
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_PAYLOAD          data=0x0000004f
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000014 (DATA_TRANSFER_TYPE=NONE | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=RELEASE_SEMAPHORE_WITH_TIMESTAMP | SRC_MEMORY_LAYOUT=BLOCKLINEAR | DST_MEMORY_LAYOUT=BLOCKLINEAR | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+
+--- seq=4827 chid=5 idx=79 nbytes=76 ---
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_CONST_A              data=0x00000000
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_COMPONENTS           data=0x00030004
+  [sch4] HOPPER_DMA_COPY_A/LINE_COUNT                     data=0x00000001
+  [sch4] HOPPER_DMA_COPY_A/OFFSET_OUT_VA                  role=CE_dst     va=0x10004c11e00 → hMemory=0x5c000078 class=NV01_MEMORY_LOCAL_USER offset=73216
+  [sch4] HOPPER_DMA_COPY_A/LINE_LENGTH_IN                 data=0x00000002
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000586 (DATA_TRANSFER_TYPE=NON_PIPELINED | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=NONE | SRC_MEMORY_LAYOUT=PITCH | DST_MEMORY_LAYOUT=PITCH | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_VA               role=semaphore  va=0x20440ff70 → hMemory=0x5c00001f class=NV01_MEMORY_SYSTEM offset=65392
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_PAYLOAD          data=0x00000050
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000014 (DATA_TRANSFER_TYPE=NONE | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=RELEASE_SEMAPHORE_WITH_TIMESTAMP | SRC_MEMORY_LAYOUT=BLOCKLINEAR | DST_MEMORY_LAYOUT=BLOCKLINEAR | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+
+--- seq=4828 chid=5 idx=80 nbytes=76 ---
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_CONST_A              data=0x00000000
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_COMPONENTS           data=0x00030004
+  [sch4] HOPPER_DMA_COPY_A/LINE_COUNT                     data=0x00000001
+  [sch4] HOPPER_DMA_COPY_A/OFFSET_OUT_VA                  role=CE_dst     va=0x10004c11f00 → hMemory=0x5c000078 class=NV01_MEMORY_LOCAL_USER offset=73472
+  [sch4] HOPPER_DMA_COPY_A/LINE_LENGTH_IN                 data=0x0000000c
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000586 (DATA_TRANSFER_TYPE=NON_PIPELINED | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=NONE | SRC_MEMORY_LAYOUT=PITCH | DST_MEMORY_LAYOUT=PITCH | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_VA               role=semaphore  va=0x20440ff70 → hMemory=0x5c00001f class=NV01_MEMORY_SYSTEM offset=65392
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_PAYLOAD          data=0x00000051
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000014 (DATA_TRANSFER_TYPE=NONE | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=RELEASE_SEMAPHORE_WITH_TIMESTAMP | SRC_MEMORY_LAYOUT=BLOCKLINEAR | DST_MEMORY_LAYOUT=BLOCKLINEAR | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+
+--- seq=4852 chid=5 idx=81 nbytes=60 ---
+  [sch4] HOPPER_DMA_COPY_A/OFFSET_IN_VA                   role=CE_src     va=0x10004700000 → hMemory=0x5c00006e class=NV01_MEMORY_SYSTEM offset=1048576
+  [sch4] HOPPER_DMA_COPY_A/OFFSET_OUT_VA                  role=CE_dst     va=0x10005003b00 → hMemory=0x5c00007d class=NV01_MEMORY_LOCAL_USER offset=15104
+  [sch4] HOPPER_DMA_COPY_A/LINE_LENGTH_IN                 data=0x000d1a00
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000182 (DATA_TRANSFER_TYPE=NON_PIPELINED | FLUSH_ENABLE=FALSE | SEMAPHORE_TYPE=NONE | SRC_MEMORY_LAYOUT=PITCH | DST_MEMORY_LAYOUT=PITCH | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_VA               role=semaphore  va=0x20440ff70 → hMemory=0x5c00001f class=NV01_MEMORY_SYSTEM offset=65392
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_PAYLOAD          data=0x00000052
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000014 (DATA_TRANSFER_TYPE=NONE | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=RELEASE_SEMAPHORE_WITH_TIMESTAMP | SRC_MEMORY_LAYOUT=BLOCKLINEAR | DST_MEMORY_LAYOUT=BLOCKLINEAR | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+
+--- seq=4855 chid=5 idx=82 nbytes=60 ---
+  [sch4] HOPPER_DMA_COPY_A/OFFSET_IN_VA                   role=CE_src     va=0x10004600000 → hMemory=0x5c00006e class=NV01_MEMORY_SYSTEM offset=0
+  [sch4] HOPPER_DMA_COPY_A/OFFSET_OUT_VA                  role=CE_dst     va=0x100050e1d00 → hMemory=0x5c00007d class=NV01_MEMORY_LOCAL_USER offset=924928
+  [sch4] HOPPER_DMA_COPY_A/LINE_LENGTH_IN                 data=0x000bf000
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000182 (DATA_TRANSFER_TYPE=NON_PIPELINED | FLUSH_ENABLE=FALSE | SEMAPHORE_TYPE=NONE | SRC_MEMORY_LAYOUT=PITCH | DST_MEMORY_LAYOUT=PITCH | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_VA               role=semaphore  va=0x20440ff70 → hMemory=0x5c00001f class=NV01_MEMORY_SYSTEM offset=65392
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_PAYLOAD          data=0x00000053
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000014 (DATA_TRANSFER_TYPE=NONE | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=RELEASE_SEMAPHORE_WITH_TIMESTAMP | SRC_MEMORY_LAYOUT=BLOCKLINEAR | DST_MEMORY_LAYOUT=BLOCKLINEAR | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+
+--- seq=4858 chid=5 idx=83 nbytes=60 ---
+  [sch4] HOPPER_DMA_COPY_A/OFFSET_IN_VA                   role=CE_src     va=0x10004700000 → hMemory=0x5c00006e class=NV01_MEMORY_SYSTEM offset=1048576
+  [sch4] HOPPER_DMA_COPY_A/OFFSET_OUT_VA                  role=CE_dst     va=0x100051a0d00 → hMemory=0x5c00007d class=NV01_MEMORY_LOCAL_USER offset=1707264
+  [sch4] HOPPER_DMA_COPY_A/LINE_LENGTH_IN                 data=0x0005f000
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000182 (DATA_TRANSFER_TYPE=NON_PIPELINED | FLUSH_ENABLE=FALSE | SEMAPHORE_TYPE=NONE | SRC_MEMORY_LAYOUT=PITCH | DST_MEMORY_LAYOUT=PITCH | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_VA               role=semaphore  va=0x20440ff70 → hMemory=0x5c00001f class=NV01_MEMORY_SYSTEM offset=65392
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_PAYLOAD          data=0x00000054
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000014 (DATA_TRANSFER_TYPE=NONE | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=RELEASE_SEMAPHORE_WITH_TIMESTAMP | SRC_MEMORY_LAYOUT=BLOCKLINEAR | DST_MEMORY_LAYOUT=BLOCKLINEAR | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+
+--- seq=4859 chid=5 idx=84 nbytes=60 ---
+  [sch4] HOPPER_DMA_COPY_A/OFFSET_IN_VA                   role=CE_src     va=0x10004600000 → hMemory=0x5c00006e class=NV01_MEMORY_SYSTEM offset=0
+  [sch4] HOPPER_DMA_COPY_A/OFFSET_OUT_VA                  role=CE_dst     va=0x10005600000 → hMemory=0x5c000085 class=NV01_MEMORY_LOCAL_USER offset=0
+  [sch4] HOPPER_DMA_COPY_A/LINE_LENGTH_IN                 data=0x00098c00
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000182 (DATA_TRANSFER_TYPE=NON_PIPELINED | FLUSH_ENABLE=FALSE | SEMAPHORE_TYPE=NONE | SRC_MEMORY_LAYOUT=PITCH | DST_MEMORY_LAYOUT=PITCH | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_VA               role=semaphore  va=0x20440ff70 → hMemory=0x5c00001f class=NV01_MEMORY_SYSTEM offset=65392
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_PAYLOAD          data=0x00000055
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000014 (DATA_TRANSFER_TYPE=NONE | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=RELEASE_SEMAPHORE_WITH_TIMESTAMP | SRC_MEMORY_LAYOUT=BLOCKLINEAR | DST_MEMORY_LAYOUT=BLOCKLINEAR | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+
+--- seq=4862 chid=5 idx=85 nbytes=60 ---
+  [sch4] HOPPER_DMA_COPY_A/OFFSET_IN_VA                   role=CE_src     va=0x10004700000 → hMemory=0x5c00006e class=NV01_MEMORY_SYSTEM offset=1048576
+  [sch4] HOPPER_DMA_COPY_A/OFFSET_OUT_VA                  role=CE_dst     va=0x10005698c00 → hMemory=0x5c000085 class=NV01_MEMORY_LOCAL_USER offset=625664
+  [sch4] HOPPER_DMA_COPY_A/LINE_LENGTH_IN                 data=0x000f7a00
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000182 (DATA_TRANSFER_TYPE=NON_PIPELINED | FLUSH_ENABLE=FALSE | SEMAPHORE_TYPE=NONE | SRC_MEMORY_LAYOUT=PITCH | DST_MEMORY_LAYOUT=PITCH | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_VA               role=semaphore  va=0x20440ff70 → hMemory=0x5c00001f class=NV01_MEMORY_SYSTEM offset=65392
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_PAYLOAD          data=0x00000056
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000014 (DATA_TRANSFER_TYPE=NONE | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=RELEASE_SEMAPHORE_WITH_TIMESTAMP | SRC_MEMORY_LAYOUT=BLOCKLINEAR | DST_MEMORY_LAYOUT=BLOCKLINEAR | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+
+--- seq=4877 chid=5 idx=86 nbytes=76 ---
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_CONST_A              data=0x00000000
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_COMPONENTS           data=0x00030004
+  [sch4] HOPPER_DMA_COPY_A/LINE_COUNT                     data=0x00000001
+  [sch4] HOPPER_DMA_COPY_A/OFFSET_OUT_VA                  role=CE_dst     va=0x10005a00000 → hMemory=0x5c00008a class=NV01_MEMORY_SYSTEM offset=0
+  [sch4] HOPPER_DMA_COPY_A/LINE_LENGTH_IN                 data=0x0017a904
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000586 (DATA_TRANSFER_TYPE=NON_PIPELINED | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=NONE | SRC_MEMORY_LAYOUT=PITCH | DST_MEMORY_LAYOUT=PITCH | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_VA               role=semaphore  va=0x20440ff70 → hMemory=0x5c00001f class=NV01_MEMORY_SYSTEM offset=65392
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_PAYLOAD          data=0x00000057
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000014 (DATA_TRANSFER_TYPE=NONE | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=RELEASE_SEMAPHORE_WITH_TIMESTAMP | SRC_MEMORY_LAYOUT=BLOCKLINEAR | DST_MEMORY_LAYOUT=BLOCKLINEAR | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+
+--- seq=4878 chid=5 idx=87 nbytes=76 ---
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_CONST_A              data=0x00000000
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_COMPONENTS           data=0x00030004
+  [sch4] HOPPER_DMA_COPY_A/LINE_COUNT                     data=0x00000001
+  [sch4] HOPPER_DMA_COPY_A/OFFSET_OUT_VA                  role=CE_dst     va=0x10004c12100 → hMemory=0x5c000078 class=NV01_MEMORY_LOCAL_USER offset=73984
+  [sch4] HOPPER_DMA_COPY_A/LINE_LENGTH_IN                 data=0x00016400
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000586 (DATA_TRANSFER_TYPE=NON_PIPELINED | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=NONE | SRC_MEMORY_LAYOUT=PITCH | DST_MEMORY_LAYOUT=PITCH | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_VA               role=semaphore  va=0x20440ff70 → hMemory=0x5c00001f class=NV01_MEMORY_SYSTEM offset=65392
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_PAYLOAD          data=0x00000058
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000014 (DATA_TRANSFER_TYPE=NONE | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=RELEASE_SEMAPHORE_WITH_TIMESTAMP | SRC_MEMORY_LAYOUT=BLOCKLINEAR | DST_MEMORY_LAYOUT=BLOCKLINEAR | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+
+--- seq=4880 chid=5 idx=88 nbytes=76 ---
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_CONST_A              data=0x00000000
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_COMPONENTS           data=0x00030004
+  [sch4] HOPPER_DMA_COPY_A/LINE_COUNT                     data=0x00000001
+  [sch4] HOPPER_DMA_COPY_A/OFFSET_OUT_VA                  role=CE_dst     va=0x10006000000 → hMemory=0x5c00008c class=NV01_MEMORY_LOCAL_USER offset=0
+  [sch4] HOPPER_DMA_COPY_A/LINE_LENGTH_IN                 data=0x00ed9690
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000586 (DATA_TRANSFER_TYPE=NON_PIPELINED | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=NONE | SRC_MEMORY_LAYOUT=PITCH | DST_MEMORY_LAYOUT=PITCH | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_VA               role=semaphore  va=0x20440ff70 → hMemory=0x5c00001f class=NV01_MEMORY_SYSTEM offset=65392
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_PAYLOAD          data=0x00000059
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000014 (DATA_TRANSFER_TYPE=NONE | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=RELEASE_SEMAPHORE_WITH_TIMESTAMP | SRC_MEMORY_LAYOUT=BLOCKLINEAR | DST_MEMORY_LAYOUT=BLOCKLINEAR | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+
+--- seq=4881 chid=5 idx=89 nbytes=76 ---
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_CONST_A              data=0x00000000
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_COMPONENTS           data=0x00030004
+  [sch4] HOPPER_DMA_COPY_A/LINE_COUNT                     data=0x00000001
+  [sch4] HOPPER_DMA_COPY_A/OFFSET_OUT_VA                  role=CE_dst     va=0x10009c00000 → hMemory=0x5c00008e class=NV01_MEMORY_LOCAL_USER offset=0
+  [sch4] HOPPER_DMA_COPY_A/LINE_LENGTH_IN                 data=0x00000002
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000586 (DATA_TRANSFER_TYPE=NON_PIPELINED | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=NONE | SRC_MEMORY_LAYOUT=PITCH | DST_MEMORY_LAYOUT=PITCH | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_VA               role=semaphore  va=0x20440ff70 → hMemory=0x5c00001f class=NV01_MEMORY_SYSTEM offset=65392
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_PAYLOAD          data=0x0000005a
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000014 (DATA_TRANSFER_TYPE=NONE | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=RELEASE_SEMAPHORE_WITH_TIMESTAMP | SRC_MEMORY_LAYOUT=BLOCKLINEAR | DST_MEMORY_LAYOUT=BLOCKLINEAR | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+
+--- seq=4888 chid=5 idx=90 nbytes=60 ---
+  [sch4] HOPPER_DMA_COPY_A/OFFSET_IN_VA                   role=CE_src     va=0x10004600000 → hMemory=0x5c00006e class=NV01_MEMORY_SYSTEM offset=0
+  [sch4] HOPPER_DMA_COPY_A/OFFSET_OUT_VA                  role=CE_dst     va=0x100057a0500 → hMemory=0x5c000085 class=NV01_MEMORY_LOCAL_USER offset=1705216
+  [sch4] HOPPER_DMA_COPY_A/LINE_LENGTH_IN                 data=0x0001f500
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000182 (DATA_TRANSFER_TYPE=NON_PIPELINED | FLUSH_ENABLE=FALSE | SEMAPHORE_TYPE=NONE | SRC_MEMORY_LAYOUT=PITCH | DST_MEMORY_LAYOUT=PITCH | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_VA               role=semaphore  va=0x20440ff70 → hMemory=0x5c00001f class=NV01_MEMORY_SYSTEM offset=65392
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_PAYLOAD          data=0x0000005b
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000014 (DATA_TRANSFER_TYPE=NONE | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=RELEASE_SEMAPHORE_WITH_TIMESTAMP | SRC_MEMORY_LAYOUT=BLOCKLINEAR | DST_MEMORY_LAYOUT=BLOCKLINEAR | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+
+--- seq=4903 chid=5 idx=91 nbytes=76 ---
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_CONST_A              data=0x00000000
+  [sch4] HOPPER_DMA_COPY_A/SET_REMAP_COMPONENTS           data=0x00030004
+  [sch4] HOPPER_DMA_COPY_A/LINE_COUNT                     data=0x00000001
+  [sch4] HOPPER_DMA_COPY_A/OFFSET_OUT_VA                  role=CE_dst     va=0x10004c6b100 → hMemory=0x5c000078 class=NV01_MEMORY_LOCAL_USER offset=438528
+  [sch4] HOPPER_DMA_COPY_A/LINE_LENGTH_IN                 data=0x0000000c
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000586 (DATA_TRANSFER_TYPE=NON_PIPELINED | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=NONE | SRC_MEMORY_LAYOUT=PITCH | DST_MEMORY_LAYOUT=PITCH | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_VA               role=semaphore  va=0x20440ff70 → hMemory=0x5c00001f class=NV01_MEMORY_SYSTEM offset=65392
+  [sch4] HOPPER_DMA_COPY_A/SET_SEMAPHORE_PAYLOAD          data=0x0000005c
+  [sch4] HOPPER_DMA_COPY_A/LAUNCH_DMA                     data=0x00000014 (DATA_TRANSFER_TYPE=NONE | FLUSH_ENABLE=TRUE | SEMAPHORE_TYPE=RELEASE_SEMAPHORE_WITH_TIMESTAMP | SRC_MEMORY_LAYOUT=BLOCKLINEAR | DST_MEMORY_LAYOUT=BLOCKLINEAR | MULTI_LINE_ENABLE=FALSE | SRC_TYPE=VIRTUAL | DST_TYPE=VIRTUAL | FLUSH_TYPE=SYS)

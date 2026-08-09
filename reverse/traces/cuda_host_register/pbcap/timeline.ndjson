@@ -1,0 +1,13 @@
+{"ts_ns":3156825500026,"src":"pbcap","pid":32266,"tid":32266,"kind":"pbcap.init","data":{"mono_ns":3156825491420,"real_ns":1787052437516380490}}
+{"ts_ns":3156846830550,"src":"pbcap","pid":32269,"tid":32269,"kind":"pbcap.init","data":{"mono_ns":3156846636943,"real_ns":1787052437537526048}}
+{"ts_ns":3156847291345,"src":"pbcap","pid":32269,"tid":32269,"kind":"cudaInitDevice.enter","data":{"device":0,"deviceFlags":"0x0","flags":"0x0"}}
+{"ts_ns":3156884991889,"src":"pbcap","pid":32269,"tid":32269,"kind":"open","data":{"fd":10,"path":"/dev/nvidia-uvm","flags":"0x80002"}}
+{"ts_ns":3156885482456,"src":"pbcap","pid":32269,"tid":32269,"kind":"open","data":{"fd":11,"path":"/dev/nvidia-uvm","flags":"0x80002"}}
+{"ts_ns":3157206576821,"src":"pbcap","pid":32269,"tid":32269,"kind":"mmap","data":{"fd":10,"path":"/dev/nvidia-uvm","addr":"0x204800000","length":2097152,"prot":"0x3","flags":"0x11","offset":"0x204800000"}}
+{"ts_ns":3157266131621,"src":"pbcap","pid":32269,"tid":32269,"kind":"munmap","data":{"addr":"0x73c208001000","length":402649088}}
+{"ts_ns":3157266568098,"src":"pbcap","pid":32269,"tid":32269,"kind":"munmap","data":{"addr":"0x73c240000000","length":134217728}}
+{"ts_ns":3157275631204,"src":"pbcap","pid":32269,"tid":32269,"kind":"cudaInitDevice.exit","data":{"ret":0}}
+{"ts_ns":3157275926449,"src":"pbcap","pid":32269,"tid":32269,"kind":"cudaHostRegister.enter","data":{"ptr":"0x73c4699ff010","size":4194304,"flags":"0x0"}}
+{"ts_ns":3157279639626,"src":"pbcap","pid":32269,"tid":32269,"kind":"cudaHostRegister.exit","data":{"ret":0}}
+{"ts_ns":3157279945868,"src":"pbcap","pid":32269,"tid":32269,"kind":"cudaHostUnregister.enter","data":{"ptr":"0x73c4699ff010"}}
+{"ts_ns":3157281102968,"src":"pbcap","pid":32269,"tid":32269,"kind":"cudaHostUnregister.exit","data":{"ret":0}}
