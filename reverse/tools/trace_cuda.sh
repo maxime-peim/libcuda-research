@@ -28,7 +28,7 @@
 #
 # Examples:
 #   trace_cuda.sh ./bin/cuda_reference --size 4M
-#   trace_cuda.sh ./bin/mc_demo --size 64M --iters 2
+#   trace_cuda.sh /path/to/libmc/bin/mc_demo --size 64M --iters 2
 #   trace_cuda.sh --timeout 30 /usr/local/cuda/samples/.../bench
 
 set -euo pipefail

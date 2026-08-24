@@ -65,12 +65,9 @@ is a port of the technique described in:
     Yan et al. (2026), "Revealing NVIDIA Closed-Source Driver Command
     Streams for CPU-GPU Runtime Behavior Insight", sections 5.1-5.2.
 
-The QMD construction in reverse/mc/mc_compute_qmd.c follows the layout used
-by Mesa's NVK (src/nouveau), which is MIT-licensed. No NVK code is copied —
-the field assignments were written from scratch against the layout NVK
-publishes. NVK is the source for the Hopper V04 bit ranges specifically,
-because the header that defines them (clcbc0qmd.h) is not part of this
-tree; the only QMD class header here is cla0c0qmd.h, for Kepler.
+The `mc` library and its Hopper QMD construction moved to the separate
+https://github.com/maxime-peim/libmc repository. Its NOTICE records the
+library's NVIDIA-source and Mesa NVK provenance.
 
 
 Warranty

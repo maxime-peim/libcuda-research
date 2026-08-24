@@ -175,7 +175,7 @@ and `state=` distinguish the phases of one operation that reports from several p
 | `fifo/verify_channel` | `result=` + `hclient hkernel_channel session device vaspace` (`enter`), `status` (`client_fail`, `vaspace_fail`, `channel_fail`), `status hdevice` (`context_fail`), `channel_pvas expected` (`vas_mismatch`), nothing (`ok`) | — | reports from seven points; `result=` is the only discriminant — there is no `step=` here |
 | `fifo/retain_channel` | `step=` + `channel_engine_type status` (`engine_type`), `session hchannel_parent btsg_channel hdup_tsg device_handle` (`alloc_retainer`), `status retained_handle` (`alloc_retainer_ret`), `hclient hkernel_channel` (`get_token`), `status token` (`get_token_ret`), nothing (`retain_resources`, `success`), `status` (`retain_resources_ret`) | — | reports from eight points |
 | `fifo/retain_channel_resources` | `step=enter` + `channel_engine_type ce gr sec2`; `step=ce_path_done`; `step=not_ce_path` | — | |
-| `fifo/channel_engine_type` | `rm_engine_type engine_type` | — | the engine-type workaround's own trace |
+| `fifo/channel_engine_type` | `rm_engine_type engine_type` | — | observes RM's runlist-based channel classification; it is instrumentation, not a functional workaround |
 | `fifo/userd_resolve` | `hclient huserd userd_offset userd_addr address_space userd_size` | yes | `kchannelCreateUserdMemDesc_GV100` in `kernel_channel_gv100.c` |
 | `fifo/userd_rpc` | `hchannel base size address_space cache_attrib` | yes | the USERD descriptor as sent to GSP |
 | `fifo/userd_bind` | `retained resource_count` | yes | |

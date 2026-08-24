@@ -21,16 +21,18 @@ contributions that help most are the ones that make a claim checkable:
 - **Tooling that widens what can be observed** — see `docs/tracing_cuda.md`.
 
 Changes to the vendored NVIDIA sources under `src/` and `kernel-open/` are
-deliberately kept minimal: tracing instrumentation, plus the one functional
-workaround `docs/findings.md §9` describes. A change there needs a reason that
-could not be met in `reverse/`.
+deliberately kept minimal: tracing instrumentation and the doorbell
+watchpoint. A functional driver change needs evidence that the question cannot
+be answered in `reverse/` or addressed in userspace.
 
 ## Practicalities
 
 - Open an issue. There is no CLA, no template, and no triage funnel.
 - Security-relevant reports: read `SECURITY.md` first — where a report should
   go depends on whether it reproduces against NVIDIA's driver or only here.
-- The local gates in `reverse/` should pass: `make` builds clean, and
-  `python3 tools/run_mc_tests.py` runs the matrix if you have the hardware.
+- The local gates in `reverse/` should pass: `make` builds the research tools
+  and CUDA trace subjects. The `libmc` build, unit tests, and H100 integration
+  matrix live in the separate
+  [`libmc`](https://github.com/maxime-peim/libmc) repository.
 - Documentation is part of the work, not an afterthought. If a change makes a
   statement in `docs/` false, fix the statement in the same change.

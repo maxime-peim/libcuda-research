@@ -917,7 +917,9 @@ Investigation path:
 7. Traced `nvGpuOpsGetChannelEngineType` → used `kchannelGetEngine_GM107`
    → used `kchannelGetRunlistId` → returned 0 (shared runlist) →
    first engine on runlist = GR → misclassified.
-8. Fix: patch RM to use `pKernelChannel->engineType` directly.
+8. Current resolution: `libmc` selects a non-GRCE LCE and uses that exact COPY
+   engine for both TSG and channel. The initially proposed RM patch is not part
+   of the public driver tree.
 
 This bug involved userspace ABI assumption (RM treats `chan_params.engineType`
 as optional), RM code (misclassification logic), and GSP (sets up the

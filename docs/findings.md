@@ -1,12 +1,17 @@
 # GPU DMA Tracing and the `mc` D2H Transfer — Findings
 
+> The `mc` implementation has moved to
+> [`libmc`](https://github.com/maxime-peim/libmc). This research log links to
+> current `libmc` source where it discusses the implementation.
+
 This document summarises everything learned across all sessions: architecture,
 driver ABI, tracing methodology, and the complete working implementation of
 the `mc` library.
 
 **Companion documents.** The full documentation set, in recommended reading
-order for someone new to the domain (`docs/compute_kernel_launch.md` sits
-outside this ladder — it is the Hopper compute-launch reference):
+order for someone new to the domain (the
+[`libmc` compute-launch reference](https://github.com/maxime-peim/libmc/blob/main/docs/compute_kernel_launch.md)
+sits outside this ladder):
 
 **Foundations (read if you don't already know these concepts):**
 1. `docs/host_gpu_communication_primer.md` — how CPUs and GPUs talk in general:
@@ -19,8 +24,7 @@ outside this ladder — it is the Hopper compute-launch reference):
    channels, subchannels, TSGs, runlists, MMU, RAMIN/RAMFC/USERD.
 
 **mc specifics:**
-4. `docs/mc_architecture.md` — the *software* architecture: ioctl layering,
-   kernel code paths, phase-by-phase setup walkthrough.
+4. [`libmc/docs/mc_architecture.md`](https://github.com/maxime-peim/libmc/blob/main/docs/mc_architecture.md) — the *software* architecture: ioctl layering, kernel code paths, phase-by-phase setup walkthrough.
 5. `docs/gpfifo_pushbuffer_reference.md` — the *data-structure* reference:
    bit-exact formats for GPFIFO entries, method headers, NVC8B5 methods, USERD,
    and the end-to-end component interaction timeline.
@@ -91,7 +95,9 @@ SET_OBJECT header), because the copy and its completion signal are two separate
 `LAUNCH_DMA`s — which is what H100 libcuda does. All methods must target **subchannel 4** (NVA06F_SUBCHANNEL_COPY_ENGINE).
 Using subchannel 0 (the default) causes Xid 32 "invalid pushbuffer stream".
 
-The code below is the current form in `reverse/mc/mc_submit.c`, after the DRF-macro refactor.
+The code below is the current form in
+[`libmc/mc/mc_submit.c`](https://github.com/maxime-peim/libmc/blob/main/mc/mc_submit.c),
+after the DRF-macro refactor.
 Every shift and mask is sourced from the NVIDIA SDK headers (`clc36f.h`, `clc8b5.h`,
 `cla06fsubch.h`) rather than hand-rolled, so a future bit-layout change propagates
 automatically. The "raw hex" form we used during bring-up is shown further below
@@ -156,7 +162,8 @@ pb[17] =
 A single fused launch also works — `0x18e` = `NON_PIPELINED | FLUSH_ENABLE |
 RELEASE_ONE_WORD_SEMAPHORE | SRC_PITCH | DST_PITCH` — and that is the value Yan et al.
 report from an A40 trace (§7).  H100 libcuda does not use it.  `mc`'s SM-authored
-kernel still does, because it fits in 16 dwords (`reverse/mc/kernels/sm_owner.cu`).
+kernel still does, because it fits in 16 dwords
+([`libmc/mc/kernels/sm_owner.cu`](https://github.com/maxime-peim/libmc/blob/main/mc/kernels/sm_owner.cu)).
 
 All addresses are GPU VAs from UVM (= CPU VAs on Hopper under UVM unification).
 
@@ -445,7 +452,7 @@ the BAR1 variant of HOPPER_USERMODE_A.  See §13 for the rework.
 | UVM_REGISTER_CHANNEL | ✅ | mandatory before SCHEDULE on externally-owned vaspace |
 | NVA06F_CTRL_CMD_GPFIFO_SCHEDULE (bEnable=1) | ✅ | must come after REGISTER_CHANNEL |
 | Map GPFIFO/USERD via rm_map_memory_at (BAR1 CPU alias into VA pool) | ✅ | for CPU writes |
-| Sema is sysmem, allocated straight into the VA pool | ✅ | CPU polls it directly, no BAR1 alias — see the comment on the sema allocation in `reverse/mc/mc_core.c` for why |
+| Sema is sysmem, allocated straight into the VA pool | ✅ | CPU polls it directly, no BAR1 alias — see the comment in [`libmc/mc/mc_core.c`](https://github.com/maxime-peim/libmc/blob/main/mc/mc_core.c) for why |
 | CPU fills `staging` with FILL_PATTERN; CE-fills d_buf from staging | ✅ | d_buf has NO BAR1 alias — CE does the copy (see §13) |
 | Write NVC8B5 method stream to pushbuffer | ✅ | 18 dwords, subch=4, SET_OBJECT first, split launches |
 | Write GP entry to GPFIFO ring (+ ext-base entry if VA > 40-bit) | ✅ | entry0 = va & 0xFFFFFFFC |
@@ -622,16 +629,19 @@ registered with UVM via `UVM_CHANNEL_RETAINER` (class 0xC574) allocation.
 This was added by "Bug 1737765: Prevent Externally Owned Channels from running unless
 bound." Scheduling an un-registered channel returns `NV_ERR_INVALID_STATE` (0x40).
 
-### Engine type determination bug in nv_gpu_ops.c
+### Historical engine-type misclassification and current resolution
 
-On Hopper, GR and CE channels share runlist 0. `kchannelGetEngine_GM107()` determines
-engine type by: `runlistId → ENG_DESC → RM_ENGINE_TYPE`. Since GR is the first
-engine on runlist 0, CE channels get misclassified as GR. UVM then tries to load
-GR context buffers for the CE channel → `NV_ERR_INVALID_OBJECT` (0x31).
+On Hopper, GR and GRCE can share runlist 0. `kchannelGetEngine_GM107()` determines
+engine type by `runlistId → ENG_DESC → RM_ENGINE_TYPE`; because GR is first on
+that shared runlist, a GRCE channel can be reported as GR. During bring-up this
+made UVM try to load GR context buffers for the CE channel and return
+`NV_ERR_INVALID_OBJECT` (0x31).
 
-**Workaround applied to nv_gpu_ops.c**: in `nvGpuOpsGetChannelEngineType()`, prefer
-`pKernelChannel->engineType` (correctly set at channel-construct time from the TSG's
-`engineType=RM_ENGINE_TYPE_COPY0`) instead of the runlist-based lookup.
+The original bring-up notes proposed changing `nvGpuOpsGetChannelEngineType()`
+to prefer `pKernelChannel->engineType`. That functional patch is **not** in this
+public driver tree and is not required by current `libmc`. The library queries
+CE caps, selects a non-GRCE LCE, and passes that exact COPY engine consistently
+to the TSG and channel, avoiding the shared GR runlist in userspace.
 
 ---
 
@@ -1176,8 +1186,10 @@ GPU ~25 % of the time.
 
 ### 13.2 Fix — libcuda-style VA-pool
 
-Three helpers replace the old interfaces (see `reverse/mc/mc_vaspace.c`,
-`reverse/mc/mc_rm.c` and `reverse/mc/mc_uvm.c`):
+Three helpers replace the old interfaces (see `libmc`'s
+[`mc_vaspace.c`](https://github.com/maxime-peim/libmc/blob/main/mc/mc_vaspace.c),
+[`mc_rm.c`](https://github.com/maxime-peim/libmc/blob/main/mc/mc_rm.c), and
+[`mc_uvm.c`](https://github.com/maxime-peim/libmc/blob/main/mc/mc_uvm.c)):
 
 - **`va_pool_init()`** — `mmap(VA_POOL_BASE=0x200000000, 4 GiB,
   PROT_NONE, MAP_FIXED_NOREPLACE)` at process init.  Bump allocator
@@ -1209,7 +1221,8 @@ Every allocation with a CPU alias (h_buf, pushbuffer, staging,
 gpu_ctl's BAR1 alias, and the sema) goes through the pool.  (At the time
 of this fix the semaphore was HBM with a BAR1 alias; it has since moved
 to sysmem with a direct CPU pointer — see the comment on the sema
-allocation in `reverse/mc/mc_core.c` — but it still lives in the pool, so
+allocation in [`libmc/mc/mc_core.c`](https://github.com/maxime-peim/libmc/blob/main/mc/mc_core.c)
+— but it still lives in the pool, so
 the invariant is unchanged.)
 `d_buf` has no CPU alias — it is CE-filled from `staging`, never
 touched by the CPU — so it stays on the plain `uvm_map_buffer()`
@@ -1258,7 +1271,7 @@ method stream matching libcuda's shape exactly (OFFSET_IN_VA at
 
 ### 13.5 Files changed
 
-- `reverse/mc/mc_vaspace.c`, `reverse/mc/mc_rm.c`, `reverse/mc/mc_uvm.c` —
+- `libmc/mc/mc_vaspace.c`, `libmc/mc/mc_rm.c`, `libmc/mc/mc_uvm.c` —
   VA pool (init/reserve/clear), `rm_alloc_sysmem_at`,
   `rm_map_memory_at`, `uvm_map_buffer_at`,
   pool-routed allocations for every UVM-mapped buffer with a CPU
@@ -1425,7 +1438,7 @@ differential-against-ground-truth methodology is the main tool.
 
 ### 14.1 Goal and result
 
-Up to mid-2026-05 the mc library (`reverse/mc/`) had two VAS
+Up to mid-2026-05 the mc library (then under `reverse/mc/`, now in `libmc/mc/`) had two VAS
 arms: `MC_VAS_UVM` and `MC_VAS_SYSMEM_CARRIER`.  Both still required
 PCIe traffic on the SM-authored hot path: the SM's pushbuffer /
 GPFIFO entry / USERD GPPut writes went to sysmem (BAR1-aliased) and

@@ -5,7 +5,7 @@
  * cuda_reference.cu — CUDA-runtime reference for mc_demo.
  *
  * This is the apples-to-apples CUDA analogue of
- * d2h/mc_demo.c: same CLI, same sizes, same patterns, same
+ * libmc/tests/mc/mc_demo.c: same CLI, same sizes, same patterns, same
  * timing shape.  Every iteration does one CPU-side garble followed by
  * a D2H cudaMemcpy and a byte-exact verify — matching the loop in
  * mc_demo so GB/s numbers from both sides are directly
@@ -38,14 +38,14 @@
  *   Report peak + mean GB/s from monotonic-clock deltas.  PASS/FAIL.
  *
  * Deliberate scope choices:
- *   - No GPU kernel fill — the reference is CE-only, matching mini_
- *     cuda_demo (which has no compute).  The H2D seed is CPU-side.
+ *   - No GPU kernel fill — the reference is CE-only, matching libmc's
+ *     mc_demo. The H2D seed is CPU-side.
  *   - Monotonic-clock timing, not cudaEvent.  Gets the same wall-
  *     clock shape mc_demo reports.
  *   - No PCIe sysfs probing — nothing in mc_demo measures
  *     link speed, so including it here would introduce asymmetry.
  *   - Pinned host memory (cudaHostAllocDefault) — matches the memory
- *     kind libmc returns from mc_malloc_host (RM's WRITE_
+ *     kind the separate libmc project returns from mc_malloc_host (RM's WRITE_
  *     COMBINE sysmem).  Both sides are pinned, so the CE DMA path is
  *     the same shape.
  *

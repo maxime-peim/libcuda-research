@@ -5,10 +5,11 @@
  * cuda_kernel_launch.cu — the smallest possible CUDA kernel launch,
  * kept as a trace subject.  Capturing it under trace_cuda.sh isolates
  * what libcuda does for a launch with no memory traffic of its own,
- * which is the baseline the QMD work in docs/compute_kernel_launch.md
- * is read against.  Its stdout is not the point; the capture is.
+ * which is the baseline the QMD work documented in libmc's
+ * docs/compute_kernel_launch.md is read against. Its stdout is not the
+ * point; the capture is.
  *
- *   sudo reverse/tools/trace_cuda.sh ./bin/cuda_kernel_launch
+ *   sudo reverse/tools/trace_cuda.sh reverse/bin/cuda_kernel_launch
  */
 #include <cuda_runtime.h>
 #include <cerrno>

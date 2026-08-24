@@ -29,11 +29,11 @@ python3 tools/trace_section.py --trace traces/cuda_host_register --section cudaH
 python3 tools/non_uvm_ledger.py traces/cuda_reference/merged.ndjson --summary
 ```
 
-The last one reports no carriers, and that is the correct answer rather
-than a broken tool: `cuda_reference` is a CUDA run, and CUDA establishes
-every GPU VA through UVM, so there is no non-UVM carrier to ledger.  Run
-it against a capture of `mc_demo` on a carrier VA space to see it
-populated.
+The last command reports 20 channels and 21 carrier-shaped mappings, but no
+carrier linked to any channel. That is the relevant result for this CUDA run:
+the mappings remain unattributed scratch/global objects rather than the
+channel-owned non-UVM carrier layout used by `libmc`. Run it against a `libmc`
+carrier-VA capture to see the per-channel resource columns populated.
 
 ## What `cuda_reference/` contains
 

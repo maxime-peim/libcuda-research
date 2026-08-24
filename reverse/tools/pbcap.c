@@ -93,7 +93,7 @@ static int      g_dbell_sync =
  */
 static int g_memcpy_snapshot = 0;
 
-/* Hopper doorbell facts — see reverse/mc/mc_submit.c and
+/* Hopper doorbell facts — see libmc/mc/mc_submit.c and
  * docs/gpfifo_pushbuffer_reference.md §10-11.
  * HOPPER_USERMODE_A (class 0xC661) is an mmap of the non-privileged VF
  * window: a 64 KiB range whose +0x90 dword is the VF_DOORBELL.  libcuda

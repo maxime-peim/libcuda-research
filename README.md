@@ -1,15 +1,17 @@
 # A research fork of NVIDIA's open GPU kernel modules
 
 This is a fork of [NVIDIA/open-gpu-kernel-modules](https://github.com/NVIDIA/open-gpu-kernel-modules),
-pinned at **610.43.02**, with two things added:
+pinned at **610.43.02**, with instrumentation added:
 
 1. **Instrumentation** — tracing through the resource manager and UVM, plus a
    kernel-side watchpoint on the GPU's doorbell register, so it is possible to
    see what `libcuda` actually asks the driver to do.
-2. **`mc`** — a small CUDA-runtime-like library built from what that showed.
-   It moves bytes between host and GPU using only raw driver ioctls: no CUDA
-   runtime, no `libcuda.so` — and for device-to-host it matches a CUDA
-   reference doing the same copy, close to the PCIe Gen5 line rate.
+
+The CUDA-runtime-like library built from those observations now lives in the
+separate [`libmc`](https://github.com/maxime-peim/libmc) repository. Keeping it
+separate lets each library revision pin the exact official NVIDIA driver source
+whose private RM/UVM ABI it targets, while this repository remains focused on
+instrumentation and reproducible evidence.
 
 It exists to answer one question in as much detail as possible: **what actually
 happens when you call `cudaMemcpy`?**
@@ -51,8 +53,8 @@ what this repository is about.
 
 | Path | What it is |
 |---|---|
-| `reverse/mc/` | the library: RM object setup, UVM mapping, submission, compute |
-| `reverse/tests/` | programs built on it, plus CUDA equivalents to compare against |
+| [`libmc`](https://github.com/maxime-peim/libmc) | the library, its raw-driver implementation, tests, and pinned header dependency |
+| `reverse/tests/cuda/` | CUDA comparison and instrumentation workloads |
 | `reverse/tools/` | the tracing toolchain — `LD_PRELOAD` shim, decoder, timeline merger |
 | `reverse/traces/` | sample captures, so the tools work without a GPU |
 | `kernel-open/nvidia/nv-doorbell-watch.c` | the kernel-side doorbell watchpoint |
@@ -80,12 +82,10 @@ first three are background and are not specific to this fork.
    `nvidia.ko`, `nvidia-uvm.ko`, GSP firmware, and the RM object model.
 3. **`docs/gpu_compute_model.md`** — the hardware: SMs, Copy Engines, PBDMA,
    channels, TSGs, runlists, the MMU.
-4. **`docs/mc_architecture.md`** — the deep dive: every ioctl, every kernel
-   path, and the full bug log from bring-up.
+4. **[`libmc/docs/mc_architecture.md`](https://github.com/maxime-peim/libmc/blob/main/docs/mc_architecture.md)** — the deep dive: every ioctl, every kernel path, and the full bug log from bring-up.
 5. **`docs/gpfifo_pushbuffer_reference.md`** — bit-exact formats. GPFIFO
    entries, method headers, NVC8B5 methods, USERD, the doorbell.
-6. **`docs/compute_kernel_launch.md`** — the compute path: QMD construction,
-   and the chain where a GPU thread rings the doorbell itself.
+6. **[`libmc/docs/compute_kernel_launch.md`](https://github.com/maxime-peim/libmc/blob/main/docs/compute_kernel_launch.md)** — the compute path: QMD construction, and the chain where a GPU thread rings the doorbell itself.
 7. **`docs/tracing_cuda.md`** — how to capture and read a trace of any CUDA
    program: the kernel instrumentation, the tools, and what each output file
    contains.
@@ -109,16 +109,15 @@ it off with `nv_dbell_disable_intercept=1` if you want it out of the way.
 make modules -j"$(nproc)"      # build the kernel modules
 # install and load them — see README.nvidia.md
 cd reverse
-make libmc mc-all
-sudo ./bin/mc_demo --size 256M --iters 5
+make
 ```
 
-Expected: `PASS: verification` and, on an H100 PCIe, around 55 GB/s
-device-to-host at that size — within a percent of what `cudaMemcpy`
-reaches on the same box.  See `docs/findings.md §11` for the full table
-and `§15` for the clock-boost request this depends on.
+The decoder and analysis tools do **not** need a GPU because a capture is
+checked in. To build and run the raw-driver implementation instead, clone
+[`libmc`](https://github.com/maxime-peim/libmc) with its submodule and follow
+that repository's README.
 
-The tracing tools do **not** need a GPU. There is a capture checked in:
+For a first look at the sample capture:
 
 ```bash
 cd reverse

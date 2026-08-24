@@ -14,7 +14,7 @@
  * Hopper ABI offsets (0x210 / 0x218).
  *
  * Run on the H100 test host:
- *   sudo PBCAP_DBELL=0 reverse/tools/trace_cuda.sh ./bin/cuda_dbell_kernel_launch
+ *   sudo PBCAP_DBELL=0 reverse/tools/trace_cuda.sh reverse/bin/cuda_dbell_kernel_launch
  *
  * The output will land in /tmp/trace-cuda_dbell_kernel_launch-DATE/ .
  */

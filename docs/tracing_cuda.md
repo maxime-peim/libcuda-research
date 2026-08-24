@@ -15,7 +15,7 @@ the automated path falls short.
 cd reverse
 ./tools/trace_cuda.sh ./bin/cuda_reference --size 4M
 # ...or any other CUDA binary:
-./tools/trace_cuda.sh ./bin/mc_demo --size 64M --iters 2
+./tools/trace_cuda.sh /path/to/libmc/bin/mc_demo --size 64M --iters 2
 ./tools/trace_cuda.sh --timeout 30 /opt/my-cuda-app arg1 arg2
 ```
 
@@ -677,5 +677,4 @@ provided the before/after comparison for mc's per-resource refactor
   category mask, and the full 59-event catalogue.
 - `docs/gpfifo_pushbuffer_reference.md` — bit-exact GPFIFO entry
   layout and NVC8B5 method encoding referenced by the decoder.
-- `docs/mc_architecture.md` — the raw-ioctl `mc` path that's
-  being compared against libcuda throughout this work.
+- [`libmc/docs/mc_architecture.md`](https://github.com/maxime-peim/libmc/blob/main/docs/mc_architecture.md) — the raw-ioctl `mc` path that's being compared against libcuda throughout this work.

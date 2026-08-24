@@ -251,7 +251,7 @@ A **channel** is bound to exactly one engine type. So:
 
 The engine type is specified at channel-allocation time.  `mc` does not
 hard-code one: it picks the first non-GRCE logical copy engine the GPU
-reports (`pick_non_grce_lce` in `reverse/mc/mc_core.c`), because the GRCE
+reports (`pick_non_grce_lce` in [`libmc/mc/mc_rm.c`](https://github.com/maxime-peim/libmc/blob/main/mc/mc_rm.c)), because the GRCE
 instances are shared with graphics contexts.  One channel, one engine.
 
 ### Why there are multiple CE instances
@@ -669,11 +669,12 @@ which runlist it lives on.
 
 ### Why runlist IDs can be shared
 
-On Hopper, **GR and CE can share runlist 0** — this was the source of
-mc's "channel classified as GR" bug. When GR and CE are on the same
-runlist, the first engine you find when walking the runlist mapping is GR
-(arbitrary but consistent). Our patch in `nvGpuOpsGetChannelEngineType`
-works around this by using the per-channel engineType field instead.
+On Hopper, **GR and GRCE can share runlist 0** — this was the source of
+mc's "channel classified as GR" bug. When they share a runlist, the first
+engine found by the runlist mapping is GR. The original bring-up proposed an
+RM patch, but the public driver remains upstream-compatible. Current `libmc`
+instead selects a non-GRCE LCE and uses that COPY engine consistently for its
+TSG and channel.
 
 ### Scheduling a channel
 
