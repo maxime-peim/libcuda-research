@@ -30,10 +30,11 @@ python3 tools/non_uvm_ledger.py traces/cuda_reference/merged.ndjson --summary
 ```
 
 The last command reports 20 channels and 21 carrier-shaped mappings, but no
-carrier linked to any channel. That is the relevant result for this CUDA run:
-the mappings remain unattributed scratch/global objects rather than the
-channel-owned non-UVM carrier layout used by `libmc`. Run it against a `libmc`
-carrier-VA capture to see the per-channel resource columns populated.
+carrier linked to any channel. That is the result supported by this capture:
+the mappings are unattributed. They may be scratch/global objects or internal
+channel bindings that are not visible in the captured NVOS46 stream. Run it
+against a `libmc` carrier-VA capture to see the per-channel resource columns
+populated.
 
 ## What `cuda_reference/` contains
 

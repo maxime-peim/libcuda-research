@@ -88,8 +88,8 @@ region you actually wanted is skipped.
 The script only works on a box where:
 
 1. **The instrumented `nvidia.ko` + `nvidia-dbell.ko` modules are
-   loaded.** Check with `lsmod | grep nvidia_dbell`. If missing, see
-   `findings.md §12` for the build + install steps.
+   loaded.** Check with `lsmod | grep nvidia_dbell`. If missing, follow the
+   build and installation notes below.
 2. **libpbcap.so is built.** Run `(cd reverse && make libpbcap)`
    once. The script expects it at `reverse/lib/libpbcap.so`.
 3. **Passwordless sudo is available** for the user who runs the
@@ -102,8 +102,8 @@ The script only works on a box where:
    inspect `systemctl list-units --type=service | grep active` if
    `mc1 dbell/*` events don't appear.
 
-In this project all of the above hold on the H100 test host. For a fresh
-deployment see `findings.md §12`.
+Verify all of the above on each deployment; they are properties of the host,
+not repository defaults.
 
 ### Userspace vs. kernel doorbell watchpoint
 
@@ -111,10 +111,12 @@ libpbcap's `PBCAP_DBELL=1` path arms a userspace SIGSEGV+TF+SIGTRAP
 watchpoint on the HOPPER_USERMODE_A mapping. That is this project's own
 earlier attempt, not the paper's method: Yan et al. §5.1–§5.2 propose the
 **kernel-side** watchpoint, and their §3 argues that a userspace approach
-cannot win the submission race at all — which `findings.md §12.1` confirms
+cannot win the submission race at all — which the
+[doorbell evidence](findings.md#why-the-userspace-watchpoint-is-insufficient) confirms
 by measurement. It is **off by default** because the kernel module
 `nvidia-dbell.ko` intercepts the same doorbell writes in a `#DB`
-trap handler before PBDMA sees them (see `findings.md §12`), and
+trap handler before PBDMA sees them (see
+[Doorbell observation](findings.md#doorbell-observation)), and
 emits `mc1 pb/submit` / `mc1 pb/bytes` records that reach
 `address_atlas.py` through `strace_diff.py` → `merged.ndjson`.
 Running the userspace path on
@@ -574,7 +576,8 @@ call with `<fn>.enter` / `<fn>.exit` NDJSON events.
   addresses, a userspace read returned byte-identical data for 112 of 112
   submissions — zero all-zero, zero mismatches.  The BAR1 channel region
   reads back real GP entries too.  What genuinely reads as zero is the BAR0
-  VF doorbell, which has no backing store (`findings.md §12.1`).  The
+  VF doorbell, which has no backing store (see
+  [the userspace-watchpoint evidence](findings.md#why-the-userspace-watchpoint-is-insufficient)).  The
   snapshot path does need `PBCAP_MAX_BYTES` raised: the pushbuffer pool is
   56 MiB against a 16 MiB default per-mapping cap, so at the default the
   pool is skipped entirely.
@@ -598,8 +601,8 @@ the permanent non-doorbell observability records — routed
 | `fifo/userd_rpc` | `_kchannelSendChannelAllocRpc` (`kernel_channel.c`) | `hchannel base size address_space cache_attrib` |
 | `fifo/userd_bind` | `nvGpuOpsBindChannelResources` (`nv_gpu_ops.c`) | `retained resource_count` |
 
-The first three were the instrumentation that mattered for the FB-carrier
-diagnosis (`findings.md §14`); the rest are broader-purpose
+The first three were the instrumentation that mattered for the
+[FB-carrier diagnosis](findings.md#fb-carrier-and-cross-engine-ordering); the rest are broader-purpose
 channel-construction visibility.  All eight are in maskable categories
 (`mmu`, `fifo`) — both on by default, both silenceable through `mc_trace`.
 
@@ -629,8 +632,8 @@ Two strategies join a carrier to a channel:
    channel has a dedicated VA space.
 
 The ledger is what surfaced libcuda's per-resource carrier shape and
-provided the before/after comparison for mc's per-resource refactor
-(`findings.md §14.3`).
+provided the before/after comparison for mc's per-resource refactor recorded
+under [FB-carrier and cross-engine ordering](findings.md#fb-carrier-and-cross-engine-ordering).
 
 ---
 
@@ -657,21 +660,22 @@ provided the before/after comparison for mc's per-resource refactor
   microsecond-scale trap overhead shows up. Compare with + without
   the watchpoint to quantify.
 - **Non-CUDA executables** work if they submit via the same RM/UVM
-  path.  Since the 2026-05-12 VA-pool fix (`findings.md §13`),
+  path. Since the [Paper-F1 VA-pool fix](findings.md#paper-f1-va-identity),
   `mc_demo` produces full tooling parity with libcuda: a
   `trace_cuda.sh` capture of a 128 MiB H2D-seed-then-D2H round-trip
   emits `mc1 pb/submit` and `mc1 pb/bytes` for every
   submission (2 of each per round-trip, 0 `mc1 pb/bytes_miss`),
   with the method-stream decode matching libcuda's shape exactly
-  (see `findings.md §13.4` for the captured example).
+  (see [Paper-F1 VA identity](findings.md#paper-f1-va-identity)).
 
 ---
 
 ## See also
 
-- `docs/findings.md §12` — kernel doorbell-watchpoint design, token
-  decode, the trap-context invariants.
-- `docs/findings.md §14` — non-UVM channel carrier investigation
+- [`docs/findings.md`](findings.md#doorbell-observation) — kernel doorbell-watchpoint design and
+  validation; the token bit-field decode and the trap-context invariants live
+  as comments in `kernel-open/nvidia/nv-doorbell-watch.c`.
+- [`docs/findings.md`](findings.md#fb-carrier-and-cross-engine-ordering) — non-UVM channel carrier investigation
   (FB-carrier resolution, per-resource refactor, refuted hypotheses).
 - `docs/reference/trace-format.md` — the `mc1` record grammar, the
   category mask, and the full 59-event catalogue.

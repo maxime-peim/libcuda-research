@@ -6,8 +6,8 @@ components that make a GPU DMA submission work on Hopper (H100).**
 This document describes the *formats on the wire* — every byte the CPU writes
 and every byte the GPU reads — and the *runtime choreography* — who reads what
 when, what wakes whom, and how completion signals propagate. It complements
-`mc_architecture.md` (which is more about the ioctl/setup layering) and
-`findings.md` (which is the running research log).
+the concise [`libmc` architecture guide](https://github.com/maxime-peim/libmc/blob/main/docs/mc_architecture.md)
+and this repository's compact [evidence log](findings.md).
 
 All definitions are pulled from the header files shipped in
 open-gpu-kernel-modules 610.43.02 (Hopper GH100 / H100 PCIe):
@@ -665,7 +665,7 @@ mc allocates USERD as part of `h_gpu_ctl_mem`, a 2 MiB
 GPFIFO ring: GPFIFO at offset 0, USERD at offset `USERD_OFFSET = 0x2000`.
 The CPU reaches USERD through a BAR1 CPU alias of that 2 MiB region,
 obtained from `rm_map_memory_at()` and placed inside the VA pool
-(§13 of `findings.md`).  PBDMA reads GPPut locally from HBM.  The
+(see [Paper-F1 VA identity](findings.md#paper-f1-va-identity)).  PBDMA reads GPPut locally from HBM.  The
 write-combine aperture of the BAR1 alias keeps the CPU's GPPut write
 bounded to one PCIe posted-write per `sfence`.
 
@@ -1142,7 +1142,8 @@ CPU poll latency          ~few µs ─┘
 ─────────────────────────────────────────────────────
 Total:                     ~134 µs = 0.13 ms
 
-Matches the 31.3 GB/s D2H observed at 4 MiB per `findings.md §11`
+Matches the 31.3 GB/s D2H observed at 4 MiB in the
+[transfer-performance evidence](findings.md#transfer-performance)
 bandwidth table — 4 MiB in 134 µs is 31.3 GB/s.  Throughput climbs to
 ~54 GB/s at 64 MiB and ~55 GB/s from 256 MiB up, once the fixed
 per-transfer overhead amortizes out.
@@ -1152,7 +1153,8 @@ Fixed overhead (~15 µs) is a visible fraction at 4 MiB — about 11 % of the ~1
 total.  Larger transfers amortize it away: at 64 MiB it is about 1 %.  Measured D2H
 climbs to ~54 GB/s at 64 MiB and ~55.5 GB/s at 1 GiB, which is about 88 % of the
 ~63 GB/s per-direction Gen5 ceiling; it matches H2D from 256 MiB up and sits within
-a couple of percent of it at 64 MiB.  See `findings.md §11`.
+a couple of percent of it at 64 MiB. See the
+[transfer-performance evidence](findings.md#transfer-performance).
 
 ---
 
@@ -1165,7 +1167,7 @@ open-gpu-kernel-modules 610.43.02.*
 ## Appendix C — Empirical per-channel BAR1 slot layout used by libcuda
 
 Added as part of the kernel-side doorbell watchpoint work (see
-`findings.md §12`). On a 4 MiB CUDA round-trip run, libcuda
+[Doorbell observation](findings.md#doorbell-observation)). On a 4 MiB CUDA round-trip run, libcuda
 creates ONE 2 MiB `/dev/nvidia0 rw-s` BAR1 mapping per context and
 packs all 20 channels' per-channel state into it as consecutive 12 KiB
 slots. Observed directly from kernel-side `ioremap_wc` + sweep + RAMFC
@@ -1221,7 +1223,8 @@ same FBMEM-shared-with-GPFIFO layout for **its single channel** but
 in a monolithic 2 MiB `gpu_ctl` allocation (GPFIFO at offset 0,
 USERD at offset 0x2000) rather than libcuda's multi-slot packing.
 The BAR1 CPU alias of `gpu_ctl` is placed in the VA pool at
-`0x200000000+` so GPU VA == CPU VA (Paper F1, see `findings.md §13`).
+`0x200000000+` so GPU VA == CPU VA (see
+[Paper-F1 VA identity](findings.md#paper-f1-va-identity)).
 This BAR1-apertured FBMEM layout applies specifically to CUDA 13 +
 driver 610 + Hopper — earlier GPUs put USERD in sysmem.
 

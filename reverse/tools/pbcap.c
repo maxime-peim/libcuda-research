@@ -78,7 +78,8 @@ static int         g_verbose   = 0;
  * this path and runs at ~zero cost.  This userspace watchpoint is our
  * own earlier attempt, not Yan et al.'s method — their §5.1–§5.2 is the
  * kernel-side one, and their §3 argues userspace cannot win this race
- * (docs/findings.md §12.1 measures why).  Export PBCAP_DBELL=1 to A/B
+ * (docs/findings.md, "Why the userspace watchpoint is insufficient",
+ * measures why).  Export PBCAP_DBELL=1 to A/B
  * the paths or to reproduce that negative result.
  */
 static int      g_dbell_arm    = 0;
@@ -98,7 +99,8 @@ static int g_memcpy_snapshot = 0;
  * HOPPER_USERMODE_A (class 0xC661) is an mmap of the non-privileged VF
  * window: a 64 KiB range whose +0x90 dword is the VF_DOORBELL.  libcuda
  * and mc allocate both the BAR0 and the BAR1 variant and ring the BAR1
- * one; the +0x90 offset is the same either way (findings.md §12.6).
+ * one; the +0x90 offset is the same either way (docs/findings.md,
+ * "Reproduction constraints").
  * Ringing it with a 32-bit work-submit-token wakes the GPU host
  * scheduler after USERD GPPut has been advanced.  The mapping is
  * always 64 KiB on this driver version. */

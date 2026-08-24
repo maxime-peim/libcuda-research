@@ -73,26 +73,21 @@ git diff 610.43.02 --stat
 
 ## Reading order
 
-The docs are meant to be read in this order if the area is new to you. The
-first three are background and are not specific to this fork.
+The documentation now stays specific to this project. For general PCIe, GPU,
+or CUDA background, use a current architecture reference rather than a second
+hand primer in this repository.
 
-1. **`docs/host_gpu_communication_primer.md`** — PCIe, BARs, MMIO, DMA,
-   doorbells, command queues, cache coherency. Not NVIDIA-specific.
-2. **`docs/nvidia_software_stack.md`** — the layers: `libcudart`, `libcuda`,
-   `nvidia.ko`, `nvidia-uvm.ko`, GSP firmware, and the RM object model.
-3. **`docs/gpu_compute_model.md`** — the hardware: SMs, Copy Engines, PBDMA,
-   channels, TSGs, runlists, the MMU.
-4. **[`libmc/docs/mc_architecture.md`](https://github.com/maxime-peim/libmc/blob/main/docs/mc_architecture.md)** — the deep dive: every ioctl, every kernel path, and the full bug log from bring-up.
-5. **`docs/gpfifo_pushbuffer_reference.md`** — bit-exact formats. GPFIFO
+1. **[`libmc/docs/mc_architecture.md`](https://github.com/maxime-peim/libmc/blob/main/docs/mc_architecture.md)** — concise context, VA-space, channel, and submission architecture.
+2. **`docs/gpfifo_pushbuffer_reference.md`** — bit-exact formats. GPFIFO
    entries, method headers, NVC8B5 methods, USERD, the doorbell.
-6. **[`libmc/docs/compute_kernel_launch.md`](https://github.com/maxime-peim/libmc/blob/main/docs/compute_kernel_launch.md)** — the compute path: QMD construction, and the chain where a GPU thread rings the doorbell itself.
-7. **`docs/tracing_cuda.md`** — how to capture and read a trace of any CUDA
+3. **[`libmc/docs/compute_kernel_launch.md`](https://github.com/maxime-peim/libmc/blob/main/docs/compute_kernel_launch.md)** — the Hopper compute and SM-authored copy chain.
+4. **`docs/tracing_cuda.md`** — how to capture and read a trace of any CUDA
    program: the kernel instrumentation, the tools, and what each output file
    contains.
-8. **`docs/reference/trace-format.md`** — the `mc1` kernel trace record
+5. **`docs/reference/trace-format.md`** — the `mc1` kernel trace record
    format: the grammar, the category mask, and the full event catalogue.
-9. **`docs/findings.md`** — the research log. Long, and the place where
-   anything unclear elsewhere is probably explained.
+6. **`docs/findings.md`** — compact experimental evidence: capture counts,
+   measured rates, falsified hypotheses, and open questions.
 
 ---
 

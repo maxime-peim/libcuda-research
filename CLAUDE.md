@@ -73,5 +73,6 @@ figure, grep the whole tree, because it will be in more places than you expect.
 
 ## When in doubt
 
-`docs/findings.md` is the research log and links out to everything else. If
-something seems contradictory, check there before re-deriving it.
+`docs/findings.md` is the compact evidence log. Use it for measurements,
+capture provenance, refuted hypotheses, and open questions; use source comments
+for implementation details.

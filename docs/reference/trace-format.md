@@ -181,7 +181,7 @@ and `state=` distinguish the phases of one operation that reports from several p
 | `fifo/userd_bind` | `retained resource_count` | yes | |
 | `fifo/chan_construct` | `step=` + `hclient hparent hnew class` (`enter`), `herror_ctx blegacy chan_count` (`lock_acquired`), `status tsg_engine_type` (`set_legacy_mode`), `tsg_eng_type valid` (`per_runlist_chram`), `engine_type runlist_id tsg_engine_type param_engine_type` (`set_engine`), `chid status` (`before_instmem`), `status` (`after_instmem`, `after_alloc_hal`, `gsp_rpc_done`, `failed`), `is_gsp_client status` (`before_gsp_rpc`), nothing (`before_lock`, `check_engine_type`, `before_alloc_hal`, `before_vaspace_cache`) | — | fifteen sites; resolves the `kchannel`/`channel` near-collision |
 | `fifo/chan_get_engine` | `hal runlist_id engine_type` | — | `hal=gm107` — the HAL variant is a field, not part of the name |
-| `fifo/gp_entry_write` | `gp_put next_gp_put put_offset` | — | the only site outside `src/nvidia` and `kernel-open`: `src/common/unix/nvidia-push/src/nvidia-push.c`, which **compiles into nvidia-modeset.ko**. It does not fire for CUDA (see `findings.md §1`) |
+| `fifo/gp_entry_write` | `gp_put next_gp_put put_offset` | — | the only site outside `src/nvidia` and `kernel-open`: `src/common/unix/nvidia-push/src/nvidia-push.c`, which **compiles into nvidia-modeset.ko**. It does not fire for CUDA (see [the captured transfer path](../findings.md#captured-cuda-transfer-path)) |
 
 ### `mmu` — GMMU, virtual memory, descriptors
 
